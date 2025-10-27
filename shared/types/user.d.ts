@@ -93,3 +93,14 @@ export interface UpdateBiographyRequest extends Request {
     biography: string;
   };
 }
+
+/** Express request for updating a user's email.
+ * - `username`: The username whose email is being updated (body).
+ * - `email`: The new email address to be set (body).
+ */
+export interface UpdateEmailRequest extends Request {
+  body: {
+    username: string;
+    email: string;
+  };
+}

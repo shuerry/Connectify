@@ -26,6 +26,10 @@ const userSchema: Schema = new Schema(
       type: String,
       default: '',
     },
+    email: {
+      type: String,
+      required: false,
+    },
   },
   { collection: 'User' },
 );

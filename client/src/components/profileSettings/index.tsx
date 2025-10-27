@@ -10,6 +10,8 @@ const ProfileSettings: React.FC = () => {
     loading,
     editBioMode,
     newBio,
+    editEmailMode,
+    newEmail,
     newPassword,
     confirmNewPassword,
     successMessage,
@@ -21,11 +23,14 @@ const ProfileSettings: React.FC = () => {
     togglePasswordVisibility,
     setEditBioMode,
     setNewBio,
+    setEditEmailMode,
+    setNewEmail,
     setNewPassword,
     setConfirmNewPassword,
     setShowConfirmation,
     handleResetPassword,
     handleUpdateBiography,
+    handleUpdateEmail,
     handleDeleteUser,
     handleViewCollectionsPage,
   } = useProfileSettings();
@@ -90,6 +95,47 @@ const ProfileSettings: React.FC = () => {
                     Save
                   </button>
                   <button className='button button-danger' onClick={() => setEditBioMode(false)}>
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* ---- Email Section ---- */}
+            <p>
+              <strong>Email:</strong>
+            </p>
+            <div className='bio-section'>
+              {!editEmailMode && (
+                <>
+                  <Markdown remarkPlugins={[remarkGfm]}>
+                    {userData.email || 'No email yet.'}
+                  </Markdown>
+                  {canEditProfile && (
+                    <button
+                      className='button button-primary'
+                      onClick={() => {
+                        setEditEmailMode(true);
+                        setNewEmail(userData.email || '');
+                      }}>
+                      Edit
+                    </button>
+                  )}
+                </>
+              )}
+
+              {editEmailMode && canEditProfile && (
+                <div className='bio-edit'>
+                  <input
+                    className='input-text'
+                    type='text'
+                    value={newEmail}
+                    onChange={e => setNewEmail(e.target.value)}
+                  />
+                  <button className='button button-primary' onClick={handleUpdateEmail}>
+                    Save
+                  </button>
+                  <button className='button button-danger' onClick={() => setEditEmailMode(false)}>
                     Cancel
                   </button>
                 </div>
