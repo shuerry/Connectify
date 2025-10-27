@@ -23,9 +23,11 @@ export const saveUser = async (user: User): Promise<UserResponse> => {
     }
 
     // Remove password field from returned object
+    // Adding email here could cause an issue since it's optional in User interface
     const safeUser: SafeDatabaseUser = {
       _id: result._id,
       username: result.username,
+      email: result.email,
       dateJoined: result.dateJoined,
       biography: result.biography,
     };
@@ -79,7 +81,7 @@ export const getUsersList = async (): Promise<UsersResponse> => {
 /**
  * Authenticates a user by verifying their username and password.
  *
- * @param {UserCredentials} loginCredentials - An object containing the username and password.
+ * @param {UserCredentials} loginCredentials - An object containing the username, password, and optionally, email.
  * @returns {Promise<UserResponse>} - Resolves with the authenticated user object (without the password) or an error message.
  */
 export const loginUser = async (loginCredentials: UserCredentials): Promise<UserResponse> => {

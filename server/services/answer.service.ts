@@ -6,9 +6,14 @@ import {
   PopulatedDatabaseAnswer,
   PopulatedDatabaseQuestion,
   QuestionResponse,
+  AnswerNotificationPayload
 } from '../types/types';
 import AnswerModel from '../models/answers.model';
 import QuestionModel from '../models/questions.model';
+import sendAnswerNotification from './notification.service';
+import NotificationService from './notification.service';
+import UserModel from '../models/users.model';
+import { populateDocument } from '../utils/database.util';
 
 /**
  * Records the most recent answer time for a given question based on its answers.
@@ -68,6 +73,7 @@ export const addAnswerToQuestion = async (
     if (result === null) {
       throw new Error('Error when adding answer to question');
     }
+
     return result;
   } catch (error) {
     return { error: 'Error when adding answer to question' };
