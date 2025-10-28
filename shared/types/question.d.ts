@@ -4,6 +4,7 @@ import { Answer, PopulatedDatabaseAnswer } from './answer';
 import { DatabaseTag, Tag } from './tag';
 import { Comment, DatabaseComment } from './comment';
 import { DatabaseCommunity } from './community';
+import { SafeDatabaseUser } from './user';
 
 /**
  * Type representing the possible ordering options for questions.

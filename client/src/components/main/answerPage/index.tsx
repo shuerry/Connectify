@@ -7,6 +7,7 @@ import QuestionBody from './questionBody';
 import VoteComponent from '../voteComponent';
 import CommentSection from '../commentSection';
 import useAnswerPage from '../../../hooks/useAnswerPage';
+import FollowComponent from '../notificationComponent';
 
 /**
  * AnswerPage component that displays the full content of a question along with its answers.
@@ -21,6 +22,9 @@ const AnswerPage = () => {
 
   return (
     <>
+      <div style={{ float: 'right' }}>
+        <FollowComponent question={question} />
+      </div>
       <VoteComponent question={question} />
       <AnswerHeader ansCount={question.answers.length} title={question.title} />
       <QuestionBody

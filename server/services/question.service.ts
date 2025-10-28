@@ -296,11 +296,18 @@ export const addFollowerToQuestion = async (
   username: string
 ): Promise<FollowResponse> => {
   try {
+    const followerUser = await getUserByUsername(username);
+    if (!followerUser || (followerUser as any).error) {
+      return { error: 'User not found' };
+    }
+
+    const followerId = (followerUser as any)._id;
+
     const result: DatabaseQuestion | null = await QuestionModel.findOneAndUpdate(
       { _id: qid },
-      { $addToSet: { followers: getUserByUsername(username) } },
+      { $addToSet: { followers: followerId } },
       { new: true }
-    );
+    ).populate('followers', '-password');
 
     if (!result) {
       return { error: 'Error adding follower!' };
