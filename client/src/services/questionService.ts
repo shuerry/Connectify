@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { PopulatedDatabaseQuestion, Question, SafeDatabaseUser, User, VoteInterface } from '../types/types';
+import { PopulatedDatabaseQuestion, Question, VoteInterface } from '../types/types';
 import api from './config';
 
 const QUESTION_API_URL = `/api/question`;
@@ -118,7 +118,7 @@ const followQuestion = async (
 ): Promise<void> => {
   const data = { qid, username };
   const res = await api.post(`${QUESTION_API_URL}/followQuestion`, data);
-  
+
   if (res.status !== 200) {
     throw new Error('Error while adding follower to the question');
   }
