@@ -1258,9 +1258,9 @@ components:
     # --------------------
     GameType:
       type: string
-      enum: # Based on known game types like 'Nim'
+      enum:
         - Nim
-        - TBD_OtherGame
+        - Connect Four
       description: The type of game to create.
 
     GameStatus:
@@ -1287,7 +1287,7 @@ components:
       properties:
         gameID:
           type: string
-          format: object-id
+          description: The game instance ID (nanoid string)
         playerID:
           type: string
 

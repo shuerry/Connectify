@@ -88,3 +88,22 @@ button:disabled {
   font-weight: bold;
   margin-top: 15px;
 }
+
+/* Connect Four Button */
+.btn-connect-four {
+  background: linear-gradient(135deg, #bec710 0%, #b50909 100%);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-connect-four:hover {
+  background: linear-gradient(135deg, #a3b720 0%, #730303 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(156, 169, 5, 0.556);
+}

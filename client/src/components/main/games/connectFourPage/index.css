@@ -1,0 +1,47 @@
+.connect-four-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #bec710 0%, #b50909 100%);
+  padding: 20px;
+}
+
+.connect-four-error {
+  max-width: 600px;
+  margin: 100px auto;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.connect-four-error h2 {
+  color: #e74c3c;
+  margin-bottom: 16px;
+}
+
+.connect-four-error p {
+  color: #7f8c8d;
+  margin-bottom: 24px;
+}
+
+.connect-four-error button {
+  padding: 12px 24px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.connect-four-error button:hover {
+  background: #2980b9;
+}
+
+@media (max-width: 768px) {
+  .connect-four-page {
+    padding: 10px;
+  }
+}
+

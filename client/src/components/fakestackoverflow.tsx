@@ -17,6 +17,7 @@ import UsersListPage from './main/usersListPage';
 import ProfileSettings from './profileSettings';
 import AllGamesPage from './main/games/allGamesPage';
 import GamePage from './main/games/gamePage';
+import ConnectFourPage from './main/games/connectFourPage';
 import AllCommunitiesPage from './main/communities/allCommunitiesPage';
 import NewCommunityPage from './main/communities/newCommunityPage';
 import CommunityPage from './main/communities/communityPage';
@@ -74,6 +75,7 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
             <Route path='/collections/:username' element={<AllCollectionsPage />} />
             <Route path='/collections/:username/:collectionId' element={<CollectionPage />} />
             <Route path='/games' element={<AllGamesPage />} />
+            <Route path='/games/connectfour' element={<ConnectFourPage />} />
             <Route path='/games/:gameID' element={<GamePage />} />
             <Route path='/communities' element={<AllCommunitiesPage />} />
             <Route path='/new/community' element={<NewCommunityPage />} />
