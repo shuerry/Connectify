@@ -87,13 +87,17 @@ export const getChat = async (chatId: string): Promise<ChatResponse> => {
  */
 export const getChatsByParticipants = async (p: string[]): Promise<DatabaseChat[]> => {
   try {
-    const chats = await ChatModel.find({ participants: { $all: p } }).lean();
+    const andConditions = p.map(username => ({
+      [`participants.${username}`]: { $exists: true },
+    }));
+
+    const chats = await ChatModel.find({ $and: andConditions }).lean<DatabaseChat[]>();
 
     if (!chats) {
       throw new Error('Chat not found with the provided participants');
     }
 
-    return chats;
+    return chats ?? [];
   } catch {
     return [];
   }
@@ -107,20 +111,22 @@ export const getChatsByParticipants = async (p: string[]): Promise<DatabaseChat[
  */
 export const addParticipantToChat = async (
   chatId: string,
-  userId: string,
+  username: string,
 ): Promise<ChatResponse> => {
   try {
     // Validate if user exists
-    const userExists: DatabaseUser | null = await UserModel.findById(userId);
+    const userExists: DatabaseUser | null = await UserModel.findOne({ username });
 
     if (!userExists) {
       throw new Error('User does not exist.');
     }
 
+    const updatePath = `participants.${username}`;
+
     // Add participant if not already in the chat
     const updatedChat: DatabaseChat | null = await ChatModel.findOneAndUpdate(
-      { _id: chatId, participants: { $ne: userId } },
-      { $push: { participants: userId } },
+      { _id: chatId, [updatePath]: { $ne: true } },
+      { $set: { [updatePath]: true } },
       { new: true }, // Return the updated document
     );
 
@@ -131,5 +137,27 @@ export const addParticipantToChat = async (
     return updatedChat;
   } catch (error) {
     return { error: `Error adding participant to chat: ${(error as Error).message}` };
+  }
+};
+
+export const toggleNotify = async (
+  chatId: string,
+  username: string,
+): Promise<ChatResponse> => {
+  try {
+    const chat = await ChatModel.findById(chatId);
+    if (!chat) {
+      throw new Error('Chat not found');
+    }
+
+    const participantsMap = chat.participants as unknown as Map<string, boolean>;
+
+    const current = participantsMap.get(username) ?? false;
+    participantsMap.set(username, !current);
+
+    const updatedChat = await chat.save();
+    return updatedChat as DatabaseChat;
+  } catch (error) {
+    return { error: `Error toggling notification status: ${(error as Error).message}` };
   }
 };

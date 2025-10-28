@@ -18,7 +18,7 @@ export interface MessageInChat extends DatabaseMessage {
  * - `messages`: Array of `Message` objects.
  */
 export interface Chat {
-  participants: string[];
+  participants: Record<string, boolean>; // username -> Notify preference
   messages: Message[];
 }
 
@@ -51,7 +51,7 @@ export interface PopulatedDatabaseChat extends Omit<DatabaseChat, 'messages'> {
  */
 export interface CreateChatRequest extends Request {
   body: {
-    participants: string[];
+    participants: Record<string, boolean>;
     messages: Omit<Message, 'type'>[];
   };
 }

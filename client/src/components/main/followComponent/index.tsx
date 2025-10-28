@@ -5,9 +5,9 @@ import { PopulatedDatabaseQuestion } from '../../../types/types';
 import useFollowStatus from '../../../hooks/useFollowStatus';
 
 /**
- * Interface represents the props for the VoteComponent.
+ * Interface represents the props for the FollowComponent.
  *
- * question - The question object containing voting information.
+ * question - The question object containing follow information.
  */
 interface FollowComponentProps {
   question: PopulatedDatabaseQuestion;

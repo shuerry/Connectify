@@ -7,7 +7,7 @@ import QuestionBody from './questionBody';
 import VoteComponent from '../voteComponent';
 import CommentSection from '../commentSection';
 import useAnswerPage from '../../../hooks/useAnswerPage';
-import FollowComponent from '../notificationComponent';
+import FollowComponent from '../followComponent';
 
 /**
  * AnswerPage component that displays the full content of a question along with its answers.

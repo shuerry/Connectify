@@ -5,6 +5,7 @@ import {
   getChat,
   addParticipantToChat,
   getChatsByParticipants,
+  toggleNotify,
 } from '../services/chat.service';
 import { populateDocument } from '../utils/database.util';
 import {
@@ -207,12 +208,37 @@ const chatController = (socket: FakeSOSocket) => {
     });
   });
 
+  /**
+   * Toggles the notification status for a user in a chat.
+   * @param req The request object containing the chat ID and username.
+   * @param res The response object to send the result.
+   * @returns {Promise<void>} A promise that resolves when the notification status is toggled.
+   * @throws {Error} Throws an error if the toggle operation fails.
+   */
+  const toggleNotifyRoute = async (req: ChatIdRequest, res: Response): Promise<void> => {
+    const { chatId } = req.params;
+    const { username } = req.body;
+
+    try {
+      const updatedChat = await toggleNotify(chatId, username);
+
+      if ('error' in updatedChat) {
+        throw new Error(updatedChat.error);
+      }
+
+      res.json(updatedChat);
+    } catch (err: unknown) {
+      res.status(500).send(`Error toggling notification status: ${(err as Error).message}`);
+    }
+  };
+
   // Register the routes
   router.post('/createChat', createChatRoute);
   router.post('/:chatId/addMessage', addMessageToChatRoute);
   router.get('/:chatId', getChatRoute);
   router.post('/:chatId/addParticipant', addParticipantToChatRoute);
   router.get('/getChatsByUser/:username', getChatsByUserRoute);
+  router.post('/:chatId/toggleNotify', toggleNotifyRoute);
 
   return router;
 };
