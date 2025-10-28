@@ -19,7 +19,7 @@ describe('Chat service', () => {
 
   describe('saveChat', () => {
     const mockChatPayload: Chat = {
-      participants: ['user1'],
+      participants: {['user1']: false},
       messages: [
         {
           msg: 'Hello!',
@@ -43,7 +43,7 @@ describe('Chat service', () => {
 
       jest.spyOn(ChatModel, 'create').mockResolvedValueOnce({
         _id: new mongoose.Types.ObjectId(),
-        participants: ['user1'],
+        participants: {['user1']: false},
         messages: [new mongoose.Types.ObjectId()],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -56,9 +56,9 @@ describe('Chat service', () => {
       }
 
       expect(result).toHaveProperty('_id');
-      expect(Array.isArray(result.participants)).toBe(true);
+      expect(typeof result.participants).toBe('object');
       expect(Array.isArray(result.messages)).toBe(true);
-      expect(result.participants[0].toString()).toEqual(expect.any(String));
+      expect(Object.keys(result.participants)[0].toString()).toEqual(expect.any(String));
       expect(result.messages[0].toString()).toEqual(expect.any(String));
     });
 
@@ -84,7 +84,7 @@ describe('Chat service', () => {
 
       const mockUpdatedChat: Chat = {
         _id: new mongoose.Types.ObjectId(),
-        participants: ['testUser'],
+        participants: {['testUser']: false},
         messages: [new mongoose.Types.ObjectId()],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -125,7 +125,7 @@ describe('Chat service', () => {
     it('should retrieve a chat by ID', async () => {
       const mockFoundChat: DatabaseChat = {
         _id: new mongoose.Types.ObjectId(),
-        participants: ['testUser'],
+        participants: {['testUser']: false},
         messages: [],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -170,7 +170,7 @@ describe('Chat service', () => {
 
       const mockChat: DatabaseChat = {
         _id: new mongoose.Types.ObjectId(),
-        participants: ['testUser'],
+        participants: {['testUser']: false},
         messages: [],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -228,14 +228,14 @@ describe('Chat service', () => {
       const mockChats: DatabaseChat[] = [
         {
           _id: new mongoose.Types.ObjectId(),
-          participants: ['user1', 'user2'],
+          participants: {['user1']: false, ['user2']: false},
           messages: [],
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
           _id: new mongoose.Types.ObjectId(),
-          participants: ['user1', 'user3'],
+          participants: {['user1']: false, ['user3']: false},
           messages: [],
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -248,9 +248,11 @@ describe('Chat service', () => {
         if (!cond) {
           expect(false).toBe(true);
         }
-        expect(cond).toHaveProperty('participants');
-        expect(JSON.stringify(cond.participants)).toContain(participantsUsedAsInput[0]);
-        expect(JSON.stringify(cond.participants)).toContain(participantsUsedAsInput[1]);
+        expect(cond).toHaveProperty('$and');
+        expect(cond.$and[0]).toHaveProperty(`participants.${participantsUsedAsInput[0]}`);
+        expect(cond.$and[0][`participants.${participantsUsedAsInput[0]}`]).toHaveProperty('$exists', true);
+        expect(cond.$and[1]).toHaveProperty(`participants.${participantsUsedAsInput[1]}`);
+        expect(cond.$and[1][`participants.${participantsUsedAsInput[1]}`]).toHaveProperty('$exists', true);
         const query: any = {};
         query.lean = jest.fn().mockReturnValue(Promise.resolve([mockChats[0]]));
         return query;
@@ -266,21 +268,21 @@ describe('Chat service', () => {
       const mockChats: DatabaseChat[] = [
         {
           _id: new mongoose.Types.ObjectId(),
-          participants: ['user1', 'user2'],
+          participants: {['user1']: false, ['user2']: false},
           messages: [],
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
           _id: new mongoose.Types.ObjectId(),
-          participants: ['user1', 'user3'],
+          participants: {['user1']: false, ['user3']: false},
           messages: [],
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
           _id: new mongoose.Types.ObjectId(),
-          participants: ['user2', 'user3'],
+          participants: {['user2']: false, ['user3']: false},
           messages: [],
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -293,8 +295,9 @@ describe('Chat service', () => {
         if (!cond) {
           expect(false).toBe(true);
         }
-        expect(cond).toHaveProperty('participants');
-        expect(JSON.stringify(cond.participants)).toContain(participantsUsedAsInput[0]);
+        expect(cond).toHaveProperty('$and');
+        expect(cond.$and[0]).toHaveProperty(`participants.${participantsUsedAsInput[0]}`);
+        expect(cond.$and[0][`participants.${participantsUsedAsInput[0]}`]).toHaveProperty('$exists', true);
         const query: any = {};
         query.lean = jest.fn().mockReturnValue(Promise.resolve([mockChats[0], mockChats[1]]));
         return query;
@@ -312,8 +315,9 @@ describe('Chat service', () => {
         if (!cond) {
           expect(false).toBe(true);
         }
-        expect(cond).toHaveProperty('participants');
-        expect(JSON.stringify(cond.participants)).toContain(participantsUsedAsInput[0]);
+        expect(cond).toHaveProperty('$and');
+        expect(cond.$and[0]).toHaveProperty(`participants.${participantsUsedAsInput[0]}`);
+        expect(cond.$and[0][`participants.${participantsUsedAsInput[0]}`]).toHaveProperty('$exists', true);
         const query: any = {};
         query.lean = jest.fn().mockReturnValue(Promise.resolve([]));
         return query;
@@ -330,8 +334,9 @@ describe('Chat service', () => {
         if (!cond) {
           expect(false).toBe(true);
         }
-        expect(cond).toHaveProperty('participants');
-        expect(JSON.stringify(cond.participants)).toContain(participantsUsedAsInput[0]);
+        expect(cond).toHaveProperty('$and');
+        expect(cond.$and[0]).toHaveProperty(`participants.${participantsUsedAsInput[0]}`);
+        expect(cond.$and[0][`participants.${participantsUsedAsInput[0]}`]).toHaveProperty('$exists', true);
         const query: any = {};
         query.lean = jest.fn().mockReturnValue(Promise.resolve(null));
         return query;
@@ -348,8 +353,9 @@ describe('Chat service', () => {
         if (!cond) {
           expect(false).toBe(true);
         }
-        expect(cond).toHaveProperty('participants');
-        expect(JSON.stringify(cond.participants)).toContain(participantsUsedAsInput[0]);
+        expect(cond).toHaveProperty('$and');
+        expect(cond.$and[0]).toHaveProperty(`participants.${participantsUsedAsInput[0]}`);
+        expect(cond.$and[0][`participants.${participantsUsedAsInput[0]}`]).toHaveProperty('$exists', true);
         const query: any = {};
         query.lean = jest.fn().mockRejectedValueOnce(new Error('DB Error'));
         return query;
