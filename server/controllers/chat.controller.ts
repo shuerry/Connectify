@@ -226,7 +226,12 @@ const chatController = (socket: FakeSOSocket) => {
         throw new Error(updatedChat.error);
       }
 
-      res.json(updatedChat);
+      const populatedChat = await populateDocument(updatedChat._id.toString(), 'chat');
+      if ('error' in populatedChat) {
+        throw new Error(populatedChat.error);
+      }
+
+      res.json(populatedChat);
     } catch (err: unknown) {
       res.status(500).send(`Error toggling notification status: ${(err as Error).message}`);
     }

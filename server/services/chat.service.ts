@@ -3,6 +3,8 @@ import ChatModel from '../models/chat.model';
 import UserModel from '../models/users.model';
 import { Chat, ChatResponse, DatabaseChat, MessageResponse, DatabaseUser } from '../types/types';
 import { saveMessage } from './message.service';
+import NotificationService from './notification.service';
+import MessageModel from '../models/messages.model';
 
 /**
  * Saves a new chat, storing any messages provided as part of the argument.
@@ -54,6 +56,59 @@ export const addMessageToChat = async (
     if (!updatedChat) {
       throw new Error('Chat not found');
     }
+
+    const messageDoc = await MessageModel.findById(messageId).lean();
+    if (!messageDoc) {
+      throw new Error('Message not found after save');
+    }
+
+    const senderUsername: string = messageDoc.msgFrom;
+    const messagePreview: string = (messageDoc.msg || '')
+      .toString()
+      .replace(/\s+/g, ' ')
+      .slice(0, 140);
+
+    // Will be helpful later when we have group chats
+    const groupName = undefined;
+
+    // Send notification to participants who have notifications enabled
+    const participantsMap = updatedChat.participants as unknown as Map<string, boolean>;
+
+    const toEmail: string[] = [];
+
+    for (const [username, isEnabled] of participantsMap.entries()) {
+      if (!isEnabled) continue;
+      if (username === senderUsername) continue;
+
+    const recipientUser = await UserModel.findOne({ username }).lean();
+    if (!recipientUser || !recipientUser.email) {
+      console.warn(
+      `Skipping notify for "${username}" (no user or no email) in chat: ${chatId}`,
+    );
+    continue;
+  }
+
+  toEmail.push(recipientUser.email);
+}
+
+    if (toEmail.length > 0) {
+      try {
+        await new NotificationService().sendChatNotification({
+          toEmail,
+          fromName: senderUsername,
+          chatId,
+          messagePreview,
+          groupName,
+          isMention: false,
+        });
+      } catch (notifyErr) {
+        console.error(
+          `Failed to send chat notification to chat: ${chatId}:`,
+          notifyErr,
+        );
+      }
+    }
+
 
     return updatedChat;
   } catch (error) {
@@ -140,6 +195,12 @@ export const addParticipantToChat = async (
   }
 };
 
+/**
+ * Toggles the notification preference for a participant in a chat.
+ * @param chatId - The ID of the chat to update.
+ * @param username - The username of the participant whose preference is to be toggled.
+ * @returns {Promise<ChatResponse>} - The updated chat or an error message.
+ */
 export const toggleNotify = async (
   chatId: string,
   username: string,

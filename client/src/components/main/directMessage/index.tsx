@@ -3,6 +3,9 @@ import useDirectMessage from '../../../hooks/useDirectMessage';
 import ChatsListCard from './chatsListCard';
 import UsersListPage from '../usersListPage';
 import MessageCard from '../messageCard';
+import FollowComponent from '../followComponent';
+import question from '../questionPage/question';
+import NotifComponent from '../notifComponent';
 
 /**
  * DirectMessage component renders a page for direct messaging between users.
@@ -52,7 +55,10 @@ const DirectMessage = () => {
         <div className='chat-container'>
           {selectedChat ? (
             <>
-              <h2>Chat Participants: {Object.keys(selectedChat.participants).join(', ')}</h2>
+              <div className='chat-header'>
+                <h2>Chat Participants: {Object.keys(selectedChat.participants).join(', ')}</h2>
+                <NotifComponent chat={selectedChat} />
+              </div>
               <div className='chat-messages'>
                 {selectedChat.messages.map(message => (
                   <MessageCard key={String(message._id)} message={message} />
