@@ -17,14 +17,13 @@ import UsersListPage from './main/usersListPage';
 import ProfileSettings from './profileSettings';
 import AllGamesPage from './main/games/allGamesPage';
 import GamePage from './main/games/gamePage';
-import ConnectFourPage from './main/games/connectFourPage';
 import AllCommunitiesPage from './main/communities/allCommunitiesPage';
 import NewCommunityPage from './main/communities/newCommunityPage';
 import CommunityPage from './main/communities/communityPage';
 import AllCollectionsPage from './main/collections/allCollectionsPage';
 import CollectionPage from './main/collections/collectionPage';
 import NewCollectionPage from './main/collections/newCollectionPage';
-
+import ConnectFourPage from './main/games/connectFourPage';
 const ProtectedRoute = ({
   user,
   socket,
@@ -42,7 +41,7 @@ const ProtectedRoute = ({
 };
 
 /**
- * Represents the main component of the application.
+ * Represents the main component of the applications.
  * It manages the state for search terms and the main title.
  */
 const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {

@@ -44,40 +44,40 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="create-room-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className='modal-overlay' onClick={onClose}>
+      <div className='create-room-modal' onClick={e => e.stopPropagation()}>
+        <div className='modal-header'>
           <h2>Create Connect Four Room</h2>
-          <button className="btn-close" onClick={onClose}>
+          <button className='btn-close' onClick={onClose}>
             ×
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="roomName">Room Name *</label>
+          <div className='form-group'>
+            <label htmlFor='roomName'>Room Name *</label>
             <input
-              id="roomName"
-              type="text"
+              id='roomName'
+              type='text'
               value={roomName}
               onChange={e => {
                 setRoomName(e.target.value);
                 setError('');
               }}
-              placeholder="Enter room name"
+              placeholder='Enter room name'
               maxLength={50}
             />
-            {error && <span className="error-message">{error}</span>}
+            {error && <span className='error-message'>{error}</span>}
           </div>
 
-          <div className="form-group">
+          <div className='form-group'>
             <label>Privacy Setting</label>
-            <div className="privacy-options">
+            <div className='privacy-options'>
               <label className={`privacy-option ${privacy === 'PUBLIC' ? 'selected' : ''}`}>
                 <input
-                  type="radio"
-                  name="privacy"
-                  value="PUBLIC"
+                  type='radio'
+                  name='privacy'
+                  value='PUBLIC'
                   checked={privacy === 'PUBLIC'}
                   onChange={() => setPrivacy('PUBLIC')}
                 />
@@ -89,9 +89,9 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
 
               <label className={`privacy-option ${privacy === 'PRIVATE' ? 'selected' : ''}`}>
                 <input
-                  type="radio"
-                  name="privacy"
-                  value="PRIVATE"
+                  type='radio'
+                  name='privacy'
+                  value='PRIVATE'
                   checked={privacy === 'PRIVATE'}
                   onChange={() => setPrivacy('PRIVATE')}
                 />
@@ -103,9 +103,9 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
 
               <label className={`privacy-option ${privacy === 'FRIENDS_ONLY' ? 'selected' : ''}`}>
                 <input
-                  type="radio"
-                  name="privacy"
-                  value="FRIENDS_ONLY"
+                  type='radio'
+                  name='privacy'
+                  value='FRIENDS_ONLY'
                   checked={privacy === 'FRIENDS_ONLY'}
                   onChange={() => setPrivacy('FRIENDS_ONLY')}
                 />
@@ -117,23 +117,23 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="checkbox-label">
+          <div className='form-group'>
+            <label className='checkbox-label'>
               <input
-                type="checkbox"
+                type='checkbox'
                 checked={allowSpectators}
                 onChange={e => setAllowSpectators(e.target.checked)}
               />
               <span>Allow Spectators</span>
             </label>
-            <p className="help-text">Let other players watch your game without interfering</p>
+            <p className='help-text'>Let other players watch your game without interfering</p>
           </div>
 
-          <div className="modal-actions">
-            <button type="button" className="btn-cancel" onClick={onClose}>
+          <div className='modal-actions'>
+            <button type='button' className='btn-cancel' onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn-create">
+            <button type='submit' className='btn-create'>
               Create Room
             </button>
           </div>
@@ -144,4 +144,3 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
 };
 
 export default CreateRoomModal;
-

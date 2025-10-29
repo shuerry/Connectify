@@ -114,7 +114,7 @@ const ConnectFourBoard = ({
     if (state.lastMoveColumn === col && board[row][col]) {
       // Highlight last move
       let isLastMove = true;
-      for (let r = 0; r < row; r++) {
+      for (let r = 0; r < row; r = r + 1) {
         if (board[r][col] !== null) {
           isLastMove = false;
           break;

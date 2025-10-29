@@ -24,12 +24,12 @@ const ConnectFourPage = () => {
 
   // Wait for user context to be ready
   if (!user) {
-    return <div className="connect-four-page">Loading...</div>;
+    return <div className='connect-four-page'>Loading...</div>;
   }
 
   if (error) {
     return (
-      <div className="connect-four-error">
+      <div className='connect-four-error'>
         <h2>Error</h2>
         <p>{error}</p>
         <button onClick={() => window.location.reload()}>Reload</button>
@@ -38,7 +38,7 @@ const ConnectFourPage = () => {
   }
 
   return (
-    <div className="connect-four-page">
+    <div className='connect-four-page'>
       {!currentGame ? (
         <ConnectFourLobby
           games={games}
@@ -63,4 +63,3 @@ const ConnectFourPage = () => {
 };
 
 export default ConnectFourPage;
-

@@ -101,7 +101,7 @@ button:disabled {
   font-weight: 600;
   transition: all 0.3s;
 }
-
+/* Connect Four Button Hover Effect */
 .btn-connect-four:hover {
   background: linear-gradient(135deg, #a3b720 0%, #730303 100%);
   transform: translateY(-2px);
