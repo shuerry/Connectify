@@ -36,7 +36,7 @@ const useAnswerPage = () => {
 
   /**
    * Function to handle question updates from editing.
-   * 
+   *
    * @param updatedQuestion - The updated question object.
    */
   const handleQuestionUpdate = (updatedQuestion: PopulatedDatabaseQuestion) => {

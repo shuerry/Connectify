@@ -15,7 +15,10 @@ interface EditQuestionRequest {
  * Interface for the hook's return value
  */
 interface UseEditQuestionReturn {
-  editQuestion: (qid: string, questionData: EditQuestionRequest) => Promise<PopulatedDatabaseQuestion | null>;
+  editQuestion: (
+    qid: string,
+    questionData: EditQuestionRequest,
+  ) => Promise<PopulatedDatabaseQuestion | null>;
   isLoading: boolean;
   error: string | null;
 }
@@ -23,7 +26,7 @@ interface UseEditQuestionReturn {
 /**
  * Custom hook for editing existing questions
  * Provides functionality to update a question's title, text, and tags
- * 
+ *
  * @returns {UseEditQuestionReturn}
  */
 export const useEditQuestion = (): UseEditQuestionReturn => {

@@ -37,13 +37,13 @@ interface QuestionBodyProps {
  * @param meta Additional metadata related to the question.
  * @param onQuestionUpdate Callback function when the question is updated
  */
-const QuestionBody = ({ 
-  question, 
-  views, 
-  text, 
-  askby, 
-  meta, 
-  onQuestionUpdate 
+const QuestionBody = ({
+  question,
+  views,
+  text,
+  askby,
+  meta,
+  onQuestionUpdate,
 }: QuestionBodyProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const { user } = useUserContext();
@@ -88,11 +88,10 @@ const QuestionBody = ({
           <div className='answer_question_meta'>asked {meta}</div>
         </div>
         {canEdit && (
-          <button 
+          <button
             className='edit-question-btn'
             onClick={handleEditClick}
-            title='Edit your question'
-          >
+            title='Edit your question'>
             Edit
           </button>
         )}

@@ -46,7 +46,10 @@ const EditQuestionForm = ({ question, onCancel, onSuccess }: EditQuestionFormPro
     }
 
     // Validate tags
-    const tags = tagString.trim().split(/\s+/).filter(tag => tag.length > 0);
+    const tags = tagString
+      .trim()
+      .split(/\s+/)
+      .filter(tag => tag.length > 0);
     if (tags.length === 0) {
       newErrors.tags = 'At least one tag is required';
     } else if (tags.length > 5) {
@@ -74,7 +77,10 @@ const EditQuestionForm = ({ question, onCancel, onSuccess }: EditQuestionFormPro
     }
 
     // Convert tag string to Tag objects
-    const tagNames = tagString.trim().split(/\s+/).filter(tag => tag.length > 0);
+    const tagNames = tagString
+      .trim()
+      .split(/\s+/)
+      .filter(tag => tag.length > 0);
     const tags: Tag[] = tagNames.map(name => ({
       name: name.toLowerCase(),
       description: `Tag for ${name}`,
@@ -149,12 +155,7 @@ const EditQuestionForm = ({ question, onCancel, onSuccess }: EditQuestionFormPro
         {error && <div className='error-message api-error'>{error}</div>}
 
         <div className='form-actions'>
-          <button
-            type='button'
-            onClick={onCancel}
-            className='btn-cancel'
-            disabled={isLoading}
-          >
+          <button type='button' onClick={onCancel} className='btn-cancel' disabled={isLoading}>
             Cancel
           </button>
           <button type='submit' className='btn-submit' disabled={isLoading}>
