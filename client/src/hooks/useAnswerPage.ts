@@ -9,7 +9,7 @@ import {
 } from '../types/types';
 import useUserContext from './useUserContext';
 import addComment from '../services/commentService';
-import { getQuestionById } from '../services/questionService';
+import { getQuestionById, getQuestionReports } from '../services/questionService';
 
 /**
  * Custom hook for managing the answer page's state, navigation, and real-time updates.
@@ -26,6 +26,7 @@ const useAnswerPage = () => {
   const { user, socket } = useUserContext();
   const [questionID, setQuestionID] = useState<string>(qid || '');
   const [question, setQuestion] = useState<PopulatedDatabaseQuestion | null>(null);
+  const [reports, setReports] = useState<Array<{ reporter: string; reason: string; createdAt: string }>>([]);
 
   /**
    * Function to handle navigation to the "New Answer" page.
@@ -84,6 +85,12 @@ const useAnswerPage = () => {
       try {
         const res = await getQuestionById(questionID, user.username);
         setQuestion(res || null);
+        if (res && res.askedBy === user.username) {
+          const r = await getQuestionReports(questionID);
+          setReports(Array.isArray(r) ? r : []);
+        } else {
+          setReports([]);
+        }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching question:', error);
@@ -197,6 +204,7 @@ const useAnswerPage = () => {
   return {
     questionID,
     question,
+    reports,
     handleNewComment,
     handleNewAnswer,
     handleQuestionUpdate,

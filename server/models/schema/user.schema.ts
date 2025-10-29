@@ -41,6 +41,12 @@ const userSchema: Schema = new Schema(
         default: [],
       },
     ],
+    hiddenQuestions: [
+      {
+        type: String,
+        default: [],
+      },
+    ],
   },
   { collection: 'User' },
 );

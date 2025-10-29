@@ -18,6 +18,7 @@ import TagModel from '../models/tags.model';
 import CommentModel from '../models/comments.model';
 import { parseKeyword, parseTags } from '../utils/parse.util';
 import { getRelations, getUsersWhoBlocked } from './user.service';
+import UserModel from '../models/users.model';
 import { checkTagInQuestion } from './tag.service';
 import {
   sortQuestionsByActive,
@@ -88,8 +89,15 @@ export const getQuestionsByOrder = async (
     const blockedViewerBy = await getUsersWhoBlocked(viewerUsername);
     const blockedViewerByList = Array.isArray(blockedViewerBy) ? blockedViewerBy : [];
 
+    // Hidden questions list
+    const viewer = await UserModel.findOne({ username: viewerUsername }).select('hiddenQuestions');
+    const hidden = viewer?.hiddenQuestions ?? [];
+
     return ordered.filter(
-      q => !blockedByViewer.includes(q.askedBy) && !blockedViewerByList.includes(q.askedBy),
+      q =>
+        !blockedByViewer.includes(q.askedBy) &&
+        !blockedViewerByList.includes(q.askedBy) &&
+        !hidden.includes(q._id.toString()),
     );
   } catch (error) {
     return [];
@@ -176,6 +184,13 @@ export const fetchAndIncrementQuestionViewsById = async (
     const blockedViewerByList = Array.isArray(blockedViewerBy) ? blockedViewerBy : [];
 
     if (blockedByViewer.includes(q.askedBy) || blockedViewerByList.includes(q.askedBy)) {
+      return { error: 'Access denied' };
+    }
+
+    // If viewer has hidden this question and is not the author, deny
+    const viewer = await UserModel.findOne({ username }).select('hiddenQuestions');
+    const hidden = viewer?.hiddenQuestions ?? [];
+    if (hidden.includes(q._id.toString()) && q.askedBy !== username) {
       return { error: 'Access denied' };
     }
 

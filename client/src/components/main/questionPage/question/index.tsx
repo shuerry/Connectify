@@ -21,8 +21,24 @@ interface QuestionProps {
  * @param q - The question object containing question details.
  */
 const QuestionView = ({ question }: QuestionProps) => {
-  const { clickTag, handleAnswer, handleSaveClick, closeModal, isModalOpen, selectedQuestion } =
-    useQuestionView();
+  const {
+    clickTag,
+    handleAnswer,
+    handleSaveClick,
+    closeModal,
+    isModalOpen,
+    selectedQuestion,
+    openReportModal,
+    isReportOpen,
+    reportTarget,
+    submitReport,
+    setReportOpen,
+    isHidden,
+  } = useQuestionView();
+
+  if (isHidden(String(question._id))) {
+    return null;
+  }
 
   return (
     <div
@@ -67,8 +83,49 @@ const QuestionView = ({ question }: QuestionProps) => {
         Edit My Collections
       </button>
 
+      <button
+        onClick={e => {
+          e.stopPropagation();
+          openReportModal(question);
+        }}
+        className='collections-btn'
+        style={{ marginLeft: '8px' }}>
+        Report
+      </button>
+
       {isModalOpen && selectedQuestion && (
         <SaveToCollectionModal question={selectedQuestion} onClose={closeModal} />
+      )}
+
+      {isReportOpen && reportTarget && (
+        <div className='modal-backdrop' onClick={e => e.stopPropagation()}>
+          <div className='modal-container' onClick={e => e.stopPropagation()}>
+            <h2 className='modal-title'>Report Post</h2>
+            <textarea
+              placeholder='Describe the reason'
+              style={{ width: '100%', height: '120px', marginBottom: '12px' }}
+              onClick={e => e.stopPropagation()}
+              onChange={() => {}}
+              id='report-reason-input'
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className='close-btn' onClick={() => setReportOpen(false)}>
+                Close
+              </button>
+              <button
+                className='close-btn'
+                onClick={e => {
+                  e.stopPropagation();
+                  const val = (
+                    document.getElementById('report-reason-input') as HTMLTextAreaElement
+                  ).value.trim();
+                  if (val) submitReport(val);
+                }}>
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

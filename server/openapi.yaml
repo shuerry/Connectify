@@ -38,6 +38,12 @@ paths:
             type: string
           required: false
           description: Username of the user who asked the question.
+        - in: query
+          name: viewer
+          schema:
+            type: string
+          required: false
+          description: Username of the viewer (used for personalization/visibility filtering).
       responses:
         '200':
           description: Successfully retrieved filtered list of questions.
