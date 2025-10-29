@@ -23,6 +23,8 @@ import CommunityPage from './main/communities/communityPage';
 import AllCollectionsPage from './main/collections/allCollectionsPage';
 import CollectionPage from './main/collections/collectionPage';
 import NewCollectionPage from './main/collections/newCollectionPage';
+import FriendsListPage from './main/friendsList';
+import BlockedListPage from './main/blockedList';
 
 const ProtectedRoute = ({
   user,
@@ -78,6 +80,8 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
             <Route path='/communities' element={<AllCommunitiesPage />} />
             <Route path='/new/community' element={<NewCommunityPage />} />
             <Route path='/communities/:communityID' element={<CommunityPage />} />
+            <Route path='/friends' element={<FriendsListPage />} />
+            <Route path='/blocked' element={<BlockedListPage />} />
           </Route>
         }
       </Routes>
