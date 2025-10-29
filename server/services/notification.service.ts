@@ -77,16 +77,16 @@ export default class NotificationService {
      * Send a notification when a new answer is added to a question.
      */
     async sendAnswerNotification(payload: AnswerNotificationPayload) {
-        const { toEmail, authorName, questionTitle, answerPreview, answerUrl, extra } = payload;
+        const { toEmail, authorName, questionTitle, answerPreview, questionId: answerUrl, extra } = payload;
 
         let subject: string;
         subject = `New answer${questionTitle ? ` — ${questionTitle}` : ""}`;
 
-        const link = answerUrl || (payload.answerId ? `${this.siteUrl}/questions/answers/${payload.answerId}` : this.siteUrl);
+        const link = `${this.siteUrl}/question/${payload.questionId}`;
 
         const html = 'test email with minimal formatting';
 
-        const text = (authorName ? authorName + ' posted an answer: ' : 'New answer: ') + answerPreview + '\n\nView: ' + link;
+        const text = (authorName ? authorName + ' posted an answer: ' : 'New answer: ') + answerPreview + '\n\nView Question: ' + link;
 
         return this.sendMail(toEmail, subject, html, text);
     }

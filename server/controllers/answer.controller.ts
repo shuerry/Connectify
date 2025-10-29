@@ -3,6 +3,8 @@ import { ObjectId } from 'mongodb';
 import { Answer, AddAnswerRequest, FakeSOSocket, PopulatedDatabaseAnswer } from '../types/types';
 import { addAnswerToQuestion, saveAnswer } from '../services/answer.service';
 import { populateDocument } from '../utils/database.util';
+import NotificationService from '../services/notification.service';
+import QuestionModel from '../models/questions.model';
 
 const answerController = (socket: FakeSOSocket) => {
   const router = express.Router();
@@ -38,6 +40,52 @@ const answerController = (socket: FakeSOSocket) => {
       if (populatedAns && 'error' in populatedAns) {
         throw new Error(populatedAns.error);
       }
+
+      try {
+      const questionDoc = await QuestionModel.findById(qid)
+        .populate('followers', '-password')
+        .lean();
+
+      if (questionDoc) {
+        const followers: any[] = Array.isArray(questionDoc.followers)
+          ? questionDoc.followers
+          : [];
+
+        const authorName = ansInfo.ansBy
+
+        const authorUsernamesToSkip = new Set<string>([
+          String(ansInfo.ansBy || ''),
+        ]);
+
+        const toEmail: string[] = followers
+          .filter(f => !!f && !!f.email)
+          .filter(f => !authorUsernamesToSkip.has(f.username))
+          .map(f => f.email);
+
+        if (toEmail.length > 0) {
+          const rawText: string =
+            (populatedAns as any).text ||
+            (ansInfo as any).text ||
+            '';
+
+          const answerPreview =
+            rawText.length > 200 ? rawText.slice(0, 197) + '…' : rawText;
+
+          const questionTitle: string = (questionDoc as any).title || '';
+
+          const notificationService = new NotificationService();
+          await notificationService.sendAnswerNotification({
+            toEmail,
+            authorName: authorName,
+            questionTitle,
+            questionId: questionDoc._id.toString(),
+            answerPreview,
+          });
+        }
+      }
+    } catch (notifyErr) {
+      console.error('Failed to send follower notifications:', notifyErr);
+    }
 
       // Populates the fields of the answer that was added and emits the new object
       socket.emit('answerUpdate', {

@@ -3,8 +3,6 @@ import useDirectMessage from '../../../hooks/useDirectMessage';
 import ChatsListCard from './chatsListCard';
 import UsersListPage from '../usersListPage';
 import MessageCard from '../messageCard';
-import FollowComponent from '../followComponent';
-import question from '../questionPage/question';
 import NotifComponent from '../notifComponent';
 
 /**

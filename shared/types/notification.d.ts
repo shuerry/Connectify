@@ -18,9 +18,8 @@ export interface AnswerNotificationPayload {
     toEmail: string[];
     authorName?: string;
     questionTitle?: string;
-    answerId?: string | number;
     answerPreview: string;
-    answerUrl?: string;
+    questionId: string;
     extra?: {
         voteCount?: number;
         commentPreview?: string;
