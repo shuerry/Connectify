@@ -28,8 +28,8 @@ export const saveUser = async (user: User): Promise<UserResponse> => {
       username: result.username,
       dateJoined: result.dateJoined,
       biography: result.biography,
-      friends: (result as unknown as { friends?: string[] }).friends ?? [],
-      blockedUsers: (result as unknown as { blockedUsers?: string[] }).blockedUsers ?? [],
+      friends: result.friends,
+      blockedUsers: result.blockedUsers,
     };
 
     return safeUser;
@@ -46,19 +46,13 @@ export const saveUser = async (user: User): Promise<UserResponse> => {
  */
 export const getUserByUsername = async (username: string): Promise<UserResponse> => {
   try {
-    const user: SafeDatabaseUser | null = await UserModel.findOne({ username })
-      .select('-password')
-      .lean();
+    const user: SafeDatabaseUser | null = await UserModel.findOne({ username }).select('-password');
 
     if (!user) {
       throw Error('User not found');
     }
 
-    return {
-      ...user,
-      friends: (user as unknown as { friends?: string[] }).friends ?? [],
-      blockedUsers: (user as unknown as { blockedUsers?: string[] }).blockedUsers ?? [],
-    } as SafeDatabaseUser;
+    return user;
   } catch (error) {
     return { error: `Error occurred when finding user: ${error}` };
   }
@@ -72,17 +66,13 @@ export const getUserByUsername = async (username: string): Promise<UserResponse>
  */
 export const getUsersList = async (): Promise<UsersResponse> => {
   try {
-    const users: SafeDatabaseUser[] = await UserModel.find().select('-password').lean();
+    const users: SafeDatabaseUser[] = await UserModel.find().select('-password');
 
     if (!users) {
       throw Error('Users could not be retrieved');
     }
 
-    return users.map(u => ({
-      ...u,
-      friends: (u as unknown as { friends?: string[] }).friends ?? [],
-      blockedUsers: (u as unknown as { blockedUsers?: string[] }).blockedUsers ?? [],
-    }));
+    return users;
   } catch (error) {
     return { error: `Error occurred when finding users: ${error}` };
   }
@@ -150,17 +140,13 @@ export const updateUser = async (
       { username },
       { $set: updates },
       { new: true },
-    ).select('-password').lean();
+    ).select('-password');
 
     if (!updatedUser) {
       throw Error('Error updating user');
     }
 
-    return {
-      ...updatedUser,
-      friends: (updatedUser as unknown as { friends?: string[] }).friends ?? [],
-      blockedUsers: (updatedUser as unknown as { blockedUsers?: string[] }).blockedUsers ?? [],
-    } as SafeDatabaseUser;
+    return updatedUser;
   } catch (error) {
     return { error: `Error occurred when updating user: ${error}` };
   }
@@ -179,18 +165,13 @@ export const addFriend = async (
       { $addToSet: { friends: friendUsername } },
       { new: true },
     )
-      .select('-password')
-      .lean();
+      .select('-password');
 
     if (!updated) {
       throw Error('Error updating friends');
     }
 
-    return {
-      ...updated,
-      friends: (updated as unknown as { friends?: string[] }).friends ?? [],
-      blockedUsers: (updated as unknown as { blockedUsers?: string[] }).blockedUsers ?? [],
-    } as SafeDatabaseUser;
+    return updated;
   } catch (error) {
     return { error: `Error when adding friend: ${error}` };
   }
@@ -219,18 +200,13 @@ export const removeFriend = async (
 
     // Return the updated user
     const updated = await UserModel.findOne({ username })
-      .select('-password')
-      .lean();
+      .select('-password');
 
     if (!updated) {
       throw Error('Error updating friends');
     }
 
-    return {
-      ...updated,
-      friends: (updated as unknown as { friends?: string[] }).friends ?? [],
-      blockedUsers: (updated as unknown as { blockedUsers?: string[] }).blockedUsers ?? [],
-    } as SafeDatabaseUser;
+    return updated;
   } catch (error) {
     return { error: `Error when removing friend: ${error}` };
   }
@@ -249,18 +225,13 @@ export const blockUser = async (
       { $addToSet: { blockedUsers: targetUsername }, $pull: { friends: targetUsername } },
       { new: true },
     )
-      .select('-password')
-      .lean();
+      .select('-password');
 
     if (!updated) {
       throw Error('Error blocking user');
     }
 
-    return {
-      ...updated,
-      friends: (updated as unknown as { friends?: string[] }).friends ?? [],
-      blockedUsers: (updated as unknown as { blockedUsers?: string[] }).blockedUsers ?? [],
-    } as SafeDatabaseUser;
+    return updated;
   } catch (error) {
     return { error: `Error when blocking user: ${error}` };
   }
@@ -279,18 +250,13 @@ export const unblockUser = async (
       { $pull: { blockedUsers: targetUsername } },
       { new: true },
     )
-      .select('-password')
-      .lean();
+      .select('-password');
 
     if (!updated) {
       throw Error('Error unblocking user');
     }
 
-    return {
-      ...updated,
-      friends: (updated as unknown as { friends?: string[] }).friends ?? [],
-      blockedUsers: (updated as unknown as { blockedUsers?: string[] }).blockedUsers ?? [],
-    } as SafeDatabaseUser;
+    return updated;
   } catch (error) {
     return { error: `Error when unblocking user: ${error}` };
   }
@@ -303,13 +269,13 @@ export const getRelations = async (
   username: string,
 ): Promise<{ friends: string[]; blockedUsers: string[] } | { error: string }> => {
   try {
-    const user = await UserModel.findOne({ username }).select('friends blockedUsers').lean();
+    const user = await UserModel.findOne({ username }).select('friends blockedUsers');
     if (!user) {
       throw Error('User not found');
     }
     return {
-      friends: (user as unknown as { friends?: string[] }).friends ?? [],
-      blockedUsers: (user as unknown as { blockedUsers?: string[] }).blockedUsers ?? [],
+      friends: user.friends ?? [],
+      blockedUsers: user.blockedUsers ?? [],
     };
   } catch (error) {
     return { error: `Error when fetching relations: ${error}` };
@@ -323,8 +289,8 @@ export const getUsersWhoBlocked = async (
   username: string,
 ): Promise<string[] | { error: string }> => {
   try {
-    const users = await UserModel.find({ blockedUsers: username }).select('username').lean();
-    return users.map(u => (u as unknown as { username: string }).username);
+    const users = await UserModel.find({ blockedUsers: username }).select('username');
+    return users.map(u => u.username);
   } catch (error) {
     return { error: `Error when fetching users who blocked ${username}: ${error}` };
   }

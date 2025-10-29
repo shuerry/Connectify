@@ -40,7 +40,7 @@ describe('User model', () => {
     it('should throw an error if error when saving to database', async () => {
       jest
         .spyOn(UserModel, 'create')
-        .mockImplementation(() => Promise.reject(new Error('Error saving document')));
+        .mockRejectedValueOnce(() => new Error('Error saving document'));
 
       const saveError = await saveUser(user);
 
@@ -66,9 +66,7 @@ describe('getUserByUsername', () => {
     jest.spyOn(UserModel, 'findOne').mockImplementation((filter?: any) => {
       expect(filter.username).toBeDefined();
       const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => Promise.resolve(user))
-      }));
+      query.select = jest.fn().mockReturnValue(Promise.resolve(user));
       return query;
     });
 
@@ -97,13 +95,9 @@ describe('getUserByUsername', () => {
   });
 
   it('should throw an error if there is an error while searching the database', async () => {
-    jest.spyOn(UserModel, 'findOne').mockImplementation(() => {
-      const query: any = {};
-      query.select = jest.fn().mockImplementation(() => {
-        throw new Error('Error finding document');
-      });
-      return query;
-    });
+    jest.spyOn(UserModel, 'findOne').mockReturnValue({
+      select: jest.fn().mockRejectedValue(new Error('Error finding document')),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
 
     const getUserError = await getUserByUsername(user.username);
 
@@ -117,13 +111,9 @@ describe('getUsersList', () => {
   });
 
   it('should return the users', async () => {
-    jest.spyOn(UserModel, 'find').mockImplementation(() => {
-      const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => Promise.resolve([safeUser]))
-      }));
-      return query;
-    });
+    jest.spyOn(UserModel, 'find').mockReturnValue({
+      select: jest.fn().mockResolvedValue([safeUser]),
+    } as unknown as Query<SafeDatabaseUser[], typeof UserModel>);
 
     const retrievedUsers = (await getUsersList()) as SafeDatabaseUser[];
 
@@ -142,15 +132,9 @@ describe('getUsersList', () => {
   });
 
   it('should throw an error if there is an error while searching the database', async () => {
-    jest.spyOn(UserModel, 'find').mockImplementation(() => {
-      const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => {
-          throw new Error('Error finding documents');
-        })
-      }));
-      return query;
-    });
+    jest.spyOn(UserModel, 'find').mockReturnValue({
+      select: jest.fn().mockRejectedValue(new Error('Error finding documents')),
+    } as unknown as Query<SafeDatabaseUser[], typeof UserModel>);
 
     const getUsersError = await getUsersList();
 
@@ -263,13 +247,9 @@ describe('deleteUserByUsername', () => {
   });
 
   it('should throw an error if a database error while deleting', async () => {
-    jest.spyOn(UserModel, 'findOneAndDelete').mockImplementation(() => {
-      const query: any = {};
-      query.select = jest.fn().mockImplementation(() => {
-        throw new Error('Error deleting document');
-      });
-      return query;
-    });
+    jest.spyOn(UserModel, 'findOneAndDelete').mockReturnValue({
+      select: jest.fn().mockRejectedValue(new Error('Error deleting document')),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
 
     const deletedError = await deleteUserByUsername(user.username);
 
@@ -301,9 +281,7 @@ describe('updateUser', () => {
     jest.spyOn(UserModel, 'findOneAndUpdate').mockImplementation((filter?: any) => {
       expect(filter.username).toBeDefined();
       const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => Promise.resolve(safeUpdatedUser))
-      }));
+      query.select = jest.fn().mockReturnValue(Promise.resolve(safeUpdatedUser));
       return query;
     });
 
@@ -333,16 +311,10 @@ describe('updateUser', () => {
     expect('error' in updatedError).toBe(true);
   });
 
-  it('should throw an error if a database error while updating', async () => {
-    jest.spyOn(UserModel, 'findOneAndUpdate').mockImplementation(() => {
-      const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => {
-          throw new Error('Error updating document');
-        })
-      }));
-      return query;
-    });
+  it('should throw an error if a database error while deleting', async () => {
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockRejectedValue(new Error('Error updating document')),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
 
     const updatedError = await updateUser(user.username, updates);
 
@@ -355,9 +327,9 @@ describe('updateUser', () => {
     jest.spyOn(UserModel, 'findOneAndUpdate').mockImplementation((filter?: any) => {
       expect(filter.username).toBeDefined();
       const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => Promise.resolve({ ...safeUpdatedUser, biography: newBio }))
-      }));
+      query.select = jest
+        .fn()
+        .mockReturnValue(Promise.resolve({ ...safeUpdatedUser, biography: newBio }));
       return query;
     });
 
@@ -398,9 +370,7 @@ describe('addFriend', () => {
     jest.spyOn(UserModel, 'findOneAndUpdate').mockImplementation((filter?: any) => {
       expect(filter.username).toBeDefined();
       const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => Promise.resolve(updatedUser))
-      }));
+      query.select = jest.fn().mockReturnValue(Promise.resolve(updatedUser));
       return query;
     });
 
@@ -446,18 +416,14 @@ describe('removeFriend', () => {
       .mockImplementationOnce((filter?: any) => {
         expect(filter.username).toBeDefined();
         const query: any = {};
-        query.select = jest.fn().mockImplementation(() => ({
-          lean: jest.fn().mockImplementation(() => Promise.resolve(updatedUser))
-        }));
+        query.select = jest.fn().mockReturnValue(Promise.resolve(updatedUser));
         return query;
       })
       // Mock the second findOneAndUpdate call (removing from friend's list)
       .mockImplementationOnce((filter?: any) => {
         expect(filter.username).toBeDefined();
         const query: any = {};
-        query.select = jest.fn().mockImplementation(() => ({
-          lean: jest.fn().mockImplementation(() => Promise.resolve(updatedUser))
-        }));
+        query.select = jest.fn().mockReturnValue(Promise.resolve(updatedUser));
         return query;
       });
 
@@ -465,9 +431,7 @@ describe('removeFriend', () => {
     jest.spyOn(UserModel, 'findOne').mockImplementation((filter?: any) => {
       expect(filter.username).toBeDefined();
       const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => Promise.resolve(updatedUser))
-      }));
+      query.select = jest.fn().mockReturnValue(Promise.resolve(updatedUser));
       return query;
     });
 
@@ -514,9 +478,7 @@ describe('blockUser', () => {
     jest.spyOn(UserModel, 'findOneAndUpdate').mockImplementation((filter?: any) => {
       expect(filter.username).toBeDefined();
       const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => Promise.resolve(updatedUser))
-      }));
+      query.select = jest.fn().mockReturnValue(Promise.resolve(updatedUser));
       return query;
     });
 
@@ -560,9 +522,7 @@ describe('unblockUser', () => {
     jest.spyOn(UserModel, 'findOneAndUpdate').mockImplementation((filter?: any) => {
       expect(filter.username).toBeDefined();
       const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => Promise.resolve(updatedUser))
-      }));
+      query.select = jest.fn().mockReturnValue(Promise.resolve(updatedUser));
       return query;
     });
 
@@ -605,9 +565,7 @@ describe('getRelations', () => {
     jest.spyOn(UserModel, 'findOne').mockImplementation((filter?: any) => {
       expect(filter.username).toBeDefined();
       const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => Promise.resolve(userRelations))
-      }));
+      query.select = jest.fn().mockReturnValue(Promise.resolve(userRelations));
       return query;
     });
 
@@ -629,9 +587,7 @@ describe('getRelations', () => {
     jest.spyOn(UserModel, 'findOne').mockImplementation((filter?: any) => {
       expect(filter.username).toBeDefined();
       const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => Promise.resolve(userRelations))
-      }));
+      query.select = jest.fn().mockReturnValue(Promise.resolve(userRelations));
       return query;
     });
 
@@ -677,9 +633,7 @@ describe('getUsersWhoBlocked', () => {
     jest.spyOn(UserModel, 'find').mockImplementation((filter?: any) => {
       expect(filter.blockedUsers).toBeDefined();
       const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => Promise.resolve(blockingUsers))
-      }));
+      query.select = jest.fn().mockReturnValue(Promise.resolve(blockingUsers));
       return query;
     });
 
@@ -695,9 +649,7 @@ describe('getUsersWhoBlocked', () => {
     jest.spyOn(UserModel, 'find').mockImplementation((filter?: any) => {
       expect(filter.blockedUsers).toBeDefined();
       const query: any = {};
-      query.select = jest.fn().mockImplementation(() => ({
-        lean: jest.fn().mockImplementation(() => Promise.resolve([]))
-      }));
+      query.select = jest.fn().mockReturnValue(Promise.resolve([]));
       return query;
     });
 

@@ -82,7 +82,7 @@ export const getQuestionsByOrder = async (
     // If no viewer, return ordered list
     if (!viewerUsername) return ordered;
 
-    // Filter out: questions askedBy users blocked by viewer, or askedBy users who blocked viewer
+    // Filter out questions askedBy users blocked by viewer, or askedBy users who blocked viewer
     const viewerRelations = await getRelations(viewerUsername);
     const blockedByViewer = 'error' in viewerRelations ? [] : viewerRelations.blockedUsers;
     const blockedViewerBy = await getUsersWhoBlocked(viewerUsername);
