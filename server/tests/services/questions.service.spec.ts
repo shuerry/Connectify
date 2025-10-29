@@ -9,6 +9,7 @@ import {
   addVoteToQuestion,
   getCommunityQuestions,
 } from '../../services/question.service';
+import * as userService from '../../services/user.service';
 import { DatabaseQuestion, PopulatedDatabaseQuestion } from '../../types/types';
 import {
   QUESTIONS,
@@ -227,6 +228,18 @@ describe('Question model', () => {
   });
 
   describe('service to view a question by id also increments the view count by 1', () => {
+    beforeEach(() => {
+      // Mock user service functions to prevent database calls
+      jest.spyOn(userService, 'getRelations').mockResolvedValue({
+        friends: [],
+        blockedUsers: [],
+      });
+      jest.spyOn(userService, 'getUsersWhoBlocked').mockResolvedValue([]);
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
     test('fetchAndIncrementQuestionViewsById should return question and add the user to the list of views if new', async () => {
       const question = POPULATED_QUESTIONS.filter(
         q => q._id && q._id.toString() === '65e9b5a995b6c7045a30d823',

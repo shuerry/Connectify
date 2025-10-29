@@ -132,3 +132,72 @@ export {
   resetPassword,
   updateBiography,
 };
+
+/**
+ * Adds a friend for the given user.
+ */
+export const addFriend = async (
+  username: string,
+  targetUsername: string,
+): Promise<SafeDatabaseUser> => {
+  const res = await api.post(`${USER_API_URL}/addFriend`, { username, targetUsername });
+  if (res.status !== 200) {
+    throw new Error('Error when adding friend');
+  }
+  return res.data;
+};
+
+/**
+ * Removes a friend for the given user.
+ */
+export const removeFriend = async (
+  username: string,
+  targetUsername: string,
+): Promise<SafeDatabaseUser> => {
+  const res = await api.post(`${USER_API_URL}/removeFriend`, { username, targetUsername });
+  if (res.status !== 200) {
+    throw new Error('Error when removing friend');
+  }
+  return res.data;
+};
+
+/**
+ * Blocks the target user.
+ */
+export const blockUser = async (
+  username: string,
+  targetUsername: string,
+): Promise<SafeDatabaseUser> => {
+  const res = await api.post(`${USER_API_URL}/blockUser`, { username, targetUsername });
+  if (res.status !== 200) {
+    throw new Error('Error when blocking user');
+  }
+  return res.data;
+};
+
+/**
+ * Unblocks the target user.
+ */
+export const unblockUser = async (
+  username: string,
+  targetUsername: string,
+): Promise<SafeDatabaseUser> => {
+  const res = await api.post(`${USER_API_URL}/unblockUser`, { username, targetUsername });
+  if (res.status !== 200) {
+    throw new Error('Error when unblocking user');
+  }
+  return res.data;
+};
+
+/**
+ * Fetch relations for a user.
+ */
+export const getRelations = async (
+  username: string,
+): Promise<{ friends: string[]; blockedUsers: string[] }> => {
+  const res = await api.get(`${USER_API_URL}/relations/${username}`);
+  if (res.status !== 200) {
+    throw new Error('Error when fetching relations');
+  }
+  return res.data;
+};

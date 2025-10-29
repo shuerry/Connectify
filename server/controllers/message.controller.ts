@@ -1,6 +1,6 @@
 import express, { Response, Request } from 'express';
 import { FakeSOSocket, AddMessageRequest } from '../types/types';
-import { saveMessage, getMessages } from '../services/message.service';
+import { saveMessage, getMessages, getDirectMessages, updateFriendRequestStatus } from '../services/message.service';
 
 const messageController = (socket: FakeSOSocket) => {
   const router = express.Router();
@@ -43,9 +43,63 @@ const messageController = (socket: FakeSOSocket) => {
     res.json(messages);
   };
 
+  /**
+   * Handles adding a direct message or friend request.
+   */
+  const addDirectMessageRoute = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { messageToAdd: msg } = req.body;
+      const msgFromDb = await saveMessage(msg);
+
+      if ('error' in msgFromDb) {
+        throw new Error(msgFromDb.error);
+      }
+
+      socket.emit('messageUpdate', { msg: msgFromDb });
+      res.json(msgFromDb);
+    } catch (err: unknown) {
+      res.status(500).send(`Error when adding a direct message: ${(err as Error).message}`);
+    }
+  };
+
+  /**
+   * Fetch direct messages between two users.
+   */
+  const getDirectMessagesRoute = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { user1, user2 } = req.query as { user1: string; user2: string };
+      const messages = await getDirectMessages(user1, user2);
+      res.json(messages);
+    } catch (err: unknown) {
+      res.status(500).send(`Error when fetching direct messages: ${(err as Error).message}`);
+    }
+  };
+
+  /**
+   * Handle friend request response (accept/decline).
+   */
+  const respondToFriendRequestRoute = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { messageId, status, responderUsername } = req.body;
+      const result = await updateFriendRequestStatus(messageId, status, responderUsername);
+
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+
+      socket.emit('messageUpdate', { msg: result });
+      res.json(result);
+    } catch (err: unknown) {
+      res.status(500).send(`Error when responding to friend request: ${(err as Error).message}`);
+    }
+  };
+
   // Add appropriate HTTP verbs and their endpoints to the router
   router.post('/addMessage', addMessageRoute);
   router.get('/getMessages', getMessagesRoute);
+  router.post('/addDirectMessage', addDirectMessageRoute);
+  router.get('/getDirectMessages', getDirectMessagesRoute);
+  router.post('/respondToFriendRequest', respondToFriendRequestRoute);
 
   return router;
 };

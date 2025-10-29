@@ -17,6 +17,7 @@ import QuestionModel from '../models/questions.model';
 import TagModel from '../models/tags.model';
 import CommentModel from '../models/comments.model';
 import { parseKeyword, parseTags } from '../utils/parse.util';
+import { getRelations, getUsersWhoBlocked } from './user.service';
 import { checkTagInQuestion } from './tag.service';
 import {
   sortQuestionsByActive,
@@ -47,6 +48,7 @@ const checkKeywordInQuestion = (q: PopulatedDatabaseQuestion, keywordlist: strin
  */
 export const getQuestionsByOrder = async (
   order: OrderType,
+  viewerUsername?: string,
 ): Promise<PopulatedDatabaseQuestion[]> => {
   try {
     const qlist: PopulatedDatabaseQuestion[] = await QuestionModel.find().populate<{
@@ -60,17 +62,35 @@ export const getQuestionsByOrder = async (
       { path: 'comments', model: CommentModel },
     ]);
 
+    let ordered: PopulatedDatabaseQuestion[];
     switch (order) {
       case 'active':
-        return sortQuestionsByActive(qlist);
+        ordered = sortQuestionsByActive(qlist);
+        break;
       case 'unanswered':
-        return sortQuestionsByUnanswered(qlist);
+        ordered = sortQuestionsByUnanswered(qlist);
+        break;
       case 'newest':
-        return sortQuestionsByNewest(qlist);
+        ordered = sortQuestionsByNewest(qlist);
+        break;
       case 'mostViewed':
       default:
-        return sortQuestionsByMostViews(qlist);
+        ordered = sortQuestionsByMostViews(qlist);
+        break;
     }
+    
+    // If no viewer, return ordered list
+    if (!viewerUsername) return ordered;
+
+    // Filter out questions askedBy users blocked by viewer, or askedBy users who blocked viewer
+    const viewerRelations = await getRelations(viewerUsername);
+    const blockedByViewer = 'error' in viewerRelations ? [] : viewerRelations.blockedUsers;
+    const blockedViewerBy = await getUsersWhoBlocked(viewerUsername);
+    const blockedViewerByList = Array.isArray(blockedViewerBy) ? blockedViewerBy : [];
+
+    return ordered.filter(
+      q => !blockedByViewer.includes(q.askedBy) && !blockedViewerByList.includes(q.askedBy),
+    );
   } catch (error) {
     return [];
   }
@@ -147,6 +167,16 @@ export const fetchAndIncrementQuestionViewsById = async (
 
     if (!q) {
       throw new Error('Question not found');
+    }
+
+    // Enforce visibility: if either party blocked the other, hide
+    const viewerRelations = await getRelations(username);
+    const blockedByViewer = 'error' in viewerRelations ? [] : viewerRelations.blockedUsers;
+    const blockedViewerBy = await getUsersWhoBlocked(username);
+    const blockedViewerByList = Array.isArray(blockedViewerBy) ? blockedViewerBy : [];
+
+    if (blockedByViewer.includes(q.askedBy) || blockedViewerByList.includes(q.askedBy)) {
+      return { error: 'Access denied' };
     }
 
     return q;

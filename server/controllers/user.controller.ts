@@ -13,7 +13,12 @@ import {
   getUsersList,
   loginUser,
   saveUser,
-  updateUser,
+    updateUser,
+    addFriend,
+    removeFriend,
+    blockUser,
+    unblockUser,
+    getRelations,
 } from '../services/user.service';
 
 const userController = (socket: FakeSOSocket) => {
@@ -193,6 +198,102 @@ const userController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Adds a friend to the given user.
+   */
+  const addFriendRoute = async (req: express.Request, res: Response): Promise<void> => {
+    try {
+      const { username, targetUsername: friendUsername } = req.body as {
+        username: string;
+        targetUsername: string;
+      };
+      const result = await addFriend(username, friendUsername);
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+      socket.emit('userUpdate', { user: result, type: 'updated' });
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).send(`Error when adding friend: ${error}`);
+    }
+  };
+
+  /**
+   * Removes a friend from the given user.
+   */
+  const removeFriendRoute = async (req: express.Request, res: Response): Promise<void> => {
+    try {
+      const { username, targetUsername: friendUsername } = req.body as {
+        username: string;
+        targetUsername: string;
+      };
+      const result = await removeFriend(username, friendUsername);
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+      socket.emit('userUpdate', { user: result, type: 'updated' });
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).send(`Error when removing friend: ${error}`);
+    }
+  };
+
+  /**
+   * Blocks a target user.
+   */
+  const blockUserRoute = async (req: express.Request, res: Response): Promise<void> => {
+    try {
+      const { username, targetUsername } = req.body as {
+        username: string;
+        targetUsername: string;
+      };
+      const result = await blockUser(username, targetUsername);
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+      socket.emit('userUpdate', { user: result, type: 'updated' });
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).send(`Error when blocking user: ${error}`);
+    }
+  };
+
+  /**
+   * Unblocks a target user.
+   */
+  const unblockUserRoute = async (req: express.Request, res: Response): Promise<void> => {
+    try {
+      const { username, targetUsername } = req.body as {
+        username: string;
+        targetUsername: string;
+      };
+      const result = await unblockUser(username, targetUsername);
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+      socket.emit('userUpdate', { user: result, type: 'updated' });
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).send(`Error when unblocking user: ${error}`);
+    }
+  };
+
+  /**
+   * Gets friends and blocked users for a username.
+   */
+  const getRelationsRoute = async (req: UserByUsernameRequest, res: Response): Promise<void> => {
+    try {
+      const { username } = req.params;
+      const result = await getRelations(username);
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).send(`Error when getting relations: ${error}`);
+    }
+  };
+
   // Define routes for the user-related operations.
   router.post('/signup', createUser);
   router.post('/login', userLogin);
@@ -201,6 +302,11 @@ const userController = (socket: FakeSOSocket) => {
   router.get('/getUsers', getUsers);
   router.delete('/deleteUser/:username', deleteUser);
   router.patch('/updateBiography', updateBiography);
+  router.post('/addFriend', addFriendRoute);
+  router.post('/removeFriend', removeFriendRoute);
+  router.post('/blockUser', blockUserRoute);
+  router.post('/unblockUser', unblockUserRoute);
+  router.get('/relations/:username', getRelationsRoute);
   return router;
 };
 
