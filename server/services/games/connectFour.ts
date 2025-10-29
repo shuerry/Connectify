@@ -75,7 +75,7 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
    * Finds the lowest empty row in a column.
    */
   private _getLowestEmptyRow(col: number): number | null {
-    for (let row = ROWS - 1; row >= 0; row--) {
+    for (let row = ROWS - 1; row >= 0; row -= 1) {
       if (this.state.board[row][col] === null) {
         return row;
       }
@@ -378,6 +378,7 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
    * Gets public room info (without sensitive data like room code).
    */
   public getPublicRoomInfo() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { roomCode, ...publicSettings } = this.state.roomSettings;
     return {
       ...this.toModel(),
@@ -393,4 +394,3 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
 }
 
 export default ConnectFourGame;
-
