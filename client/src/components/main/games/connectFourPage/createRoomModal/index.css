@@ -139,6 +139,37 @@
   color: #7f8c8d;
 }
 
+
+.public-option strong {
+  color: #000000 !important;
+  font-style: normal;
+}
+
+.public-option p {
+  color: #7f8c8d !important;
+  font-style: normal;
+}
+
+.private-option strong {
+  color: #000000 !important;
+  font-style: normal;
+}
+
+.private-option p {
+  color: #7f8c8d !important;
+  font-style: normal;
+}
+
+.friends-only-option strong {
+  color: #000000 !important;
+  font-style: normal;
+}
+
+.friends-only-option p {
+  color: #7f8c8d !important;
+  font-style: normal;
+}
+
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -149,8 +180,8 @@
 }
 
 .checkbox-label input[type='checkbox'] {
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
   cursor: pointer;
 }
 

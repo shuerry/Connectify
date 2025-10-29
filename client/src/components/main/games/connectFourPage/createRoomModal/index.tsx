@@ -73,7 +73,8 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
           <div className='form-group'>
             <label>Privacy Setting</label>
             <div className='privacy-options'>
-              <label className={`privacy-option ${privacy === 'PUBLIC' ? 'selected' : ''}`}>
+              <label
+                className={`privacy-option public-option ${privacy === 'PUBLIC' ? 'selected' : ''}`}>
                 <input
                   type='radio'
                   name='privacy'
@@ -87,7 +88,8 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
                 </div>
               </label>
 
-              <label className={`privacy-option ${privacy === 'PRIVATE' ? 'selected' : ''}`}>
+              <label
+                className={`privacy-option private-option ${privacy === 'PRIVATE' ? 'selected' : ''}`}>
                 <input
                   type='radio'
                   name='privacy'
@@ -101,7 +103,8 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
                 </div>
               </label>
 
-              <label className={`privacy-option ${privacy === 'FRIENDS_ONLY' ? 'selected' : ''}`}>
+              <label
+                className={`privacy-option friends-only-option ${privacy === 'FRIENDS_ONLY' ? 'selected' : ''}`}>
                 <input
                   type='radio'
                   name='privacy'

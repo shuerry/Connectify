@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import './index.css';
 import {
   GameInstance,
@@ -38,16 +38,19 @@ const ConnectFourBoard = ({
   const isMyTurn = isPlayer && playerColor === currentTurn;
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const showToast = (msg: string) => {
+  const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
     window.clearTimeout((showToast as unknown as { t?: number }).t);
     (showToast as unknown as { t?: number }).t = window.setTimeout(() => setToastMsg(null), 1800);
-  };
+  }, []);
 
   // Check if column is full
-  const isColumnFull = (col: number): boolean => {
-    return board[0][col] !== null;
-  };
+  const isColumnFull = useCallback(
+    (col: number): boolean => {
+      return board[0][col] !== null;
+    },
+    [board],
+  );
 
   // Handle column click
   const handleColumnClick = (col: number) => {
@@ -90,7 +93,7 @@ const ConnectFourBoard = ({
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [status, isPlayer, isMyTurn, board, onMakeMove]);
+  }, [status, isPlayer, isMyTurn, board, onMakeMove, isColumnFull, showToast]);
 
   // Check if a position is a winning position
   const isWinningPosition = (row: number, col: number): boolean => {
@@ -135,6 +138,7 @@ const ConnectFourBoard = ({
   };
 
   return (
+    // Connect Four Board Container
     <div className='connect-four-board-container'>
       <div className='game-header'>
         <div className='room-info'>
@@ -149,7 +153,6 @@ const ConnectFourBoard = ({
           Leave Game
         </button>
       </div>
-
       <div className='players-info'>
         <div className={`player-card ${currentTurn === state.player1Color ? 'active' : ''}`}>
           <div className={`player-color ${state.player1Color.toLowerCase()}`}></div>
@@ -159,7 +162,7 @@ const ConnectFourBoard = ({
             {currentUser === player1 && <span className='you-label'>You</span>}
           </div>
         </div>
-
+        {/* Turn Indicator */}
         <div className='turn-indicator'>
           {status === 'WAITING_TO_START' && <span>Waiting for players...</span>}
           {status === 'IN_PROGRESS' && (
@@ -167,6 +170,7 @@ const ConnectFourBoard = ({
               {isMyTurn ? 'Your Turn!' : `${currentTurn}'s Turn`}
             </span>
           )}
+          {/* Game Over Indicator */}
           {status === 'OVER' && (
             <span className='game-over'>
               Game Over - {getWinnerName()}
@@ -174,7 +178,7 @@ const ConnectFourBoard = ({
             </span>
           )}
         </div>
-
+        {/* Player 2 Card */}
         <div className={`player-card ${currentTurn === state.player2Color ? 'active' : ''}`}>
           <div className='player-details'>
             <span className='player-name'>{player2 || 'Waiting...'}</span>
@@ -184,7 +188,6 @@ const ConnectFourBoard = ({
           <div className={`player-color ${state.player2Color.toLowerCase()}`}></div>
         </div>
       </div>
-
       <div className='board-wrapper'>
         <div className='connect-four-board'>
           {board.map((row, rowIndex) => (
@@ -216,7 +219,7 @@ const ConnectFourBoard = ({
           </div>
         )}
       </div>
-
+      {/* Spectators List */}
       {spectators.length > 0 && (
         <div className='spectators-list'>
           <h4>Spectators ({spectators.length})</h4>
@@ -235,7 +238,7 @@ const ConnectFourBoard = ({
           <span>👁️ You are spectating this game</span>
         </div>
       )}
-
+      {/* Game Info Section */}
       <div className='game-info'>
         <div className='info-item'>
           <strong>Total Moves:</strong> {state.totalMoves}
@@ -247,7 +250,7 @@ const ConnectFourBoard = ({
           </div>
         )}
       </div>
-
+      {/* Game Instructions */}
       <div className='game-instructions'>
         <h4>Controls</h4>
         <p>Click on a column or press keys 1-7 to drop your disc</p>
