@@ -33,7 +33,12 @@ const QuestionView = ({ question }: QuestionProps) => {
     reportTarget,
     submitReport,
     setReportOpen,
+    isHidden,
   } = useQuestionView();
+
+  if (isHidden(String(question._id))) {
+    return null;
+  }
 
   return (
     <div

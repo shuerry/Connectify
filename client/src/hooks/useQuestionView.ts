@@ -23,6 +23,7 @@ const useQuestionView = () => {
   const [selectedQuestion, setSelectedQuestion] = useState<PopulatedDatabaseQuestion | null>(null);
   const [isReportOpen, setReportOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState<PopulatedDatabaseQuestion | null>(null);
+  const [hiddenQuestionIds, setHiddenQuestionIds] = useState<Set<string>>(new Set());
 
   /**
    * Function to navigate to the home page with the specified tag as a search parameter.
@@ -65,7 +66,12 @@ const useQuestionView = () => {
     await reportQuestion(String(reportTarget._id), user.username, reason);
     setReportOpen(false);
     setReportTarget(null);
-    // Optionally refresh or navigate to remove the item from list immediately
+    setHiddenQuestionIds(prev => new Set(prev).add(String(reportTarget._id)));
+  };
+
+  const isHidden = (qid: string | undefined): boolean => {
+    if (!qid) return false;
+    return hiddenQuestionIds.has(String(qid));
   };
 
   return {
@@ -80,6 +86,7 @@ const useQuestionView = () => {
     reportTarget,
     submitReport,
     setReportOpen,
+    isHidden,
   };
 };
 
