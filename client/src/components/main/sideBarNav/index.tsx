@@ -10,11 +10,16 @@ import useUserContext from '../../../hooks/useUserContext';
  */
 const SideBarNav = () => {
   const { user } = useUserContext();
-  const [showOptions, setShowOptions] = useState<boolean>(false);
+  const [showMessagingOptions, setShowMessagingOptions] = useState<boolean>(false);
+  const [showUsersOptions, setShowUsersOptions] = useState<boolean>(false);
   const location = useLocation();
 
-  const toggleOptions = () => {
-    setShowOptions(!showOptions);
+  const toggleMessagingOptions = () => {
+    setShowMessagingOptions(!showMessagingOptions);
+  };
+
+  const toggleUsersOptions = () => {
+    setShowUsersOptions(!showUsersOptions);
   };
 
   const isActiveOption = (path: string) =>
@@ -38,10 +43,10 @@ const SideBarNav = () => {
         to='/messaging'
         id='menu_messaging'
         className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}
-        onClick={toggleOptions}>
+        onClick={toggleMessagingOptions}>
         Messaging
       </NavLink>
-      {showOptions && (
+      {showMessagingOptions && (
         <div className='additional-options'>
           <NavLink
             to='/messaging'
@@ -58,9 +63,29 @@ const SideBarNav = () => {
       <NavLink
         to='/users'
         id='menu_users'
-        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
+        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}
+        onClick={toggleUsersOptions}>
         Users
       </NavLink>
+      {showUsersOptions && (
+        <div className='additional-options'>
+          <NavLink
+            to='/users'
+            className={`menu_button message-options ${isActiveOption('/users')}`}>
+            All
+          </NavLink>
+          <NavLink
+            to='/friends'
+            className={`menu_button message-options ${isActiveOption('/friends')}`}>
+            Friends
+          </NavLink>
+          <NavLink
+            to='/blocked'
+            className={`menu_button message-options ${isActiveOption('/blocked')}`}>
+            Blocked
+          </NavLink>
+        </div>
+      )}
       <NavLink
         to='/games'
         id='menu_games'
@@ -78,18 +103,6 @@ const SideBarNav = () => {
         id='menu_collections'
         className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
         My Collections
-      </NavLink>
-      <NavLink
-        to='/friends'
-        id='menu_friends'
-        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
-        Friends
-      </NavLink>
-      <NavLink
-        to='/blocked'
-        id='menu_blocked'
-        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
-        Blocked Users
       </NavLink>
     </div>
   );

@@ -94,12 +94,14 @@ export type VoteResponse = VoteInterface | { error: string };
  * - `order`: The order in which to sort the questions.
  * - `search`: The search string used to find questions.
  * - `askedBy`: The username of the user who asked the question.
+ * - `viewer`: The username of the viewer.
  */
 export interface FindQuestionRequest extends Request {
   query: {
     order: OrderType;
     search: string;
     askedBy: string;
+    viewer?: string;
   };
 }
 

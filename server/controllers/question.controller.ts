@@ -40,7 +40,7 @@ const questionController = (socket: FakeSOSocket) => {
     const { order } = req.query;
     const { search } = req.query;
     const { askedBy } = req.query;
-    const { viewer } = req.query as { viewer?: string };
+    const { viewer } = req.query;
 
     try {
       let qlist: PopulatedDatabaseQuestion[] = await getQuestionsByOrder(order, viewer);

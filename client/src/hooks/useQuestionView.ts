@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PopulatedDatabaseQuestion } from '../types/types';
 import { ObjectId } from 'mongodb';
+import useUserContext from './useUserContext';
+import { reportQuestion } from '../services/questionService';
 
 /**
  * Custom hook to manage the state and behavior of the question view.
@@ -16,8 +18,11 @@ import { ObjectId } from 'mongodb';
  */
 const useQuestionView = () => {
   const navigate = useNavigate();
+  const { user } = useUserContext();
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<PopulatedDatabaseQuestion | null>(null);
+  const [isReportOpen, setReportOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<PopulatedDatabaseQuestion | null>(null);
 
   /**
    * Function to navigate to the home page with the specified tag as a search parameter.
@@ -50,6 +55,19 @@ const useQuestionView = () => {
     setModalOpen(false);
   };
 
+  const openReportModal = (question: PopulatedDatabaseQuestion) => {
+    setReportTarget(question);
+    setReportOpen(true);
+  };
+
+  const submitReport = async (reason: string) => {
+    if (!reportTarget) return;
+    await reportQuestion(String(reportTarget._id), user.username, reason);
+    setReportOpen(false);
+    setReportTarget(null);
+    // Optionally refresh or navigate to remove the item from list immediately
+  };
+
   return {
     isModalOpen,
     selectedQuestion,
@@ -57,6 +75,11 @@ const useQuestionView = () => {
     handleAnswer,
     handleSaveClick,
     closeModal,
+    openReportModal,
+    isReportOpen,
+    reportTarget,
+    submitReport,
+    setReportOpen,
   };
 };
 

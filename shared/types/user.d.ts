@@ -23,6 +23,7 @@ export interface User extends UserCredentials {
   biography?: string;
   friends?: string[];
   blockedUsers?: string[];
+  hiddenQuestions?: string[];
 }
 
 /**

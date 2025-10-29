@@ -24,6 +24,7 @@ import chatController from './controllers/chat.controller';
 import gameController from './controllers/game.controller';
 import collectionController from './controllers/collection.controller';
 import communityController from './controllers/community.controller';
+import reportController from './controllers/report.controller';
 
 const MONGO_URL = `${process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017'}/fake_so`;
 const PORT = parseInt(process.env.PORT || '8000');
@@ -142,6 +143,7 @@ app.use('/api/chat', chatController(socket));
 app.use('/api/games', gameController(socket));
 app.use('/api/collection', collectionController(socket));
 app.use('/api/community', communityController(socket));
+app.use('/api/report', reportController());
 
 const openApiDocument = yaml.parse(fs.readFileSync('./openapi.yaml', 'utf8'));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
