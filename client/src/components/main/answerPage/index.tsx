@@ -10,10 +10,10 @@ import useAnswerPage from '../../../hooks/useAnswerPage';
 
 /**
  * AnswerPage component that displays the full content of a question along with its answers.
- * It also includes the functionality to vote, ask a new question, and post a new answer.
+ * It also includes the functionality to vote, ask a new question, post a new answer, and edit the question.
  */
 const AnswerPage = () => {
-  const { questionID, question, handleNewComment, handleNewAnswer } = useAnswerPage();
+  const { questionID, question, handleNewComment, handleNewAnswer, handleQuestionUpdate } = useAnswerPage();
 
   if (!question) {
     return null;
@@ -24,10 +24,12 @@ const AnswerPage = () => {
       <VoteComponent question={question} />
       <AnswerHeader ansCount={question.answers.length} title={question.title} />
       <QuestionBody
+        question={question}
         views={question.views.length}
         text={question.text}
         askby={question.askedBy}
         meta={getMetaData(new Date(question.askDateTime))}
+        onQuestionUpdate={handleQuestionUpdate}
       />
       <CommentSection
         comments={question.comments}
