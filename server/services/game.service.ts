@@ -43,7 +43,8 @@ const findGames = async (
     const sanitized = games
       .filter(game => {
         if (game.gameType === 'Connect Four') {
-          const privacy = (game.state as any)?.roomSettings?.privacy;
+          const privacy = (game.state as { roomSettings?: { privacy?: string } })?.roomSettings
+            ?.privacy;
           return privacy === 'PUBLIC';
         }
         return true;
@@ -57,16 +58,17 @@ const findGames = async (
         };
 
         if (game.gameType === 'Connect Four') {
-          const stateAny = (base.state as any) || {};
-          const roomSettings = stateAny.roomSettings || {};
+          const connectFourState =
+            (base.state as { roomSettings?: { roomCode?: string; [key: string]: unknown } }) || {};
+          const roomSettings = connectFourState.roomSettings || {};
           // Do not leak room codes via the games list
           if (roomSettings) {
-            stateAny.roomSettings = {
+            connectFourState.roomSettings = {
               ...roomSettings,
               roomCode: undefined,
             };
           }
-          base.state = stateAny as GameState;
+          base.state = connectFourState as GameState;
         }
 
         return base;
