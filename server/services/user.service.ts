@@ -197,18 +197,28 @@ export const addFriend = async (
 };
 
 /**
- * Removes a friend relation for a user.
+ * Removes a friend relation for a user. Also removes the user from the friend's list.
  */
 export const removeFriend = async (
   username: string,
   friendUsername: string,
 ): Promise<UserResponse> => {
   try {
-    const updated = await UserModel.findOneAndUpdate(
+    // Remove from both users' friend lists
+    await UserModel.findOneAndUpdate(
       { username },
       { $pull: { friends: friendUsername } },
       { new: true },
-    )
+    );
+    
+    await UserModel.findOneAndUpdate(
+      { username: friendUsername },
+      { $pull: { friends: username } },
+      { new: true },
+    );
+
+    // Return the updated user
+    const updated = await UserModel.findOne({ username })
       .select('-password')
       .lean();
 

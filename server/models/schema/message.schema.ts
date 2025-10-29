@@ -8,7 +8,9 @@ import { Schema } from 'mongoose';
  * - `msg`: The text of the message.
  * - `msgFrom`: The username of the user sending the message.
  * - `msgDateTime`: The date and time the message was sent.
- * - `type`: The type of message, either 'global' or 'direct'.
+ * - `type`: The type of message, either 'global', 'direct', or 'friendRequest'.
+ * - `msgTo`: The username of the recipient (for direct messages and friend requests).
+ * - `friendRequestStatus`: The status of friend request ('pending', 'accepted', 'declined').
  */
 const messageSchema: Schema = new Schema(
   {
@@ -23,7 +25,14 @@ const messageSchema: Schema = new Schema(
     },
     type: {
       type: String,
-      enum: ['global', 'direct'],
+      enum: ['global', 'direct', 'friendRequest'],
+    },
+    msgTo: {
+      type: String,
+    },
+    friendRequestStatus: {
+      type: String,
+      enum: ['pending', 'accepted', 'declined'],
     },
   },
   { collection: 'Message' },

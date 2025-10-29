@@ -78,6 +78,7 @@ export const getQuestionsByOrder = async (
         ordered = sortQuestionsByMostViews(qlist);
         break;
     }
+    
     // If no viewer, return ordered list
     if (!viewerUsername) return ordered;
 

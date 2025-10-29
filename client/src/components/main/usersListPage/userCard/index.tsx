@@ -2,7 +2,8 @@ import './index.css';
 import { useEffect, useState } from 'react';
 import { SafeDatabaseUser } from '../../../../types/types';
 import useUserContext from '../../../../hooks/useUserContext';
-import { addFriend, removeFriend, blockUser, getRelations } from '../../../../services/userService';
+import { removeFriend, blockUser, getRelations } from '../../../../services/userService';
+import { addDirectMessage, getDirectMessages } from '../../../../services/messageService';
 
 /**
  * Interface representing the props for the User component.
@@ -27,6 +28,7 @@ const UserCardView = (props: UserProps) => {
   const { user: currentUser } = useUserContext();
   const [isFriend, setIsFriend] = useState<boolean>(false);
   const [isBlocked, setIsBlocked] = useState<boolean>(false);
+  const [friendRequestSent, setFriendRequestSent] = useState<boolean>(false);
 
   useEffect(() => {
     const checkRelations = async () => {
@@ -34,19 +36,37 @@ const UserCardView = (props: UserProps) => {
         const relations = await getRelations(currentUser.username);
         setIsFriend(relations.friends.includes(user.username));
         setIsBlocked(relations.blockedUsers.includes(user.username));
+        
+        // Check if there's a pending friend request from current user to this user
+        const messages = await getDirectMessages(currentUser.username, user.username);
+        const hasPendingRequest = messages.some(
+          msg => msg.type === 'friendRequest' && 
+                 msg.msgFrom === currentUser.username && 
+                 msg.msgTo === user.username && 
+                 msg.friendRequestStatus === 'pending'
+        );
+        setFriendRequestSent(hasPendingRequest);
       } catch {
         setIsFriend(false);
         setIsBlocked(false);
+        setFriendRequestSent(false);
       }
     };
     checkRelations();
   }, [currentUser.username, user.username]);
 
-  const onAddFriend = async (e: React.MouseEvent) => {
+  const onSendFriendRequest = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      await addFriend(currentUser.username, user.username);
-      setIsFriend(true);
+      await addDirectMessage({
+        msg: `${currentUser.username} wants to be your friend!`,
+        msgFrom: currentUser.username,
+        msgDateTime: new Date(),
+        type: 'friendRequest',
+        msgTo: user.username,
+        friendRequestStatus: 'pending',
+      });
+      setFriendRequestSent(true);
     } catch {}
   };
 
@@ -79,8 +99,10 @@ const UserCardView = (props: UserProps) => {
         <div style={{ display: 'flex', gap: 8 }}>
           {isFriend ? (
             <button type='button' onClick={onRemoveFriend}>Remove Friend</button>
+          ) : friendRequestSent ? (
+            <span style={{ color: 'blue' }}>Friend Request Sent</span>
           ) : (
-            <button type='button' onClick={onAddFriend}>Add Friend</button>
+            <button type='button' onClick={onSendFriendRequest}>Send Friend Request</button>
           )}
           <button type='button' onClick={onBlockUser}>Block</button>
         </div>

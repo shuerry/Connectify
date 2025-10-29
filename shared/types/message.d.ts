@@ -6,13 +6,17 @@ import { Request } from 'express';
  * - `msg`: The text content of the message.
  * - `msgFrom`: The username of the user sending the message.
  * - `msgDateTime`: The date and time when the message was sent.
- * - `type`: The type of the message, either 'global' or 'direct'.
+ * - `type`: The type of the message, either 'global', 'direct', or 'friendRequest'.
+ * - `msgTo`: The username of the recipient (for direct messages and friend requests).
+ * - `friendRequestStatus`: The status of friend request ('pending', 'accepted', 'declined').
  */
 export interface Message {
   msg: string;
   msgFrom: string;
   msgDateTime: Date;
-  type: 'global' | 'direct';
+  type: 'global' | 'direct' | 'friendRequest';
+  msgTo?: string;
+  friendRequestStatus?: 'pending' | 'accepted' | 'declined';
 }
 
 /**
@@ -21,7 +25,9 @@ export interface Message {
  * - `msg`: The text content of the message.
  * - `msgFrom`: The username of the user sending the message.
  * - `msgDateTime`: The date and time when the message was sent.
- * - `type`: The type of the message, either 'global' or 'direct'.
+ * - `type`: The type of the message, either 'global', 'direct', or 'friendRequest'.
+ * - `msgTo`: The username of the recipient (for direct messages and friend requests).
+ * - `friendRequestStatus`: The status of friend request ('pending', 'accepted', 'declined').
  */
 export interface DatabaseMessage extends Message {
   _id: ObjectId;
