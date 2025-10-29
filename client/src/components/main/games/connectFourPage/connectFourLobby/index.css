@@ -1,0 +1,283 @@
+.connect-four-lobby {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.lobby-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.lobby-header h1 {
+  color: #000000;
+  margin-bottom: 10px;
+}
+
+.lobby-header p {
+  color: #000000;
+}
+
+.lobby-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.btn-create-room {
+  padding: 12px 24px;
+  background: #d7ce23;
+  color: rgb(0, 0, 0);
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-create-room:hover {
+  background: #e0122d;
+}
+
+.join-by-code {
+  display: flex;
+  gap: 10px;
+}
+
+.join-by-code input {
+  padding: 10px 16px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  width: 150px;
+}
+
+.join-by-code button {
+  padding: 10px 20px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.join-by-code button:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+.join-by-code button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.lobby-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.lobby-filters button {
+  padding: 10px 20px;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.lobby-filters button.active {
+  background: #02121e;
+  color: white;
+  border-color: #030e16;
+}
+
+.lobby-filters button:hover {
+  border-color: #00192a;
+}
+
+.rooms-list {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.no-rooms {
+  text-align: center;
+  padding: 60px 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.no-rooms p {
+  color: #7f8c8d;
+  margin: 10px 0;
+}
+
+.room-card {
+  background: white;
+  border: 2px solid #ecf0f1;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.room-card:hover {
+  border-color: #3498db;
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.1);
+}
+
+.room-info h3 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+}
+
+.room-details {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.room-details span {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.status {
+  background: #ecf0f1;
+  color: #2c3e50;
+}
+
+.status.waiting_to_start {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status.in_progress {
+  background: #d4edda;
+  color: #155724;
+}
+
+.players {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.spectators-allowed {
+  background: #f3e5f5;
+  color: #6a1b9a;
+}
+
+.room-players p {
+  margin: 5px 0;
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.spectator-count {
+  color: #9b59b6 !important;
+  font-weight: 500;
+}
+
+.room-actions {
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
+}
+
+.btn-join,
+.btn-spectate {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.btn-join {
+  background: #27ae60;
+  color: white;
+}
+
+.btn-join:hover {
+  background: #229954;
+}
+
+.btn-spectate {
+  background: #9b59b6;
+  color: white;
+}
+
+.btn-spectate:hover {
+  background: #8e44ad;
+}
+
+.game-rules-summary {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #000101;
+}
+
+.game-rules-summary h3 {
+  color: #000000;
+  margin: 0 0 15px 0;
+}
+
+.game-rules-summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.game-rules-summary li {
+  padding: 8px 0;
+  color: #555;
+  position: relative;
+  padding-left: 25px;
+}
+
+.game-rules-summary li:before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #27ae60;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .lobby-actions {
+    flex-direction: column;
+  }
+
+  .room-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .room-actions {
+    width: 100%;
+    margin-top: 15px;
+  }
+
+  .room-actions button {
+    width: 100%;
+  }
+}
+

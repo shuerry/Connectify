@@ -34,6 +34,15 @@ const useAnswerPage = () => {
     navigate(`/new/answer/${questionID}`);
   };
 
+  /**
+   * Function to handle question updates from editing.
+   *
+   * @param updatedQuestion - The updated question object.
+   */
+  const handleQuestionUpdate = (updatedQuestion: PopulatedDatabaseQuestion) => {
+    setQuestion(updatedQuestion);
+  };
+
   useEffect(() => {
     if (!qid) {
       navigate('/home');
@@ -190,6 +199,7 @@ const useAnswerPage = () => {
     question,
     handleNewComment,
     handleNewAnswer,
+    handleQuestionUpdate,
   };
 };
 

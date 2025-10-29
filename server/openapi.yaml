@@ -175,6 +175,51 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
+  /question/editQuestion/{qid}:
+    put:
+      tags:
+        - Questions
+      summary: Edit an existing question. Only the question author can edit.
+      parameters:
+        - in: path
+          name: qid
+          schema:
+            type: string
+            format: object-id
+          required: true
+          description: The unique ID of the question to edit.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditQuestionBody'
+      responses:
+        '200':
+          description: Question successfully updated and populated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PopulatedQuestion'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          description: Unauthorized - only question author can edit
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Unauthorized: You can only edit your own questions"
+        '404':
+          description: Question not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Question not found"
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
   # --------------------
   # ANSWER CONTROLLER
   # --------------------
@@ -1097,6 +1142,35 @@ components:
           format: object-id
           nullable: true
 
+    EditQuestionBody:
+      type: object
+      required:
+        - title
+        - text
+        - tags
+        - username
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: The updated question title
+        text:
+          type: string
+          minLength: 1
+          description: The updated question text content
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagBody'
+          minItems: 1
+          maxItems: 5
+          description: Array of updated Tag objects for the question
+        username:
+          type: string
+          minLength: 1
+          description: Username of the person editing the question (for authorization)
+
     PopulatedQuestion:
       type: object
       description: A fully populated question object with embedded tags, answers, and comments.
@@ -1261,9 +1335,9 @@ components:
     # --------------------
     GameType:
       type: string
-      enum: # Based on known game types like 'Nim'
+      enum:
         - Nim
-        - TBD_OtherGame
+        - Connect Four
       description: The type of game to create.
 
     GameStatus:
@@ -1290,7 +1364,7 @@ components:
       properties:
         gameID:
           type: string
-          format: object-id
+          description: The game instance ID (nanoid string)
         playerID:
           type: string
 

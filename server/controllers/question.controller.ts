@@ -5,6 +5,7 @@ import {
   FindQuestionRequest,
   FindQuestionByIdRequest,
   AddQuestionRequest,
+  EditQuestionRequest,
   VoteRequest,
   FakeSOSocket,
   PopulatedDatabaseQuestion,
@@ -20,6 +21,7 @@ import {
   getCommunityQuestions,
   getQuestionsByOrder,
   saveQuestion,
+  updateQuestion,
 } from '../services/question.service';
 import { processTags } from '../services/tag.service';
 import { populateDocument } from '../utils/database.util';
@@ -207,6 +209,61 @@ const questionController = (socket: FakeSOSocket) => {
   };
 
   /**
+   * Edits an existing question in the database. The request must contain the updated question data.
+   * Only the author of the question can edit it.
+   * If there is an error, the HTTP response's status is updated.
+   *
+   * @param req The EditQuestionRequest object containing the question ID and updated data.
+   * @param res The HTTP response object used to send back the updated question.
+   *
+   * @returns A Promise that resolves to void.
+   */
+  const editQuestion = async (req: EditQuestionRequest, res: Response): Promise<void> => {
+    const { qid } = req.params;
+    const { title, text, tags, username } = req.body;
+
+    // Validate question ID format
+    if (!ObjectId.isValid(qid)) {
+      res.status(400).send('Invalid question ID format');
+      return;
+    }
+
+    try {
+      // Process the tags
+      const processedTags = await processTags(tags);
+
+      if (processedTags.length === 0) {
+        res.status(400).send('Invalid tags provided');
+        return;
+      }
+
+      // Update the question
+      const result = await updateQuestion(qid, title, text, processedTags, username);
+
+      if ('error' in result) {
+        if (result.error === 'Question not found') {
+          res.status(404).send(result.error);
+        } else if (result.error.includes('Unauthorized')) {
+          res.status(403).send(result.error);
+        } else {
+          res.status(400).send(result.error);
+        }
+        return;
+      }
+
+      // Emit the updated question to all connected clients
+      socket.emit('questionUpdate', result);
+      res.json(result);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        res.status(500).send(`Error when updating question: ${err.message}`);
+      } else {
+        res.status(500).send(`Error when updating question`);
+      }
+    }
+  };
+
+  /**
    * Retrieves a list of questions for a specific community. The community ID is passed as a parameter.
    * If there is an error, the HTTP response's status is updated.
    *
@@ -269,6 +326,7 @@ const questionController = (socket: FakeSOSocket) => {
   router.get('/getQuestion', getQuestionsByFilter);
   router.get('/getQuestionById/:qid', getQuestionById);
   router.post('/addQuestion', addQuestion);
+  router.put('/editQuestion/:qid', editQuestion);
   router.post('/upvoteQuestion', upvoteQuestion);
   router.post('/downvoteQuestion', downvoteQuestion);
   router.get('/getCommunityQuestions/:communityId', getCommunityQuestionsRoute);

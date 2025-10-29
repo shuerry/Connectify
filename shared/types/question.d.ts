@@ -178,3 +178,26 @@ export interface CommunityQuestionsRequest extends Request {
     communityId: string;
   };
 }
+
+/**
+ * Interface for the request body when editing an existing question.
+ * - qid: The unique identifier of the question being edited (params).
+ * - body: The updated question data.
+ */
+export interface EditQuestionRequest extends Request {
+  params: {
+    qid: string;
+  };
+  body: {
+    title: string;
+    text: string;
+    tags: Tag[];
+    username: string; 
+  };
+}
+
+/**
+ * Type representing possible responses for an update Question operation.
+ * - Either a PopulatedDatabaseQuestion object or an error message.
+ */
+export type UpdateQuestionResponse = PopulatedDatabaseQuestion | { error: string };

@@ -977,4 +977,187 @@ describe('Test questionController', () => {
       expect(response.text).toContain('Error when fetching community questions: Database error');
     });
   });
+
+  describe('PUT /editQuestion/:qid', () => {
+    let updateQuestionSpy: jest.SpyInstance;
+    let processTagsSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      updateQuestionSpy = jest.spyOn(questionUtil, 'updateQuestion');
+      processTagsSpy = jest.spyOn(tagUtil, 'processTags');
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    const validQuestionId = '65e9b58910afe6e94fc6e6dc';
+    const editQuestionBody = {
+      title: 'Updated Question Title',
+      text: 'Updated question text content',
+      tags: [
+        { name: 'updated-tag', description: 'Updated tag description' },
+      ],
+      username: 'testuser',
+    };
+
+    const mockUpdatedQuestion: PopulatedDatabaseQuestion = {
+      _id: new mongoose.Types.ObjectId(validQuestionId),
+      title: 'Updated Question Title',
+      text: 'Updated question text content',
+      tags: [dbTag1],
+      askedBy: 'testuser',
+      askDateTime: new Date('2024-01-01'),
+      answers: [],
+      views: ['testuser'],
+      upVotes: [],
+      downVotes: [],
+      comments: [],
+      community: null,
+    };
+
+    test('should successfully update question with valid data', async () => {
+      processTagsSpy.mockResolvedValueOnce([dbTag1]);
+      updateQuestionSpy.mockResolvedValueOnce(mockUpdatedQuestion);
+
+      const response = await supertest(app)
+        .put(`/api/question/editQuestion/${validQuestionId}`)
+        .send(editQuestionBody);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(
+        JSON.parse(JSON.stringify(mockUpdatedQuestion, null, 2))
+      );
+      expect(processTagsSpy).toHaveBeenCalledWith(editQuestionBody.tags);
+      expect(updateQuestionSpy).toHaveBeenCalledWith(
+        validQuestionId,
+        'Updated Question Title',
+        'Updated question text content',
+        [dbTag1],
+        'testuser'
+      );
+    });
+
+    test('should return 400 for invalid question ID format', async () => {
+      const response = await supertest(app)
+        .put('/api/question/editQuestion/invalid-id')
+        .send(editQuestionBody);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Request Validation Failed');
+      expect(response.body.errors[0].path).toBe('/params/qid');
+    });
+
+    test('should return 404 when question not found', async () => {
+      processTagsSpy.mockResolvedValueOnce([dbTag1]);
+      updateQuestionSpy.mockResolvedValueOnce({ error: 'Question not found' });
+
+      const response = await supertest(app)
+        .put(`/api/question/editQuestion/${validQuestionId}`)
+        .send(editQuestionBody);
+
+      expect(response.status).toBe(404);
+      expect(response.text).toBe('Question not found');
+    });
+
+    test('should return 403 when user is not authorized', async () => {
+      processTagsSpy.mockResolvedValueOnce([dbTag1]);
+      updateQuestionSpy.mockResolvedValueOnce({ 
+        error: 'Unauthorized: You can only edit your own questions' 
+      });
+
+      const response = await supertest(app)
+        .put(`/api/question/editQuestion/${validQuestionId}`)
+        .send(editQuestionBody);
+
+      expect(response.status).toBe(403);
+      expect(response.text).toBe('Unauthorized: You can only edit your own questions');
+    });
+
+    test('should return 400 for validation errors', async () => {
+      const invalidBody = {
+        ...editQuestionBody,
+        title: 'a'.repeat(101),
+      };
+
+      const response = await supertest(app)
+        .put(`/api/question/editQuestion/${validQuestionId}`)
+        .send(invalidBody);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Request Validation Failed');
+      expect(response.body.errors[0].path).toBe('/body/title');
+    });
+
+    test('should return 400 when tags are invalid', async () => {
+      processTagsSpy.mockResolvedValueOnce([]);
+
+      const response = await supertest(app)
+        .put(`/api/question/editQuestion/${validQuestionId}`)
+        .send(editQuestionBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Invalid tags provided');
+    });
+
+    test('should return 500 when service throws an error', async () => {
+      processTagsSpy.mockResolvedValueOnce([dbTag1]);
+      updateQuestionSpy.mockRejectedValueOnce(new Error('Database error'));
+
+      const response = await supertest(app)
+        .put(`/api/question/editQuestion/${validQuestionId}`)
+        .send(editQuestionBody);
+
+      expect(response.status).toBe(500);
+      expect(response.text).toContain('Error when updating question: Database error');
+    });
+
+    test('should handle missing required fields', async () => {
+      const incompleteBody = {
+        title: 'Updated Title',
+        // missing text, tags, username
+      };
+
+      const response = await supertest(app)
+        .put(`/api/question/editQuestion/${validQuestionId}`)
+        .send(incompleteBody);
+
+      expect(response.status).toBe(400);
+    });
+
+    test('should handle empty title', async () => {
+      const emptyTitleBody = {
+        ...editQuestionBody,
+        title: '',
+      };
+
+      const response = await supertest(app)
+        .put(`/api/question/editQuestion/${validQuestionId}`)
+        .send(emptyTitleBody);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Request Validation Failed');
+      expect(response.body.errors[0].path).toBe('/body/title');
+    });
+
+    test('should handle empty text', async () => {
+      processTagsSpy.mockResolvedValueOnce([dbTag1]);
+      updateQuestionSpy.mockResolvedValueOnce({ 
+        error: 'Title and text cannot be empty' 
+      });
+
+      const emptyTextBody = {
+        ...editQuestionBody,
+        text: '   ',
+      };
+
+      const response = await supertest(app)
+        .put(`/api/question/editQuestion/${validQuestionId}`)
+        .send(emptyTextBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Title and text cannot be empty');
+    });
+  });
 });

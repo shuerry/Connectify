@@ -1,4 +1,11 @@
-import { GameInstance, GameState, GameStatus, GameType } from '../types/types';
+import {
+  GameInstance,
+  GameState,
+  GameStatus,
+  GameType,
+  ConnectFourGameState,
+  ConnectFourRoomSettings,
+} from '../types/types';
 import api from './config';
 
 const GAMES_API_URL = `/api/games`;
@@ -93,4 +100,106 @@ const leaveGame = async (gameID: string, playerID: string): Promise<GameInstance
   return res.data;
 };
 
-export { createGame, getGames, joinGame, leaveGame };
+/**
+ * Function to create a new Connect Four room with custom settings.
+ * @param playerID The ID of the player creating the room.
+ * @param roomSettings The settings for the room.
+ * @returns A promise resolving to the created room information.
+ * @throws Error if there is an issue while creating the room.
+ */
+const createConnectFourRoom = async (
+  playerID: string,
+  roomSettings: ConnectFourRoomSettings,
+): Promise<{
+  gameID: string;
+  roomCode?: string;
+  game: GameInstance<ConnectFourGameState>;
+}> => {
+  const res = await api.post(`${GAMES_API_URL}/connectfour/create`, {
+    playerID,
+    roomSettings,
+  });
+
+  if (res.status !== 200) {
+    throw new Error('Error while creating Connect Four room');
+  }
+
+  return res.data;
+};
+
+/**
+ * Function to join a Connect Four room.
+ * @param playerID The ID of the player joining.
+ * @param gameID The ID of the game to join.
+ * @param roomCode Optional room code for private rooms.
+ * @param asSpectator Whether to join as a spectator.
+ * @returns A promise resolving to the game instance.
+ * @throws Error if there is an issue while joining the room.
+ */
+const joinConnectFourRoom = async (
+  playerID: string,
+  gameID: string,
+  roomCode?: string,
+  asSpectator?: boolean,
+): Promise<GameInstance<ConnectFourGameState>> => {
+  const res = await api.post(`${GAMES_API_URL}/connectfour/join`, {
+    playerID,
+    gameID,
+    roomCode,
+    asSpectator,
+  });
+
+  if (res.status !== 200) {
+    throw new Error('Error while joining Connect Four room');
+  }
+
+  return res.data;
+};
+
+/**
+ * Join a Connect Four room by private room code.
+ */
+const joinConnectFourRoomByCode = async (
+  playerID: string,
+  roomCode: string,
+  asSpectator?: boolean,
+): Promise<GameInstance<ConnectFourGameState>> => {
+  const res = await api.post(`${GAMES_API_URL}/connectfour/join-by-code`, {
+    playerID,
+    roomCode,
+    asSpectator,
+  });
+
+  if (res.status !== 200) {
+    throw new Error('Error while joining Connect Four room by code');
+  }
+
+  return res.data;
+};
+
+/**
+ * Function to get information about a specific Connect Four room.
+ * @param gameID The ID of the game.
+ * @returns A promise resolving to the game instance.
+ * @throws Error if there is an issue while fetching the room.
+ */
+const getConnectFourRoom = async (gameID: string): Promise<GameInstance<ConnectFourGameState>> => {
+  const res = await api.get(`${GAMES_API_URL}/connectfour/${gameID}`);
+
+  if (res.status !== 200) {
+    throw new Error('Error while fetching Connect Four room');
+  }
+
+  return res.data;
+};
+
+export {
+  createGame,
+  getGames,
+  joinGame,
+  leaveGame,
+  createConnectFourRoom,
+  joinConnectFourRoom,
+  joinConnectFourRoomByCode,
+  getConnectFourRoom,
+};

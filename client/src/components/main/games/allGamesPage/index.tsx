@@ -1,4 +1,5 @@
 import './index.css';
+import { useNavigate } from 'react-router-dom';
 import useAllGamesPage from '../../../../hooks/useAllGamesPage';
 import GameCard from './gameCard';
 
@@ -10,6 +11,7 @@ import GameCard from './gameCard';
  * - A refresh button to reload the list of available games from the server.
  */
 const AllGamesPage = () => {
+  const navigate = useNavigate();
   const {
     availableGames,
     handleJoin,
@@ -26,8 +28,12 @@ const AllGamesPage = () => {
         <button className='btn-create-game' onClick={handleToggleModal}>
           Create Game
         </button>
+        {/* Added Connect Four Button */}
+        <button className='btn-connect-four' onClick={() => navigate('/games/connectfour')}>
+          Play Connect Four
+        </button>
       </div>
-
+      {/* Modal for selecting game type */}
       {isModalOpen && (
         <div className='game-modal'>
           <div className='modal-content'>
@@ -37,7 +43,7 @@ const AllGamesPage = () => {
           </div>
         </div>
       )}
-
+      {/* Available Games List */}
       <div className='game-available'>
         <div className='game-list'>
           {error && <div className='game-error'>{error}</div>}

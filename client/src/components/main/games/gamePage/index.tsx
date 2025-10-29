@@ -1,5 +1,6 @@
 import './index.css';
 import NimGamePage from '../nimGamePage';
+import ConnectFourPage from '../connectFourPage';
 import useGamePage from '../../../../hooks/useGamePage';
 import { GameInstance, NimGameState } from '../../../../types/types';
 
@@ -26,6 +27,8 @@ const GamePage = () => {
     switch (gameType) {
       case 'Nim':
         return <NimGamePage gameInstance={gameInstance as GameInstance<NimGameState>} />;
+      case 'Connect Four':
+        return <ConnectFourPage />;
       default:
         return <div>Unknown game type</div>;
     }
@@ -33,22 +36,29 @@ const GamePage = () => {
 
   return (
     <div className='game-page'>
-      <header className='game-header'>
-        <h1>Nim Game</h1>
-        <p className='game-status'>
-          Status: {gameInstance ? gameInstance.state.status : 'Not started'}
-        </p>
-      </header>
+      {gameInstance?.gameType === 'Connect Four' ? (
+        // Connect Four has its own layout
+        renderGameComponent(gameInstance.gameType)
+      ) : (
+        <>
+          <header className='game-header'>
+            <h1>{gameInstance?.gameType || 'Game'}</h1>
+            <p className='game-status'>
+              Status: {gameInstance ? gameInstance.state.status : 'Not started'}
+            </p>
+          </header>
 
-      <div className='game-controls'>
-        <button className='btn-leave-game' onClick={handleLeaveGame}>
-          Leave Game
-        </button>
-      </div>
+          <div className='game-controls'>
+            <button className='btn-leave-game' onClick={handleLeaveGame}>
+              Leave Game
+            </button>
+          </div>
 
-      {gameInstance && renderGameComponent(gameInstance.gameType)}
+          {gameInstance && renderGameComponent(gameInstance.gameType)}
 
-      {error && <div className='game-error'>{error}</div>}
+          {error && <div className='game-error'>{error}</div>}
+        </>
+      )}
     </div>
   );
 };

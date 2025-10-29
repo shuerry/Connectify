@@ -23,7 +23,7 @@ import CommunityPage from './main/communities/communityPage';
 import AllCollectionsPage from './main/collections/allCollectionsPage';
 import CollectionPage from './main/collections/collectionPage';
 import NewCollectionPage from './main/collections/newCollectionPage';
-
+import ConnectFourPage from './main/games/connectFourPage';
 const ProtectedRoute = ({
   user,
   socket,
@@ -41,7 +41,7 @@ const ProtectedRoute = ({
 };
 
 /**
- * Represents the main component of the application.
+ * Represents the main component of the applications.
  * It manages the state for search terms and the main title.
  */
 const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
@@ -74,6 +74,7 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
             <Route path='/collections/:username' element={<AllCollectionsPage />} />
             <Route path='/collections/:username/:collectionId' element={<CollectionPage />} />
             <Route path='/games' element={<AllGamesPage />} />
+            <Route path='/games/connectfour' element={<ConnectFourPage />} />
             <Route path='/games/:gameID' element={<GamePage />} />
             <Route path='/communities' element={<AllCommunitiesPage />} />
             <Route path='/new/community' element={<NewCommunityPage />} />

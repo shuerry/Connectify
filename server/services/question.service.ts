@@ -269,6 +269,82 @@ export const addVoteToQuestion = async (
 };
 
 /**
+ * Updates an existing question in the database.
+ * @param {string} qid  The question ID to update
+ * @param {string} title  The updated title
+ * @param {string} text  The updated text content
+ * @param {DatabaseTag[]} processedTags  The processed tags for the question
+ * @param {string} username  The username of the person attempting to edit
+ * @returns {Promise<UpdateQuestionResponse>}  The updated question or error message
+ */
+export const updateQuestion = async (
+  qid: string,
+  title: string,
+  text: string,
+  processedTags: DatabaseTag[],
+  username: string,
+): Promise<PopulatedDatabaseQuestion | { error: string }> => {
+  try {
+    // First, check if the question exists and if the user is authorized to edit it
+    const existingQuestion = await QuestionModel.findById(qid);
+    
+    if (!existingQuestion) {
+      return { error: 'Question not found' };
+    }
+
+    // Check if the user is the author of the question
+    if (existingQuestion.askedBy !== username) {
+      return { error: 'Unauthorized: You can only edit your own questions' };
+    }
+
+    // Validate input
+    if (!title.trim() || !text.trim()) {
+      return { error: 'Title and text cannot be empty' };
+    }
+
+    if (title.trim().length > 100) {
+      return { error: 'Title must be 100 characters or less' };
+    }
+
+    if (processedTags.length === 0) {
+      return { error: 'At least one tag is required' };
+    }
+
+    if (processedTags.length > 5) {
+      return { error: 'Maximum 5 tags allowed' };
+    }
+
+    // Update the question
+    const updatedQuestion = await QuestionModel.findByIdAndUpdate(
+      qid,
+      {
+        title: title.trim(),
+        text: text.trim(),
+        tags: processedTags.map(tag => tag._id),
+      },
+      { new: true }
+    ).populate<{
+      tags: DatabaseTag[];
+      answers: PopulatedDatabaseAnswer[];
+      comments: DatabaseComment[];
+      community: DatabaseCommunity;
+    }>([
+      { path: 'tags', model: TagModel },
+      { path: 'answers', model: AnswerModel, populate: { path: 'comments', model: CommentModel } },
+      { path: 'comments', model: CommentModel },
+    ]);
+
+    if (!updatedQuestion) {
+      return { error: 'Failed to update question' };
+    }
+
+    return updatedQuestion;
+  } catch (error) {
+    return { error: 'Error when updating question' };
+  }
+};
+
+/**
  * Fetches all questions in a community.
  *
  * @param communityId - The ID of the community to fetch questions from

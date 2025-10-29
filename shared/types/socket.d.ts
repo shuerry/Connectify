@@ -126,9 +126,17 @@ export interface CollectionUpdatePayload {
 export interface ClientToServerEvents {
   makeMove: (move: GameMovePayload) => void;
   joinGame: (gameID: string) => void;
-  leaveGame: (gameID: string) => void;
+  leaveGame: (data: { gameID: string; playerID: string; isSpectator?: boolean }) => void;
   joinChat: (chatID: string) => void;
   leaveChat: (chatID: string | undefined) => void;
+  // Request the server to emit the latest public Connect Four rooms list
+  requestConnectFourRooms: () => void;
+  // Register this socket's presence for auto-cleanup on disconnect
+  registerPresence: (data: {
+    gameID: GameInstanceID;
+    playerID: string;
+    isSpectator?: boolean;
+  }) => void;
 }
 
 /**
@@ -159,4 +167,6 @@ export interface ServerToClientEvents {
   chatUpdate: (chat: ChatUpdatePayload) => void;
   communityUpdate: (community: CommunityUpdatePayload) => void;
   collectionUpdate: (community: CollectionUpdatePayload) => void;
+  // Broadcast updated list of public Connect Four rooms
+  connectFourRoomsUpdate: (rooms: GameInstance<GameState>[]) => void;
 }
