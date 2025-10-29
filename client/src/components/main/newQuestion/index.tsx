@@ -4,7 +4,7 @@ import Form from '../baseComponents/form';
 import Input from '../baseComponents/input';
 import TextArea from '../baseComponents/textarea';
 import './index.css';
-import ContentFilterModal from './contentFilterModal';
+import ProfanityFilterModal from './profanityFilterModal';
 
 /**
  * NewQuestionPage component allows users to submit a new question with a title,
@@ -105,7 +105,7 @@ const NewQuestionPage = () => {
         <div className='mandatory_indicator'>* indicates mandatory fields</div>
       </div>
       {isFilterModalOpen && (
-        <ContentFilterModal
+        <ProfanityFilterModal
           reason={filterReason}
           onClose={() => setIsFilterModalOpen(false)}
         />
