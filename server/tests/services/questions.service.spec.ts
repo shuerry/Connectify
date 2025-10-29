@@ -599,4 +599,236 @@ describe('Question model', () => {
       expect(result.length).toEqual(0);
     });
   });
+
+  describe('updateQuestion', () => {
+    let mockQuestionFindById: jest.SpyInstance;
+    let mockQuestionFindByIdAndUpdate: jest.SpyInstance;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockQuestionFindById = jest.spyOn(QuestionModel, 'findById');
+      mockQuestionFindByIdAndUpdate = jest.spyOn(QuestionModel, 'findByIdAndUpdate');
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    const mockExistingQuestion: DatabaseQuestion = {
+      _id: new mongoose.Types.ObjectId('65e9b58910afe6e94fc6e6dc'),
+      title: 'Original Title',
+      text: 'Original question text',
+      tags: [new mongoose.Types.ObjectId('507f191e810c19729de860ea')],
+      askedBy: 'testuser',
+      askDateTime: new Date('2024-01-01'),
+      answers: [],
+      views: [],
+      upVotes: [],
+      downVotes: [],
+      comments: [],
+      community: null,
+    };
+
+    const mockUpdatedQuestion: PopulatedDatabaseQuestion = {
+      ...mockExistingQuestion,
+      title: 'Updated Title',
+      text: 'Updated question text',
+      tags: [
+        {
+          _id: new mongoose.Types.ObjectId('507f191e810c19729de860ea'),
+          name: 'updated-tag',
+          description: 'Updated tag description',
+        },
+      ],
+      answers: [],
+      comments: [],
+      community: null,
+    };
+
+    const mockProcessedTags = [
+      {
+        _id: new mongoose.Types.ObjectId('507f191e810c19729de860ea'),
+        name: 'updated-tag',
+        description: 'Updated tag description',
+      },
+    ];
+
+    test('should successfully update question when user is authorized', async () => {
+      const { updateQuestion } = await import('../../services/question.service');
+
+      mockQuestionFindById.mockResolvedValueOnce(mockExistingQuestion);
+      mockQuestionFindByIdAndUpdate.mockReturnValueOnce({
+        populate: jest.fn().mockResolvedValueOnce(mockUpdatedQuestion),
+      });
+
+      const result = await updateQuestion(
+        '65e9b58910afe6e94fc6e6dc',
+        'Updated Title',
+        'Updated question text',
+        mockProcessedTags,
+        'testuser'
+      );
+
+      expect(mockQuestionFindById).toHaveBeenCalledWith('65e9b58910afe6e94fc6e6dc');
+      expect(mockQuestionFindByIdAndUpdate).toHaveBeenCalledWith(
+        '65e9b58910afe6e94fc6e6dc',
+        {
+          title: 'Updated Title',
+          text: 'Updated question text',
+          tags: [new mongoose.Types.ObjectId('507f191e810c19729de860ea')],
+        },
+        { new: true }
+      );
+      expect(result).toEqual(mockUpdatedQuestion);
+    });
+
+    test('should return error when question not found', async () => {
+      const { updateQuestion } = await import('../../services/question.service');
+
+      mockQuestionFindById.mockResolvedValueOnce(null);
+
+      const result = await updateQuestion(
+        'nonexistent-id',
+        'Updated Title',
+        'Updated question text',
+        mockProcessedTags,
+        'testuser'
+      );
+
+      expect(result).toEqual({ error: 'Question not found' });
+    });
+
+    test('should return error when user is not authorized', async () => {
+      const { updateQuestion } = await import('../../services/question.service');
+
+      mockQuestionFindById.mockResolvedValueOnce(mockExistingQuestion);
+
+      const result = await updateQuestion(
+        '65e9b58910afe6e94fc6e6dc',
+        'Updated Title',
+        'Updated question text',
+        mockProcessedTags,
+        'unauthorized-user'
+      );
+
+      expect(result).toEqual({ error: 'Unauthorized: You can only edit your own questions' });
+    });
+
+    test('should return error when title is empty', async () => {
+      const { updateQuestion } = await import('../../services/question.service');
+
+      mockQuestionFindById.mockResolvedValueOnce(mockExistingQuestion);
+
+      const result = await updateQuestion(
+        '65e9b58910afe6e94fc6e6dc',
+        '',
+        'Updated question text',
+        mockProcessedTags,
+        'testuser'
+      );
+
+      expect(result).toEqual({ error: 'Title and text cannot be empty' });
+    });
+
+    test('should return error when text is empty', async () => {
+      const { updateQuestion } = await import('../../services/question.service');
+
+      mockQuestionFindById.mockResolvedValueOnce(mockExistingQuestion);
+
+      const result = await updateQuestion(
+        '65e9b58910afe6e94fc6e6dc',
+        'Updated Title',
+        '   ',
+        mockProcessedTags,
+        'testuser'
+      );
+
+      expect(result).toEqual({ error: 'Title and text cannot be empty' });
+    });
+
+    test('should return error when title is too long', async () => {
+      const { updateQuestion } = await import('../../services/question.service');
+
+      mockQuestionFindById.mockResolvedValueOnce(mockExistingQuestion);
+      const longTitle = 'a'.repeat(101);
+
+      const result = await updateQuestion(
+        '65e9b58910afe6e94fc6e6dc',
+        longTitle,
+        'Updated question text',
+        mockProcessedTags,
+        'testuser'
+      );
+
+      expect(result).toEqual({ error: 'Title must be 100 characters or less' });
+    });
+
+    test('should return error when no tags provided', async () => {
+      const { updateQuestion } = await import('../../services/question.service');
+
+      mockQuestionFindById.mockResolvedValueOnce(mockExistingQuestion);
+
+      const result = await updateQuestion(
+        '65e9b58910afe6e94fc6e6dc',
+        'Updated Title',
+        'Updated question text',
+        [],
+        'testuser'
+      );
+
+      expect(result).toEqual({ error: 'At least one tag is required' });
+    });
+
+    test('should return error when too many tags provided', async () => {
+      const { updateQuestion } = await import('../../services/question.service');
+
+      mockQuestionFindById.mockResolvedValueOnce(mockExistingQuestion);
+      const tooManyTags = Array(6).fill(mockProcessedTags[0]);
+
+      const result = await updateQuestion(
+        '65e9b58910afe6e94fc6e6dc',
+        'Updated Title',
+        'Updated question text',
+        tooManyTags,
+        'testuser'
+      );
+
+      expect(result).toEqual({ error: 'Maximum 5 tags allowed' });
+    });
+
+    test('should return error when database update fails', async () => {
+      const { updateQuestion } = await import('../../services/question.service');
+
+      mockQuestionFindById.mockResolvedValueOnce(mockExistingQuestion);
+      mockQuestionFindByIdAndUpdate.mockReturnValueOnce({
+        populate: jest.fn().mockResolvedValueOnce(null),
+      });
+
+      const result = await updateQuestion(
+        '65e9b58910afe6e94fc6e6dc',
+        'Updated Title',
+        'Updated question text',
+        mockProcessedTags,
+        'testuser'
+      );
+
+      expect(result).toEqual({ error: 'Failed to update question' });
+    });
+
+    test('should handle database errors gracefully', async () => {
+      const { updateQuestion } = await import('../../services/question.service');
+
+      mockQuestionFindById.mockRejectedValueOnce(new Error('Database error'));
+
+      const result = await updateQuestion(
+        '65e9b58910afe6e94fc6e6dc',
+        'Updated Title',
+        'Updated question text',
+        mockProcessedTags,
+        'testuser'
+      );
+
+      expect(result).toEqual({ error: 'Error when updating question' });
+    });
+  });
 });
