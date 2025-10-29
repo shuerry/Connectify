@@ -37,15 +37,45 @@ const findGames = async (
       throw new Error('No games found');
     }
 
-    // Format and return the games in reverse order (most recent first)
-    return games
-      .map(game => ({
-        state: game.state as GameState,
-        gameID: game.gameID as GameInstanceID,
-        players: game.players as string[],
-        gameType: game.gameType as GameType,
-      }))
+    // Filter and sanitize results:
+    // Exclude private Connect Four rooms from the public list
+    // Remove/obfuscate any room codes from Connect Four state before returning
+    const sanitized = games
+      .filter(game => {
+        if (game.gameType === 'Connect Four') {
+          const privacy = (game.state as { roomSettings?: { privacy?: string } })?.roomSettings
+            ?.privacy;
+          return privacy === 'PUBLIC';
+        }
+        return true;
+      })
+      .map(game => {
+        const base = {
+          state: game.state as GameState,
+          gameID: game.gameID as GameInstanceID,
+          players: game.players as string[],
+          gameType: game.gameType as GameType,
+        };
+
+        if (game.gameType === 'Connect Four') {
+          const connectFourState =
+            (base.state as { roomSettings?: { roomCode?: string; [key: string]: unknown } }) || {};
+          const roomSettings = connectFourState.roomSettings || {};
+          // Do not leak room codes via the games list
+          if (roomSettings) {
+            connectFourState.roomSettings = {
+              ...roomSettings,
+              roomCode: undefined,
+            };
+          }
+          base.state = connectFourState as GameState;
+        }
+
+        return base;
+      })
       .reverse();
+
+    return sanitized;
   } catch (error) {
     return [];
   }

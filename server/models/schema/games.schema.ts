@@ -26,7 +26,7 @@ const gameSchema: Schema = new Schema(
     },
     gameType: {
       type: String,
-      enum: ['Nim'],
+      enum: ['Nim', 'Connect Four'],
       required: true,
     },
   },

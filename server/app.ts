@@ -31,10 +31,21 @@ const PORT = parseInt(process.env.PORT || '8000');
 const app = express();
 const server = http.createServer(app);
 // allow requests from the local dev client or the production client only
+// Build allowed client origins from env (comma-separated) with sensible defaults
+const ALLOWED_CLIENT_ORIGINS: string[] = (
+  process.env.CLIENT_URLS
+    ? process.env.CLIENT_URLS.split(',')
+        .map(o => o.trim())
+        .filter(o => o.length > 0)
+    : process.env.CLIENT_URL
+      ? [process.env.CLIENT_URL]
+      : ['http://localhost:4530', 'http://127.0.0.1:4530']
+) as string[];
+
 const socket: FakeSOSocket = new Server(server, {
   path: '/socket.io',
   cors: {
-    origin: `${process.env.CLIENT_URL}` || 'http://localhost:4530',
+    origin: ALLOWED_CLIENT_ORIGINS,
     credentials: true,
   },
 });
@@ -69,6 +80,27 @@ process.on('SIGINT', async () => {
 });
 
 app.use(express.json());
+
+// Minimal CORS for REST API (avoids adding a dependency). Uses same allowed origins as Socket.IO
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const requestOrigin = req.headers.origin;
+  const isAllowed = requestOrigin && ALLOWED_CLIENT_ORIGINS.includes(requestOrigin);
+  if (isAllowed) {
+    res.header('Access-Control-Allow-Origin', requestOrigin);
+    res.header('Vary', 'Origin');
+  }
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+  );
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+    return;
+  }
+  next();
+});
 
 try {
   app.use(

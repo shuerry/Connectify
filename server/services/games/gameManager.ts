@@ -6,9 +6,12 @@ import {
   GameMove,
   GameState,
   GameType,
+  ConnectFourRoomSettings,
+  ConnectFourGameState,
 } from '../../types/types';
 import Game from './game';
 import NimGame from './nim';
+import ConnectFourGame from './connectFour';
 
 /**
  * Manages the lifecycle of games, including creation, joining, and leaving games.
@@ -31,14 +34,32 @@ class GameManager {
   /**
    * Factory method to create a new game based on the provided game type.
    * @param gameType The type of the game to create.
+   * @param creatorID The ID of the player creating the game.
+   * @param roomSettings Optional room settings for Connect Four games.
    * @returns A promise resolving to the created game instance.
    * @throws an error for an unsupported game type
    */
-  private async _gameFactory(gameType: GameType): Promise<Game<GameState, BaseMove>> {
+  private async _gameFactory(
+    gameType: GameType,
+    creatorID?: string,
+    roomSettings?: ConnectFourRoomSettings,
+  ): Promise<Game<GameState, BaseMove>> {
     switch (gameType) {
       case 'Nim': {
         const newGame = new NimGame();
         await NimModel.create(newGame.toModel());
+
+        return newGame;
+      }
+      case 'Connect Four': {
+        if (!creatorID) {
+          throw new Error('Creator ID is required for Connect Four');
+        }
+        if (!roomSettings) {
+          throw new Error('Room settings are required for Connect Four');
+        }
+        const newGame = new ConnectFourGame(creatorID, roomSettings);
+        await newGame.saveGameState();
 
         return newGame;
       }
@@ -63,11 +84,17 @@ class GameManager {
   /**
    * Creates and adds a new game to the manager games map.
    * @param gameType The type of the game to add.
+   * @param creatorID Optional creator ID for games that require it.
+   * @param roomSettings Optional room settings for Connect Four games.
    * @returns The game ID or an error message.
    */
-  public async addGame(gameType: GameType): Promise<GameInstanceID | { error: string }> {
+  public async addGame(
+    gameType: GameType,
+    creatorID?: string,
+    roomSettings?: ConnectFourRoomSettings,
+  ): Promise<GameInstanceID | { error: string }> {
     try {
-      const newGame = await this._gameFactory(gameType);
+      const newGame = await this._gameFactory(gameType, creatorID, roomSettings);
       this._games.set(newGame.id, newGame);
 
       return newGame.id;
@@ -89,11 +116,15 @@ class GameManager {
    * Joins an existing game.
    * @param gameID The ID of the game to join.
    * @param playerID The ID of the player joining the game.
+   * @param roomCode Optional room code for private rooms.
+   * @param asSpectator Whether to join as a spectator.
    * @returns The game instance or an error message.
    */
   public async joinGame(
     gameID: GameInstanceID,
     playerID: string,
+    roomCode?: string,
+    asSpectator?: boolean,
   ): Promise<GameInstance<GameState> | { error: string }> {
     try {
       const gameToJoin = this.getGame(gameID);
@@ -102,7 +133,22 @@ class GameManager {
         throw new Error('Game requested does not exist.');
       }
 
-      gameToJoin.join(playerID);
+      // Verify access for Connect Four games
+      if (gameToJoin.gameType === 'Connect Four') {
+        const connectFourGame = gameToJoin as unknown as ConnectFourGame;
+        if (!connectFourGame.verifyAccess(roomCode)) {
+          throw new Error('Access denied: invalid room code or room is private');
+        }
+
+        if (asSpectator) {
+          connectFourGame.addSpectator(playerID);
+        } else {
+          gameToJoin.join(playerID);
+        }
+      } else {
+        gameToJoin.join(playerID);
+      }
+
       await gameToJoin.saveGameState();
 
       return gameToJoin.toModel();
@@ -115,11 +161,13 @@ class GameManager {
    * Allows a player to leave a game.
    * @param gameID The ID of the game to leave.
    * @param playerID The ID of the player leaving the game.
+   * @param isSpectator Whether the player is leaving as a spectator.
    * @returns The updated game state or an error message.
    */
   public async leaveGame(
     gameID: GameInstanceID,
     playerID: string,
+    isSpectator?: boolean,
   ): Promise<GameInstance<GameState> | { error: string }> {
     try {
       const gameToLeave = this.getGame(gameID);
@@ -128,13 +176,27 @@ class GameManager {
         throw new Error('Game requested does not exist.');
       }
 
-      gameToLeave.leave(playerID);
+      // Handle spectator leaving for Connect Four
+      if (isSpectator && gameToLeave.gameType === 'Connect Four') {
+        const connectFourGame = gameToLeave as unknown as ConnectFourGame;
+        connectFourGame.removeSpectator(playerID);
+      } else {
+        gameToLeave.leave(playerID);
+      }
+
       await gameToLeave.saveGameState();
 
       const leftGameState = gameToLeave.toModel();
 
+      // Remove game if it's over or has no players
       if (gameToLeave.state.status === 'OVER') {
         this.removeGame(gameID);
+      } else if (gameToLeave.gameType === 'Connect Four') {
+        // Check if Connect Four game has no players
+        const connectFourState = leftGameState.state as ConnectFourGameState;
+        if (!connectFourState.player1 && !connectFourState.player2) {
+          this.removeGame(gameID);
+        }
       }
 
       return leftGameState;

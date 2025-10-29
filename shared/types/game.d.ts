@@ -4,7 +4,7 @@ import { Request } from 'express';
  * Type representing the possible game types as a literal.
  * This is derived from the GAME_TYPES constant.
  */
-export type GameType = 'Nim';
+export type GameType = 'Nim' | 'Connect Four';
 
 /**
  * Type representing the unique identifier for a game instance.
@@ -139,3 +139,83 @@ export interface FindGameQuery {
  * This is typically used in responses to return multiple games.
  */
 export type GamesResponse = GameInstance<GameState>[];
+
+/**
+ * Type representing room privacy settings for Connect Four.
+ * - `PUBLIC`: Anyone can see and join the room.
+ * - `PRIVATE`: Only accessible via room code.
+ * - `FRIENDS_ONLY`: Only friends can join (future feature).
+ */
+export type RoomPrivacy = 'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY';
+
+/**
+ * Type representing player colors in Connect Four.
+ */
+export type ConnectFourColor = 'RED' | 'YELLOW';
+
+/**
+ * Interface representing a position on the Connect Four board.
+ */
+export interface BoardPosition {
+  row: number;
+  col: number;
+}
+
+/**
+ * Interface representing a move in a Connect Four game.
+ * - `column`: The column where the disc is dropped (0-6).
+ */
+export interface ConnectFourMove extends BaseMove {
+  column: number;
+}
+
+/**
+ * Interface representing room settings for Connect Four.
+ */
+export interface ConnectFourRoomSettings {
+  roomName: string;
+  privacy: RoomPrivacy;
+  allowSpectators: boolean;
+  roomCode?: string;
+}
+
+/**
+ * Interface representing the state of a Connect Four game.
+ */
+export interface ConnectFourGameState extends WinnableGameState {
+  board: (ConnectFourColor | null)[][];
+  currentTurn: ConnectFourColor;
+  player1?: string;
+  player2?: string;
+  player1Color: ConnectFourColor;
+  player2Color: ConnectFourColor;
+  moves: ReadonlyArray<ConnectFourMove & { playerID: string }>;
+  winningPositions?: ReadonlyArray<BoardPosition>;
+  totalMoves: number;
+  roomSettings: ConnectFourRoomSettings;
+  spectators: string[];
+  lastMoveColumn?: number;
+}
+
+/**
+ * Interface for creating a Connect Four room.
+ */
+export interface CreateConnectFourRoomRequest extends Request {
+  body: {
+    gameType: 'Connect Four';
+    playerID: string;
+    roomSettings: ConnectFourRoomSettings;
+  };
+}
+
+/**
+ * Interface for joining a Connect Four room.
+ */
+export interface JoinConnectFourRoomRequest extends Request {
+  body: {
+    gameID: GameInstanceID;
+    playerID: string;
+    roomCode?: string;
+    asSpectator?: boolean;
+  };
+}

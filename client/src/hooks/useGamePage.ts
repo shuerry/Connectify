@@ -27,7 +27,7 @@ const useGamePage = () => {
       setJoinedGameID('');
     }
 
-    socket.emit('leaveGame', joinedGameID);
+    socket.emit('leaveGame', { gameID: joinedGameID, playerID: user.username });
     navigate('/games');
   };
 
