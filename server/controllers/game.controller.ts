@@ -84,11 +84,26 @@ const gameController = (socket: FakeSOSocket) => {
         throw new Error('Game was created but could not be retrieved');
       }
 
+      const gameInstance = game.toModel();
+      const connectFourGame = game as unknown as ConnectFourGame;
+      
       res.status(200).json({
         gameID: newGameID,
-        roomCode: (game as unknown as ConnectFourGame).state.roomSettings.roomCode,
-        game: game.toModel(),
+        roomCode: connectFourGame.state.roomSettings.roomCode,
+        game: gameInstance,
       });
+
+      // Send invitations to selected friends for friends-only rooms
+      if (roomSettings.privacy === 'FRIENDS_ONLY' && roomSettings.invitedFriends) {
+        for (const friendUsername of roomSettings.invitedFriends) {
+          socket.to(`user:${friendUsername}`).emit('gameInvitation', {
+            gameID: newGameID,
+            roomName: roomSettings.roomName,
+            inviterUsername: playerID,
+            roomCode: connectFourGame.state.roomSettings.roomCode,
+          });
+        }
+      }
 
       // Notify lobby clients about updated public rooms
       broadcastConnectFourRooms();
@@ -377,19 +392,57 @@ const gameController = (socket: FakeSOSocket) => {
       for (const gameID of joinedGames) {
         const info = presence.get(gameID);
         if (!info) continue;
+        
         try {
-          const result = await GameManager.getInstance().leaveGame(
-            gameID as GameInstanceID,
-            info.playerID,
-            info.isSpectator,
-          );
-          if (!('error' in result)) {
-            socket.in(gameID).emit('gameUpdate', { gameInstance: result });
+          // For Connect Four games in progress, ensure proper win attribution
+          const game = GameManager.getInstance().getGame(gameID as GameInstanceID);
+          if (game && game.gameType === 'Connect Four' && !info.isSpectator) {
+            const connectFourGame = game as unknown as ConnectFourGame;
+            if (connectFourGame.state.status === 'IN_PROGRESS') {
+              // Player disconnected during active game - opponent should win
+              const result = await GameManager.getInstance().leaveGame(
+                gameID as GameInstanceID,
+                info.playerID,
+                info.isSpectator,
+              );
+              
+              if (!('error' in result)) {
+                socket.in(gameID).emit('gameUpdate', { gameInstance: result });
+                // Notify remaining players about the disconnection win
+                socket.in(gameID).emit('playerDisconnected', {
+                  disconnectedPlayer: info.playerID,
+                  message: `${info.playerID} disconnected. Game ended.`,
+                });
+              }
+            } else {
+              // Game not in progress, normal leave
+              const result = await GameManager.getInstance().leaveGame(
+                gameID as GameInstanceID,
+                info.playerID,
+                info.isSpectator,
+              );
+              if (!('error' in result)) {
+                socket.in(gameID).emit('gameUpdate', { gameInstance: result });
+              }
+            }
+          } else {
+            // Non Connect Four games or spectators, normal leave
+            const result = await GameManager.getInstance().leaveGame(
+              gameID as GameInstanceID,
+              info.playerID,
+              info.isSpectator,
+            );
+            if (!('error' in result)) {
+              socket.in(gameID).emit('gameUpdate', { gameInstance: result });
+            }
           }
         } catch (error) {
           // ignore cleanup errors
         }
       }
+      
+      // Update public rooms list after cleanup
+      broadcastConnectFourRooms();
     });
 
     // client requests the latest list of public Connect Four rooms

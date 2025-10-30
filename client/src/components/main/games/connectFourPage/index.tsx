@@ -2,6 +2,7 @@ import './index.css';
 import ConnectFourLobby from './connectFourLobby';
 import ConnectFourBoard from './connectFourBoard';
 import CreateRoomModal from './createRoomModal';
+import GameInvitationNotification from './gameInvitationNotification';
 import useConnectFourPage from '../../../../hooks/useConnectFourPage';
 
 /**
@@ -19,6 +20,9 @@ const ConnectFourPage = () => {
     handleJoinByCode,
     handleMakeMove,
     handleLeaveGame,
+    gameInvitations,
+    handleAcceptInvitation,
+    handleDeclineInvitation,
     error,
   } = useConnectFourPage();
 
@@ -58,6 +62,16 @@ const ConnectFourPage = () => {
       {showCreateModal && (
         <CreateRoomModal onClose={() => setShowCreateModal(false)} onCreate={handleCreateRoom} />
       )}
+
+      {/* Game Invitations */}
+      {gameInvitations.map((invitation, index) => (
+        <GameInvitationNotification
+          key={`${invitation.gameID}-${index}`}
+          invitation={invitation}
+          onAccept={(gameID, roomCode) => handleAcceptInvitation(gameID, roomCode)}
+          onDecline={() => handleDeclineInvitation(invitation.gameID)}
+        />
+      ))}
     </div>
   );
 };

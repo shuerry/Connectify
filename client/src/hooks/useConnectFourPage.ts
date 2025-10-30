@@ -25,6 +25,12 @@ const useConnectFourPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSpectator, setIsSpectator] = useState(false);
+  const [gameInvitations, setGameInvitations] = useState<Array<{
+    gameID: string;
+    roomName: string;
+    inviterUsername: string;
+    roomCode?: string;
+  }>>([]);
 
   // Load available games (fallback to HTTP)
   const loadGames = useCallback(async () => {
@@ -57,7 +63,9 @@ const useConnectFourPage = () => {
         'connectFourRoomsUpdate',
         handleRoomsUpdate as unknown as (rooms: unknown[]) => void,
       );
-      // Request latest rooms immediately
+      
+      // Join user room for notifications and request latest rooms
+      socket.emit('joinUserRoom', user.username);
       socket.emit('requestConnectFourRooms');
 
       return () => {
@@ -136,12 +144,35 @@ const useConnectFourPage = () => {
       }
     };
 
+    const handlePlayerDisconnected = (data: { disconnectedPlayer: string; message: string }) => {
+      if (user && data.disconnectedPlayer !== user.username) {
+        // Show notification when opponent disconnects
+        alert(`${data.message} You win!`);
+      }
+    };
+
+    const handleGameInvitation = (data: {
+      gameID: string;
+      roomName: string;
+      inviterUsername: string;
+      roomCode?: string;
+    }) => {
+      if (user && data.inviterUsername !== user.username) {
+        // Add invitation to the list
+        setGameInvitations(prev => [...prev, data]);
+      }
+    };
+
     socket.on('gameUpdate', handleGameUpdate);
     socket.on('gameError', handleGameError);
+    socket.on('playerDisconnected', handlePlayerDisconnected);
+    socket.on('gameInvitation', handleGameInvitation);
 
     return () => {
       socket.off('gameUpdate', handleGameUpdate);
       socket.off('gameError', handleGameError);
+      socket.off('playerDisconnected', handlePlayerDisconnected);
+      socket.off('gameInvitation', handleGameInvitation);
     };
   }, [currentGame, user, socket, handleLeaveGame]);
 
@@ -233,6 +264,37 @@ const useConnectFourPage = () => {
     });
   };
 
+  // Handle invitation acceptance
+  const handleAcceptInvitation = async (gameID: string, roomCode?: string) => {
+    if (!user || !socket) return;
+
+    try {
+      const game = await joinConnectFourRoom(user.username, gameID, roomCode, false);
+      setCurrentGame(game);
+      setIsSpectator(false);
+      socket.emit('joinGame', gameID);
+      socket.emit('registerPresence', {
+        gameID,
+        playerID: user.username,
+        isSpectator: false,
+      });
+
+      // Remove invitation from list
+      setGameInvitations(prev => prev.filter(inv => inv.gameID !== gameID));
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Error accepting invitation:', err);
+      alert('Failed to join game. It may no longer be available.');
+      // Remove invitation even if joining failed
+      setGameInvitations(prev => prev.filter(inv => inv.gameID !== gameID));
+    }
+  };
+
+  // Handle invitation decline
+  const handleDeclineInvitation = (gameID: string) => {
+    setGameInvitations(prev => prev.filter(inv => inv.gameID !== gameID));
+  };
+
   // (handleLeaveGame moved above)
 
   return {
@@ -246,6 +308,9 @@ const useConnectFourPage = () => {
     handleJoinByCode,
     handleMakeMove,
     handleLeaveGame,
+    gameInvitations,
+    handleAcceptInvitation,
+    handleDeclineInvitation,
     error,
   };
 };

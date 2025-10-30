@@ -12,6 +12,7 @@ import {
 import Game from './game';
 import NimGame from './nim';
 import ConnectFourGame from './connectFour';
+import { getRelations } from '../user.service';
 
 /**
  * Manages the lifecycle of games, including creation, joining, and leaving games.
@@ -136,8 +137,23 @@ class GameManager {
       // Verify access for Connect Four games
       if (gameToJoin.gameType === 'Connect Four') {
         const connectFourGame = gameToJoin as unknown as ConnectFourGame;
-        if (!connectFourGame.verifyAccess(roomCode)) {
-          throw new Error('Access denied: invalid room code or room is private');
+        
+        // Get player's friends list for friends-only room access
+        let playerFriends: string[] = [];
+        if (connectFourGame.state.roomSettings.privacy === 'FRIENDS_ONLY') {
+          const relations = await getRelations(playerID);
+          if ('error' in relations) {
+            throw new Error('Could not verify friends for room access');
+          }
+          playerFriends = relations.friends;
+        }
+        
+        if (!connectFourGame.verifyAccess(roomCode, playerFriends)) {
+          if (connectFourGame.state.roomSettings.privacy === 'FRIENDS_ONLY') {
+            throw new Error('Access denied: This is a friends-only room');
+          } else {
+            throw new Error('Access denied: invalid room code or room is private');
+          }
         }
 
         if (asSpectator) {

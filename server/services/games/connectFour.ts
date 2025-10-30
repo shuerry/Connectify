@@ -279,7 +279,7 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
     }
 
     if (this._players.includes(playerID)) {
-      throw new Error('Cannot join game: player already in game');
+      throw new Error('You are already in this game');
     }
 
     // Check if joining as player or spectator will be handled by caller
@@ -301,11 +301,11 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
     }
 
     if (this.state.spectators.includes(playerID)) {
-      throw new Error('Already spectating this game');
+      throw new Error('You are already spectating this game');
     }
 
     if (this._players.includes(playerID)) {
-      throw new Error('Cannot spectate: already playing in this game');
+      throw new Error('You are already in this game as a player');
     }
 
     this.state = {
@@ -359,7 +359,7 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
   /**
    * Verifies room access with optional room code.
    */
-  public verifyAccess(roomCode?: string): boolean {
+  public verifyAccess(roomCode?: string, playerFriends?: string[]): boolean {
     const { privacy, roomCode: actualCode } = this.state.roomSettings;
 
     if (privacy === 'PUBLIC') {
@@ -370,8 +370,18 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       return roomCode === actualCode;
     }
 
-    // FRIENDS_ONLY - future feature, for now treat as private
-    return roomCode === actualCode;
+    if (privacy === 'FRIENDS_ONLY') {
+      // For friends-only rooms, allow access if:
+      // 1. Player has the correct room code (for sharing with friends)
+      // 2. Player is friends with the room creator
+      const roomCreator = this.state.player1;
+      const hasCorrectCode = roomCode === actualCode;
+      const isFriend = Boolean(roomCreator && playerFriends?.includes(roomCreator));
+      
+      return hasCorrectCode || isFriend;
+    }
+
+    return false;
   }
 
   /**

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './index.css';
 import { ConnectFourRoomSettings } from '../../../../../types/types';
+import FriendsSelector from './friendsSelector';
 
 interface CreateRoomModalProps {
   onClose: () => void;
@@ -14,6 +15,7 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
   const [roomName, setRoomName] = useState('');
   const [privacy, setPrivacy] = useState<'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY'>('PUBLIC');
   const [allowSpectators, setAllowSpectators] = useState(true);
+  const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -38,6 +40,7 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
       roomName: roomName.trim(),
       privacy,
       allowSpectators,
+      invitedFriends: privacy === 'FRIENDS_ONLY' ? selectedFriends : undefined,
     };
 
     onCreate(roomSettings);
@@ -114,7 +117,7 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
                 />
                 <div>
                   <strong> Friends Only</strong>
-                  <p>Accessible via code (future feature)</p>
+                  <p>Only your friends can join!</p>
                 </div>
               </label>
             </div>
@@ -131,6 +134,18 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
             </label>
             <p className='help-text'>Let other players watch your game without interfering</p>
           </div>
+
+          {privacy === 'FRIENDS_ONLY' && (
+            <div className='form-group'>
+              <FriendsSelector
+                selectedFriends={selectedFriends}
+                onFriendsChange={setSelectedFriends}
+              />
+              <p className='help-text'>
+                Selected friends will receive an invitation to join your game
+              </p>
+            </div>
+          )}
 
           <div className='modal-actions'>
             <button type='button' className='btn-cancel' onClick={onClose}>
