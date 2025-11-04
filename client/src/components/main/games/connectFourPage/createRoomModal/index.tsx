@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './index.css';
 import { ConnectFourRoomSettings } from '../../../../../types/types';
 import FriendsSelector from './friendsSelector';
@@ -17,6 +17,15 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
   const [allowSpectators, setAllowSpectators] = useState(true);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [error, setError] = useState('');
+
+  // Automatically disable spectators for private rooms
+  useEffect(() => {
+    if (privacy === 'PRIVATE') {
+      setAllowSpectators(false);
+    } else {
+      setAllowSpectators(true);
+    }
+  }, [privacy]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,11 +137,17 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
               <input
                 type='checkbox'
                 checked={allowSpectators}
+                disabled={privacy === 'PRIVATE'}
                 onChange={e => setAllowSpectators(e.target.checked)}
               />
               <span>Allow Spectators</span>
             </label>
-            <p className='help-text'>Let other players watch your game without interfering</p>
+            <p className='help-text'>
+              {privacy === 'PRIVATE' 
+                ? 'Spectators are disabled for private rooms to maintain privacy' 
+                : 'Let other players watch your game without interfering'
+              }
+            </p>
           </div>
 
           {privacy === 'FRIENDS_ONLY' && (

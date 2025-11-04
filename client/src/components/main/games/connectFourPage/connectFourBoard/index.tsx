@@ -6,6 +6,7 @@ import {
   ConnectFourColor,
   BoardPosition,
 } from '../../../../../types/types';
+import RoomShareModal from '../roomShareModal';
 
 interface ConnectFourBoardProps {
   gameInstance: GameInstance<ConnectFourGameState>;
@@ -37,6 +38,7 @@ const ConnectFourBoard = ({
         : null;
   const isMyTurn = isPlayer && playerColor === currentTurn;
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
@@ -44,13 +46,7 @@ const ConnectFourBoard = ({
     (showToast as unknown as { t?: number }).t = window.setTimeout(() => setToastMsg(null), 1800);
   }, []);
 
-  // Check if column is full
-  const isColumnFull = useCallback(
-    (col: number): boolean => {
-      return board[0][col] !== null;
-    },
-    [board],
-  );
+
 
   // Handle column click
   const handleColumnClick = (col: number) => {
@@ -66,11 +62,8 @@ const ConnectFourBoard = ({
       showToast('Not your turn');
       return;
     }
-    if (isColumnFull(col)) {
-      showToast('Column is full');
-      return;
-    }
 
+    // Allow moves on full columns - server will handle as draw condition
     onMakeMove(col);
   };
 
@@ -99,18 +92,13 @@ const ConnectFourBoard = ({
         return;
       }
 
-      if (isColumnFull(col)) {
-        showToast(`Column ${parseInt(key)} is full - try another column`);
-        return;
-      }
-
-      // All checks passed, make the move
+      // Allow moves on full columns - server will handle as draw condition
       onMakeMove(col);
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [status, isPlayer, isMyTurn, currentTurn, board, onMakeMove, isColumnFull, showToast]);
+  }, [status, isPlayer, isMyTurn, currentTurn, onMakeMove, showToast]);
 
   // Check if a position is a winning position
   const isWinningPosition = (row: number, col: number): boolean => {
@@ -166,9 +154,16 @@ const ConnectFourBoard = ({
             </span>
           )}
         </div>
-        <button className='btn-leave' onClick={onLeaveGame}>
-          Leave Game
-        </button>
+        <div className='header-actions'>
+          {state.roomSettings.roomCode && isPlayer && (
+            <button className='btn-share' onClick={() => setShowShareModal(true)}>
+              📤 Invite Friends
+            </button>
+          )}
+          <button className='btn-leave' onClick={onLeaveGame}>
+            Leave Game
+          </button>
+        </div>
       </div>
       <div className='players-info'>
         <div className={`player-card ${currentTurn === state.player1Color ? 'active' : ''}`}>
@@ -215,7 +210,7 @@ const ConnectFourBoard = ({
                   className={`${getCellClassName(rowIndex, colIndex)} ${
                     cell ? 'occupied' : 'empty'
                   } ${
-                    !isColumnFull(colIndex) && isMyTurn && status === 'IN_PROGRESS'
+                    isMyTurn && status === 'IN_PROGRESS'
                       ? 'clickable'
                       : ''
                   }`}
@@ -285,6 +280,14 @@ const ConnectFourBoard = ({
         <p>Click on a column or press keys 1-7 to drop your disc</p>
       </div>
       {toastMsg && <div className='cf-toast'>{toastMsg}</div>}
+      
+      {/* Room Share Modal */}
+      {showShareModal && (
+        <RoomShareModal 
+          onClose={() => setShowShareModal(false)} 
+          gameInstance={gameInstance}
+        />
+      )}
     </div>
   );
 };

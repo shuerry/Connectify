@@ -25,6 +25,42 @@ const useConnectFourPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSpectator, setIsSpectator] = useState(false);
+  const [pendingRoomCode, setPendingRoomCode] = useState<string | null>(null);
+
+  // Persistence functions
+  const saveGameState = useCallback((game: GameInstance<ConnectFourGameState>, spectator: boolean) => {
+    try {
+      localStorage.setItem('connectfour_current_game', JSON.stringify(game));
+      localStorage.setItem('connectfour_is_spectator', JSON.stringify(spectator));
+    } catch (error) {
+      console.error('Failed to save game state:', error);
+    }
+  }, []);
+
+  const loadGameState = useCallback(() => {
+    try {
+      const savedGame = localStorage.getItem('connectfour_current_game');
+      const savedSpectator = localStorage.getItem('connectfour_is_spectator');
+      
+      if (savedGame && savedSpectator) {
+        const game = JSON.parse(savedGame) as GameInstance<ConnectFourGameState>;
+        const spectator = JSON.parse(savedSpectator) as boolean;
+        return { game, spectator };
+      }
+    } catch (error) {
+      console.error('Failed to load game state:', error);
+    }
+    return null;
+  }, []);
+
+  const clearGameState = useCallback(() => {
+    try {
+      localStorage.removeItem('connectfour_current_game');
+      localStorage.removeItem('connectfour_is_spectator');
+    } catch (error) {
+      console.error('Failed to clear game state:', error);
+    }
+  }, []);
   const [gameInvitations, setGameInvitations] = useState<Array<{
     gameID: string;
     roomName: string;
@@ -46,10 +82,56 @@ const useConnectFourPage = () => {
 
   // Initial load and real-time lobby updates
   useEffect(() => {
-    if (!user || !user.username) {
+    // Give a small delay to allow user context to be properly set
+    if (!user) {
+      return; // Wait for user to be loaded, don't redirect immediately
+    }
+    
+    if (!user.username) {
       navigate('/');
       return;
     }
+
+    // Try to restore previous game state
+    const savedState = loadGameState();
+    if (savedState && !currentGame) {
+      setCurrentGame(savedState.game);
+      setIsSpectator(savedState.spectator);
+      
+      // Rejoin the game via socket
+      if (socket) {
+        socket.emit('joinGame', savedState.game.gameID);
+        socket.emit('registerPresence', {
+          gameID: savedState.game.gameID,
+          playerID: user.username,
+          isSpectator: savedState.spectator,
+        });
+      }
+    }
+
+    // Check for pending invitation from chat
+    const checkPendingInvitation = () => {
+      try {
+        const pendingInvitation = localStorage.getItem('connectfour_pending_invitation');
+        if (pendingInvitation && !currentGame) {
+          const invitation = JSON.parse(pendingInvitation);
+          // Clear the pending invitation
+          localStorage.removeItem('connectfour_pending_invitation');
+          
+          // Set the room code for auto-population
+          if (invitation.roomCode) {
+            setPendingRoomCode(invitation.roomCode);
+            alert(`Welcome! Room code "${invitation.roomCode}" can now be entered in the "Join by Code" field below.`);
+          } else {
+            alert(`Welcome! Look for "${invitation.roomName}" by ${invitation.inviterUsername} in the public games list below.`);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking pending invitation:', error);
+      }
+    };
+
+    checkPendingInvitation();
 
     // Fallback initial fetch
     loadGames();
@@ -75,7 +157,7 @@ const useConnectFourPage = () => {
         );
       };
     }
-  }, [user, navigate, loadGames, socket]);
+  }, [user, navigate, loadGames, socket, loadGameState, currentGame]);
 
   // Leave game (moved above socket handlers to satisfy hooks lint rules)
   const handleLeaveGame = useCallback(() => {
@@ -95,8 +177,9 @@ const useConnectFourPage = () => {
 
     setCurrentGame(null);
     setIsSpectator(false);
+    clearGameState();
     loadGames();
-  }, [currentGame, user, socket, isSpectator, loadGames]);
+  }, [currentGame, user, socket, isSpectator, loadGames, clearGameState]);
 
   // Socket event handlers
   useEffect(() => {
@@ -119,6 +202,7 @@ const useConnectFourPage = () => {
       // Update current game if it's the one we're in
       if (currentGame && currentGame.gameID === updatedGame.gameID) {
         setCurrentGame(updatedGame);
+        saveGameState(updatedGame, isSpectator);
 
         // Check if game is over
         if (updatedGame.state.status === 'OVER') {
@@ -174,7 +258,7 @@ const useConnectFourPage = () => {
       socket.off('playerDisconnected', handlePlayerDisconnected);
       socket.off('gameInvitation', handleGameInvitation);
     };
-  }, [currentGame, user, socket, handleLeaveGame]);
+  }, [currentGame, user, socket, handleLeaveGame, isSpectator, saveGameState]);
 
   // Create new room
   const handleCreateRoom = async (roomSettings: ConnectFourRoomSettings) => {
@@ -184,16 +268,39 @@ const useConnectFourPage = () => {
       const response = await createConnectFourRoom(user.username, roomSettings);
       setShowCreateModal(false);
 
-      // Show room code for private rooms
-      if (roomSettings.privacy !== 'PUBLIC' && response.roomCode) {
+      // Send chat invitations to friends for friends-only rooms
+      if (roomSettings.privacy === 'FRIENDS_ONLY' && roomSettings.invitedFriends) {
+        const { sendGameInvitation } = await import('../services/messageService');
+        for (const friendUsername of roomSettings.invitedFriends) {
+          try {
+            await sendGameInvitation(
+              user.username,
+              friendUsername,
+              response.gameID,
+              roomSettings.roomName,
+              'Connect Four',
+              response.roomCode
+            );
+          } catch (inviteError) {
+            // eslint-disable-next-line no-console
+            console.error(`Failed to send invitation to ${friendUsername}:`, inviteError);
+          }
+        }
         alert(
-          `Room created! Room code: ${response.roomCode}\n\nShare this code with others to let them join.`,
+          `Room created! Invitations sent to ${roomSettings.invitedFriends.length} friend(s) via chat.`
+        );
+      }
+      // Show room code for private rooms
+      else if (roomSettings.privacy === 'PRIVATE' && response.roomCode) {
+        alert(
+          `Room created! Room code: ${response.roomCode}\n\nShare this code with others to let them join, or send the code via direct message.`,
         );
       }
 
       // Join the created room
       setCurrentGame(response.game);
       setIsSpectator(false);
+      saveGameState(response.game, false);
       socket.emit('joinGame', response.gameID);
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -214,6 +321,7 @@ const useConnectFourPage = () => {
       const game = await joinConnectFourRoom(user.username, gameID, roomCode, asSpectator);
       setCurrentGame(game);
       setIsSpectator(asSpectator);
+      saveGameState(game, asSpectator);
       socket.emit('joinGame', gameID);
       // Register presence for auto-cleanup on disconnect
       socket.emit('registerPresence', {
@@ -236,6 +344,7 @@ const useConnectFourPage = () => {
       const game = await joinConnectFourRoomByCode(user.username, roomCode, false);
       setCurrentGame(game);
       setIsSpectator(false);
+      saveGameState(game, false);
       socket.emit('joinGame', game.gameID);
       socket.emit('registerPresence', {
         gameID: game.gameID,
@@ -272,6 +381,7 @@ const useConnectFourPage = () => {
       const game = await joinConnectFourRoom(user.username, gameID, roomCode, false);
       setCurrentGame(game);
       setIsSpectator(false);
+      saveGameState(game, false);
       socket.emit('joinGame', gameID);
       socket.emit('registerPresence', {
         gameID,
@@ -312,6 +422,7 @@ const useConnectFourPage = () => {
     handleAcceptInvitation,
     handleDeclineInvitation,
     error,
+    pendingRoomCode,
   };
 };
 

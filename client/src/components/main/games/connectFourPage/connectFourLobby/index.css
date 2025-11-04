@@ -182,6 +182,11 @@
   color: #6a1b9a;
 }
 
+.privacy-indicator {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
 .room-players p {
   margin: 5px 0;
   color: #7f8c8d;

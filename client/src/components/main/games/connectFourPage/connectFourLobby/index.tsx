@@ -7,6 +7,7 @@ interface ConnectFourLobbyProps {
   onCreateRoom: () => void;
   onJoinRoom: (gameID: string, roomCode?: string, asSpectator?: boolean) => void;
   onJoinByCode: (roomCode: string) => void;
+  initialRoomCode?: string;
 }
 
 /**
@@ -17,8 +18,9 @@ const ConnectFourLobby = ({
   onCreateRoom,
   onJoinRoom,
   onJoinByCode,
+  initialRoomCode,
 }: ConnectFourLobbyProps) => {
-  const [roomCodeInput, setRoomCodeInput] = useState('');
+  const [roomCodeInput, setRoomCodeInput] = useState(initialRoomCode || '');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'WAITING' | 'PLAYING'>('ALL');
 
   const filteredGames = games.filter(game => {
@@ -100,8 +102,12 @@ const ConnectFourLobby = ({
                     {game.state.status === 'WAITING_TO_START' ? 'Waiting' : 'Playing'}
                   </span>
                   <span className='players'>{game.players.length}/2 Players</span>
-                  {game.state.roomSettings.allowSpectators && (
+                  {game.state.roomSettings.allowSpectators && 
+                   game.state.roomSettings.privacy !== 'PRIVATE' && (
                     <span className='spectators-allowed'>👁️ Spectators Allowed</span>
+                  )}
+                  {game.state.roomSettings.privacy === 'PRIVATE' && (
+                    <span className='privacy-indicator'>🔒 Private Room</span>
                   )}
                 </div>
                 <div className='room-players'>
@@ -118,7 +124,8 @@ const ConnectFourLobby = ({
                     Join Game
                   </button>
                 )}
-                {game.state.roomSettings.allowSpectators && (
+                {game.state.roomSettings.allowSpectators && 
+                 game.state.roomSettings.privacy !== 'PRIVATE' && (
                   <button
                     className='btn-spectate'
                     onClick={() => onJoinRoom(game.gameID, undefined, true)}>

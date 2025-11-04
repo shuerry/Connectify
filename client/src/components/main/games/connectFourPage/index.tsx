@@ -24,6 +24,7 @@ const ConnectFourPage = () => {
     handleAcceptInvitation,
     handleDeclineInvitation,
     error,
+    pendingRoomCode,
   } = useConnectFourPage();
 
   // Wait for user context to be ready
@@ -49,6 +50,7 @@ const ConnectFourPage = () => {
           onCreateRoom={() => setShowCreateModal(true)}
           onJoinRoom={handleJoinRoom}
           onJoinByCode={handleJoinByCode}
+          initialRoomCode={pendingRoomCode || undefined}
         />
       ) : (
         <ConnectFourBoard
