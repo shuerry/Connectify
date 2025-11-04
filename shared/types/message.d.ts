@@ -6,17 +6,25 @@ import { Request } from 'express';
  * - `msg`: The text content of the message.
  * - `msgFrom`: The username of the user sending the message.
  * - `msgDateTime`: The date and time when the message was sent.
- * - `type`: The type of the message, either 'global', 'direct', or 'friendRequest'.
- * - `msgTo`: The username of the recipient (for direct messages and friend requests).
+ * - `type`: The type of the message, either 'global', 'direct', 'friendRequest', or 'gameInvitation'.
+ * - `msgTo`: The username of the recipient (for direct messages, friend requests, and game invitations).
  * - `friendRequestStatus`: The status of friend request ('pending', 'accepted', 'declined').
+ * - `gameInvitation`: Game invitation details (for game invitation messages).
  */
 export interface Message {
   msg: string;
   msgFrom: string;
   msgDateTime: Date;
-  type: 'global' | 'direct' | 'friendRequest';
+  type: 'global' | 'direct' | 'friendRequest' | 'gameInvitation';
   msgTo?: string;
   friendRequestStatus?: 'pending' | 'accepted' | 'declined';
+  gameInvitation?: {
+    gameID: string;
+    roomName: string;
+    roomCode?: string;
+    gameType: 'Connect Four';
+    status: 'pending' | 'accepted' | 'declined' | 'expired';
+  };
 }
 
 /**
@@ -25,9 +33,10 @@ export interface Message {
  * - `msg`: The text content of the message.
  * - `msgFrom`: The username of the user sending the message.
  * - `msgDateTime`: The date and time when the message was sent.
- * - `type`: The type of the message, either 'global', 'direct', or 'friendRequest'.
- * - `msgTo`: The username of the recipient (for direct messages and friend requests).
+ * - `type`: The type of the message, either 'global', 'direct', 'friendRequest', or 'gameInvitation'.
+ * - `msgTo`: The username of the recipient (for direct messages, friend requests, and game invitations).
  * - `friendRequestStatus`: The status of friend request ('pending', 'accepted', 'declined').
+ * - `gameInvitation`: Game invitation details (for game invitation messages).
  */
 export interface DatabaseMessage extends Message {
   _id: ObjectId;

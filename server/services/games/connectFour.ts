@@ -199,7 +199,7 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       throw new Error(`Invalid move: column must be between 0 and ${COLS - 1}`);
     }
 
-    // Column-full is handled in applyMove as a draw condition
+    // Note: Column full check moved to applyMove to handle as draw condition
   }
 
   /**
@@ -211,14 +211,14 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
     const { playerID, move: gameMove } = move;
     const row = this._getLowestEmptyRow(gameMove.column);
 
+    // If column is full, end the game as a draw
     if (row === null) {
-      // Column is full -> treat as draw
       this.state = {
         ...this.state,
         status: 'OVER',
         moves: [...this.state.moves, { ...gameMove, playerID }],
         totalMoves: this.state.totalMoves + 1,
-        winners: [],
+        winners: [], // Empty array indicates a draw
         lastMoveColumn: gameMove.column,
       };
       return;
@@ -298,6 +298,11 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
   public addSpectator(playerID: string): void {
     if (!this.state.roomSettings.allowSpectators) {
       throw new Error('Spectators are not allowed in this room');
+    }
+
+    // Disable spectators for private rooms
+    if (this.state.roomSettings.privacy === 'PRIVATE') {
+      throw new Error('Spectators are not allowed in private rooms');
     }
 
     if (this.state.spectators.includes(playerID)) {

@@ -1,6 +1,6 @@
 import express, { Response, Request } from 'express';
 import { FakeSOSocket, AddMessageRequest } from '../types/types';
-import { saveMessage, getMessages, getDirectMessages, updateFriendRequestStatus } from '../services/message.service';
+import { saveMessage, getMessages, getDirectMessages, updateFriendRequestStatus, sendGameInvitation, updateGameInvitationStatus } from '../services/message.service';
 
 const messageController = (socket: FakeSOSocket) => {
   const router = express.Router();
@@ -94,12 +94,58 @@ const messageController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Send a game invitation through chat.
+   */
+  const sendGameInvitationRoute = async (req: Request, res: Response): Promise<void> => {
+    try {
+      console.log('Received game invitation request:', req.body);
+      const { fromUsername, toUsername, gameID, roomName, gameType, roomCode } = req.body;
+      console.log('Calling sendGameInvitation service...');
+      const result = await sendGameInvitation(fromUsername, toUsername, gameID, roomName, gameType, roomCode);
+      console.log('Service result:', result);
+
+      if ('error' in result) {
+        console.log('Service returned error:', result.error);
+        throw new Error(result.error);
+      }
+
+      console.log('Emitting messageUpdate and sending response');
+      socket.emit('messageUpdate', { msg: result });
+      res.json(result);
+    } catch (err: unknown) {
+      console.error('Controller error:', err);
+      res.status(500).send(`Error when sending game invitation: ${(err as Error).message}`);
+    }
+  };
+
+  /**
+   * Handle game invitation response (accept/decline).
+   */
+  const respondToGameInvitationRoute = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { messageId, status, responderUsername } = req.body;
+      const result = await updateGameInvitationStatus(messageId, status, responderUsername);
+
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+
+      socket.emit('messageUpdate', { msg: result });
+      res.json(result);
+    } catch (err: unknown) {
+      res.status(500).send(`Error when responding to game invitation: ${(err as Error).message}`);
+    }
+  };
+
   // Add appropriate HTTP verbs and their endpoints to the router
   router.post('/addMessage', addMessageRoute);
   router.get('/getMessages', getMessagesRoute);
   router.post('/addDirectMessage', addDirectMessageRoute);
   router.get('/getDirectMessages', getDirectMessagesRoute);
   router.post('/respondToFriendRequest', respondToFriendRequestRoute);
+  router.post('/sendGameInvitation', sendGameInvitationRoute);
+  router.post('/respondToGameInvitation', respondToGameInvitationRoute);
 
   return router;
 };
