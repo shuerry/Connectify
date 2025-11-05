@@ -1,6 +1,13 @@
 import express, { Response, Request } from 'express';
 import { FakeSOSocket, AddMessageRequest } from '../types/types';
-import { saveMessage, getMessages, getDirectMessages, updateFriendRequestStatus } from '../services/message.service';
+import { 
+  saveMessage, 
+  getMessages, 
+  getDirectMessages, 
+  updateFriendRequestStatus,
+  sendGameInvitation,
+  updateGameInvitationStatus
+} from '../services/message.service';
 
 const messageController = (socket: FakeSOSocket) => {
   const router = express.Router();

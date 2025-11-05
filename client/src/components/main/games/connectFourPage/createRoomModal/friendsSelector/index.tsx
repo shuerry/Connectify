@@ -34,7 +34,7 @@ const FriendsSelector = ({ selectedFriends, onFriendsChange }: FriendsSelectorPr
         const response = await fetch(`/api/user/relations/${user.username}`, {
           credentials: 'include',
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           // Transform friends list to include mock online status
@@ -61,7 +61,7 @@ const FriendsSelector = ({ selectedFriends, onFriendsChange }: FriendsSelectorPr
 
   // Filter friends based on search term
   const filteredFriends = friends.filter(friend =>
-    friend.username.toLowerCase().includes(searchTerm.toLowerCase())
+    friend.username.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleFriendToggle = (username: string) => {
@@ -82,8 +82,8 @@ const FriendsSelector = ({ selectedFriends, onFriendsChange }: FriendsSelectorPr
 
   if (loading) {
     return (
-      <div className="friends-selector">
-        <div className="friends-loading">
+      <div className='friends-selector'>
+        <div className='friends-loading'>
           <span>Loading friends...</span>
         </div>
       </div>
@@ -91,70 +91,67 @@ const FriendsSelector = ({ selectedFriends, onFriendsChange }: FriendsSelectorPr
   }
 
   return (
-    <div className="friends-selector">
-      <div className="friends-header">
+    <div className='friends-selector'>
+      <div className='friends-header'>
         <h4>Select Friends to Invite</h4>
-        <div className="friends-actions">
-          <button 
-            type="button" 
-            className="btn-select-all"
+        <div className='friends-actions'>
+          <button
+            type='button'
+            className='btn-select-all'
             onClick={selectAllFriends}
-            disabled={filteredFriends.length === 0}
-          >
+            disabled={filteredFriends.length === 0}>
             Select All
           </button>
-          <button 
-            type="button" 
-            className="btn-clear-all"
+          <button
+            type='button'
+            className='btn-clear-all'
             onClick={clearAllFriends}
-            disabled={selectedFriends.length === 0}
-          >
+            disabled={selectedFriends.length === 0}>
             Clear All
           </button>
         </div>
       </div>
 
       {friends.length === 0 ? (
-        <div className="no-friends">
+        <div className='no-friends'>
           <p>You don't have any friends yet.</p>
           <p>Add some friends to invite them to your games!</p>
         </div>
       ) : (
         <>
-          <div className="friends-search">
+          <div className='friends-search'>
             <input
-              type="text"
-              placeholder="Search friends..."
+              type='text'
+              placeholder='Search friends...'
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="friends-search-input"
+              onChange={e => setSearchTerm(e.target.value)}
+              className='friends-search-input'
             />
           </div>
 
-          <div className="friends-list">
+          <div className='friends-list'>
             {filteredFriends.length === 0 ? (
-              <p className="no-results">No friends match your search.</p>
+              <p className='no-results'>No friends match your search.</p>
             ) : (
-              filteredFriends.map((friend) => (
+              filteredFriends.map(friend => (
                 <div
                   key={friend.username}
                   className={`friend-item ${selectedFriends.includes(friend.username) ? 'selected' : ''}`}
-                  onClick={() => handleFriendToggle(friend.username)}
-                >
-                  <div className="friend-info">
-                    <div className="friend-avatar">
+                  onClick={() => handleFriendToggle(friend.username)}>
+                  <div className='friend-info'>
+                    <div className='friend-avatar'>
                       <span>{friend.username.charAt(0).toUpperCase()}</span>
                     </div>
-                    <div className="friend-details">
-                      <span className="friend-name">{friend.username}</span>
+                    <div className='friend-details'>
+                      <span className='friend-name'>{friend.username}</span>
                       <span className={`friend-status ${friend.isOnline ? 'online' : 'offline'}`}>
                         {friend.isOnline ? '🟢 Online' : '⚫ Offline'}
                       </span>
                     </div>
                   </div>
-                  <div className="friend-checkbox">
+                  <div className='friend-checkbox'>
                     <input
-                      type="checkbox"
+                      type='checkbox'
                       checked={selectedFriends.includes(friend.username)}
                       onChange={() => handleFriendToggle(friend.username)}
                     />
@@ -165,8 +162,9 @@ const FriendsSelector = ({ selectedFriends, onFriendsChange }: FriendsSelectorPr
           </div>
 
           {selectedFriends.length > 0 && (
-            <div className="selected-summary">
-              <strong>{selectedFriends.length}</strong> friend{selectedFriends.length !== 1 ? 's' : ''} selected
+            <div className='selected-summary'>
+              <strong>{selectedFriends.length}</strong> friend
+              {selectedFriends.length !== 1 ? 's' : ''} selected
             </div>
           )}
         </>

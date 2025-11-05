@@ -38,30 +38,35 @@ const MessageCard = ({
   const handleGameInvitationResponse = async (status: 'accepted' | 'declined') => {
     try {
       await respondToGameInvitation(message._id.toString(), status, currentUser.username);
-      
+
       // If accepted, copy room code and redirect to Connect Four page
       if (status === 'accepted' && message.gameInvitation) {
         try {
           // If there's a room code, copy it to clipboard
           if (message.gameInvitation.roomCode) {
             await navigator.clipboard.writeText(message.gameInvitation.roomCode);
-            alert(`Room code "${message.gameInvitation.roomCode}" copied to clipboard! You can now join the game on the Connect Four page.`);
+            alert(
+              `Room code "${message.gameInvitation.roomCode}" copied to clipboard! You can now join the game on the Connect Four page.`,
+            );
           } else {
             alert('Redirecting to Connect Four page. Look for the room in the public games list.');
           }
-          
+
           // Save the invitation details for easy access on the Connect Four page
           try {
-            localStorage.setItem('connectfour_pending_invitation', JSON.stringify({
-              gameID: message.gameInvitation.gameID,
-              roomCode: message.gameInvitation.roomCode,
-              roomName: message.gameInvitation.roomName,
-              inviterUsername: message.msgFrom,
-            }));
+            localStorage.setItem(
+              'connectfour_pending_invitation',
+              JSON.stringify({
+                gameID: message.gameInvitation.gameID,
+                roomCode: message.gameInvitation.roomCode,
+                roomName: message.gameInvitation.roomName,
+                inviterUsername: message.msgFrom,
+              }),
+            );
           } catch (storageError) {
             console.error('Failed to save invitation details:', storageError);
           }
-          
+
           // Navigate to Connect Four page using React Router
           navigate('/games/connectfour');
         } catch (error) {
@@ -70,7 +75,7 @@ const MessageCard = ({
           navigate('/games/connectfour');
         }
       }
-      
+
       if (onMessageUpdate) {
         onMessageUpdate();
       }
@@ -115,16 +120,14 @@ const MessageCard = ({
           <div className='game-invitation-actions'>
             {message.gameInvitation?.status === 'pending' && (
               <>
-                <button 
-                  className='accept-button game-accept' 
-                  onClick={() => handleGameInvitationResponse('accepted')}
-                >
+                <button
+                  className='accept-button game-accept'
+                  onClick={() => handleGameInvitationResponse('accepted')}>
                   {message.gameInvitation?.roomCode ? 'Copy Code & Go' : 'Go to Game'}
                 </button>
-                <button 
-                  className='decline-button game-decline' 
-                  onClick={() => handleGameInvitationResponse('declined')}
-                >
+                <button
+                  className='decline-button game-decline'
+                  onClick={() => handleGameInvitationResponse('declined')}>
                   Decline
                 </button>
               </>

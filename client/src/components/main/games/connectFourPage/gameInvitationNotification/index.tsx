@@ -37,30 +37,26 @@ const GameInvitationNotification = ({
   if (!isVisible) return null;
 
   return (
-    <div className="game-invitation-notification">
-      <div className="invitation-content">
-        <div className="invitation-header">
-          <span className="invitation-icon">🎮</span>
-          <div className="invitation-info">
+    <div className='game-invitation-notification'>
+      <div className='invitation-content'>
+        <div className='invitation-header'>
+          <span className='invitation-icon'>🎮</span>
+          <div className='invitation-info'>
             <h4>Game Invitation</h4>
             <p>
               <strong>{invitation.inviterUsername}</strong> invited you to join{' '}
               <strong>"{invitation.roomName}"</strong>
             </p>
           </div>
-          <button
-            className="btn-close-invitation"
-            onClick={handleDecline}
-            title="Dismiss"
-          >
+          <button className='btn-close-invitation' onClick={handleDecline} title='Dismiss'>
             ×
           </button>
         </div>
-        <div className="invitation-actions">
-          <button className="btn-decline" onClick={handleDecline}>
+        <div className='invitation-actions'>
+          <button className='btn-decline' onClick={handleDecline}>
             Decline
           </button>
-          <button className="btn-accept" onClick={handleAccept}>
+          <button className='btn-accept' onClick={handleAccept}>
             Accept & Join
           </button>
         </div>

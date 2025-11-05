@@ -121,7 +121,7 @@ const sendGameInvitation = async (
       gameType,
       roomCode,
     });
-    
+
     const res = await api.post(`${MESSAGE_API_URL}/sendGameInvitation`, {
       fromUsername,
       toUsername,
@@ -130,10 +130,10 @@ const sendGameInvitation = async (
       gameType,
       roomCode,
     });
-    
+
     console.log('Response status:', res.status);
     console.log('Response data:', res.data);
-    
+
     if (res.status !== 200) {
       throw new Error(`Server returned status ${res.status}: ${res.statusText}`);
     }
@@ -189,12 +189,12 @@ const getMessages = async (): Promise<DatabaseMessage[]> => {
   return res.data;
 };
 
-export { 
-  addMessage, 
-  getMessages, 
-  addDirectMessage, 
-  getDirectMessages, 
-  respondToFriendRequest, 
-  sendGameInvitation, 
-  respondToGameInvitation 
+export {
+  addMessage,
+  getMessages,
+  addDirectMessage,
+  getDirectMessages,
+  respondToFriendRequest,
+  sendGameInvitation,
+  respondToGameInvitation,
 };

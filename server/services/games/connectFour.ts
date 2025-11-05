@@ -211,17 +211,9 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
     const { playerID, move: gameMove } = move;
     const row = this._getLowestEmptyRow(gameMove.column);
 
-    // If column is full, end the game as a draw
+    // If column is full, reject the move (don't end game as draw)
     if (row === null) {
-      this.state = {
-        ...this.state,
-        status: 'OVER',
-        moves: [...this.state.moves, { ...gameMove, playerID }],
-        totalMoves: this.state.totalMoves + 1,
-        winners: [], // Empty array indicates a draw
-        lastMoveColumn: gameMove.column,
-      };
-      return;
+      throw new Error('Invalid move: column is full');
     }
 
     const playerColor = this._getPlayerColor(playerID);
@@ -245,8 +237,8 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
         winningPositions,
         lastMoveColumn: gameMove.column,
       };
-    } else if (this._isBoardFull()) {
-      // Draw
+    } else if (newBoard[0].every(cell => cell !== null)) {
+      // Draw - check if the new board is full after placing the piece
       this.state = {
         ...this.state,
         board: newBoard,

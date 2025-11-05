@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import './index.css';
 import { ConnectFourRoomSettings } from '../../../../../types/types';
-import FriendsSelector from './friendsSelector';
 
 interface CreateRoomModalProps {
   onClose: () => void;
@@ -15,7 +14,6 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
   const [roomName, setRoomName] = useState('');
   const [privacy, setPrivacy] = useState<'PUBLIC' | 'PRIVATE' | 'FRIENDS_ONLY'>('PUBLIC');
   const [allowSpectators, setAllowSpectators] = useState(true);
-  const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [error, setError] = useState('');
 
   // Automatically disable spectators for private rooms
@@ -49,7 +47,6 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
       roomName: roomName.trim(),
       privacy,
       allowSpectators,
-      invitedFriends: privacy === 'FRIENDS_ONLY' ? selectedFriends : undefined,
     };
 
     onCreate(roomSettings);
@@ -126,7 +123,7 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
                 />
                 <div>
                   <strong> Friends Only</strong>
-                  <p>Only your friends can join!</p>
+                  <p>Only visible to your friends in the lobby</p>
                 </div>
               </label>
             </div>
@@ -143,24 +140,11 @@ const CreateRoomModal = ({ onClose, onCreate }: CreateRoomModalProps) => {
               <span>Allow Spectators</span>
             </label>
             <p className='help-text'>
-              {privacy === 'PRIVATE' 
-                ? 'Spectators are disabled for private rooms to maintain privacy' 
-                : 'Let other players watch your game without interfering'
-              }
+              {privacy === 'PRIVATE'
+                ? 'Spectators are disabled for private rooms to maintain privacy'
+                : 'Let other players watch your game without interfering'}
             </p>
           </div>
-
-          {privacy === 'FRIENDS_ONLY' && (
-            <div className='form-group'>
-              <FriendsSelector
-                selectedFriends={selectedFriends}
-                onFriendsChange={setSelectedFriends}
-              />
-              <p className='help-text'>
-                Selected friends will receive an invitation to join your game
-              </p>
-            </div>
-          )}
 
           <div className='modal-actions'>
             <button type='button' className='btn-cancel' onClick={onClose}>

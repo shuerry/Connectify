@@ -41,10 +41,10 @@ const RoomShareModal = ({ onClose, gameInstance }: RoomShareModalProps) => {
   }, [user]);
 
   const handleFriendToggle = (friendUsername: string) => {
-    setSelectedFriends(prev => 
+    setSelectedFriends(prev =>
       prev.includes(friendUsername)
         ? prev.filter(f => f !== friendUsername)
-        : [...prev, friendUsername]
+        : [...prev, friendUsername],
     );
   };
 
@@ -71,16 +71,16 @@ const RoomShareModal = ({ onClose, gameInstance }: RoomShareModalProps) => {
             gameID: gameInstance.gameID,
             roomName: roomSettings.roomName,
             gameType: 'Connect Four',
-            roomCode: roomSettings.roomCode
+            roomCode: roomSettings.roomCode,
           });
-          
+
           await sendGameInvitation(
             user.username,
             friendUsername,
             gameInstance.gameID,
             roomSettings.roomName,
             'Connect Four',
-            roomSettings.roomCode
+            roomSettings.roomCode,
           );
           console.log(`Successfully sent invitation to ${friendUsername}`);
           sentCount++;
@@ -112,13 +112,17 @@ const RoomShareModal = ({ onClose, gameInstance }: RoomShareModalProps) => {
         <div className='room-share-modal' onClick={e => e.stopPropagation()}>
           <div className='modal-header'>
             <h2>Share Room</h2>
-            <button className='btn-close' onClick={onClose}>×</button>
+            <button className='btn-close' onClick={onClose}>
+              ×
+            </button>
           </div>
           <div className='modal-content'>
             <p>This room cannot be shared as it has no room code.</p>
           </div>
           <div className='modal-actions'>
-            <button className='btn-cancel' onClick={onClose}>Close</button>
+            <button className='btn-cancel' onClick={onClose}>
+              Close
+            </button>
           </div>
         </div>
       </div>
@@ -130,12 +134,16 @@ const RoomShareModal = ({ onClose, gameInstance }: RoomShareModalProps) => {
       <div className='room-share-modal' onClick={e => e.stopPropagation()}>
         <div className='modal-header'>
           <h2>Share Room: {gameInstance.state.roomSettings.roomName}</h2>
-          <button className='btn-close' onClick={onClose}>×</button>
+          <button className='btn-close' onClick={onClose}>
+            ×
+          </button>
         </div>
 
         <div className='modal-content'>
           <div className='room-info'>
-            <p><strong>Room Code:</strong> {gameInstance.state.roomSettings.roomCode}</p>
+            <p>
+              <strong>Room Code:</strong> {gameInstance.state.roomSettings.roomCode}
+            </p>
             <p className='help-text'>
               Select friends to send them a direct message with the room invitation and code.
             </p>
@@ -172,11 +180,10 @@ const RoomShareModal = ({ onClose, gameInstance }: RoomShareModalProps) => {
           <button className='btn-cancel' onClick={onClose}>
             Cancel
           </button>
-          <button 
-            className='btn-share' 
+          <button
+            className='btn-share'
             onClick={handleSendInvitations}
-            disabled={selectedFriends.length === 0 || isSending}
-          >
+            disabled={selectedFriends.length === 0 || isSending}>
             {isSending ? 'Sending...' : `Send to ${selectedFriends.length} Friend(s)`}
           </button>
         </div>

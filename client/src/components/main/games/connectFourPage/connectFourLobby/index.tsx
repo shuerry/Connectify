@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './index.css';
 import { GameInstance, ConnectFourGameState } from '../../../../../types/types';
+import { getRelations } from '../../../../../services/userService';
 
 interface ConnectFourLobbyProps {
   games: GameInstance<ConnectFourGameState>[];
@@ -8,6 +9,7 @@ interface ConnectFourLobbyProps {
   onJoinRoom: (gameID: string, roomCode?: string, asSpectator?: boolean) => void;
   onJoinByCode: (roomCode: string) => void;
   initialRoomCode?: string;
+  currentUser: string;
 }
 
 /**
@@ -19,16 +21,52 @@ const ConnectFourLobby = ({
   onJoinRoom,
   onJoinByCode,
   initialRoomCode,
+  currentUser,
 }: ConnectFourLobbyProps) => {
   const [roomCodeInput, setRoomCodeInput] = useState(initialRoomCode || '');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'WAITING' | 'PLAYING'>('ALL');
+  const [privacyFilter, setPrivacyFilter] = useState<'ALL' | 'PUBLIC' | 'FRIENDS_ONLY'>('ALL');
+  const [friends, setFriends] = useState<string[]>([]);
+
+  // Load friends list
+  useEffect(() => {
+    const loadFriends = async () => {
+      try {
+        const relations = await getRelations(currentUser);
+        setFriends(relations.friends || []);
+      } catch (error) {
+        console.error('Failed to load friends:', error);
+        setFriends([]);
+      }
+    };
+
+    if (currentUser) {
+      loadFriends();
+    }
+  }, [currentUser]);
 
   const filteredGames = games.filter(game => {
-    // Only show public rooms in the lobby
-    if (game.state.roomSettings.privacy !== 'PUBLIC') {
-      return false;
+    const { privacy } = game.state.roomSettings;
+    
+    // First apply privacy filter
+    let showRoom = false;
+    
+    if (privacy === 'PUBLIC') {
+      // Show public rooms if filter allows
+      showRoom = privacyFilter === 'ALL' || privacyFilter === 'PUBLIC';
+    } else if (privacy === 'FRIENDS_ONLY') {
+      // Show friends-only rooms only to friends of the creator and if filter allows
+      const roomCreator = game.state.player1;
+      const isFriendOfCreator =
+        roomCreator === currentUser || (roomCreator && friends.includes(roomCreator));
+      
+      showRoom = !!isFriendOfCreator && (privacyFilter === 'ALL' || privacyFilter === 'FRIENDS_ONLY');
     }
-
+    // Don't show private rooms in the lobby (they need room codes)
+    
+    if (!showRoom) return false;
+    
+    // Then apply status filter
     if (statusFilter === 'ALL') return true;
     if (statusFilter === 'WAITING') return game.state.status === 'WAITING_TO_START';
     if (statusFilter === 'PLAYING') return game.state.status === 'IN_PROGRESS';
@@ -69,27 +107,62 @@ const ConnectFourLobby = ({
       </div>
 
       <div className='lobby-filters'>
-        <button
-          className={statusFilter === 'ALL' ? 'active' : ''}
-          onClick={() => setStatusFilter('ALL')}>
-          All Rooms
-        </button>
-        <button
-          className={statusFilter === 'WAITING' ? 'active' : ''}
-          onClick={() => setStatusFilter('WAITING')}>
-          Waiting
-        </button>
-        <button
-          className={statusFilter === 'PLAYING' ? 'active' : ''}
-          onClick={() => setStatusFilter('PLAYING')}>
-          Playing
-        </button>
+        <div className='filter-section'>
+          <h4>Status</h4>
+          <div className='filter-buttons'>
+            <button
+              className={statusFilter === 'ALL' ? 'active' : ''}
+              onClick={() => setStatusFilter('ALL')}>
+              All
+            </button>
+            <button
+              className={statusFilter === 'WAITING' ? 'active' : ''}
+              onClick={() => setStatusFilter('WAITING')}>
+              Waiting
+            </button>
+            <button
+              className={statusFilter === 'PLAYING' ? 'active' : ''}
+              onClick={() => setStatusFilter('PLAYING')}>
+              Playing
+            </button>
+          </div>
+        </div>
+        
+        <div className='filter-section'>
+          <h4>Room Type</h4>
+          <div className='filter-buttons'>
+            <button
+              className={privacyFilter === 'ALL' ? 'active' : ''}
+              onClick={() => setPrivacyFilter('ALL')}>
+              All Rooms
+            </button>
+            <button
+              className={privacyFilter === 'PUBLIC' ? 'active' : ''}
+              onClick={() => setPrivacyFilter('PUBLIC')}>
+               Public
+            </button>
+            <button
+              className={privacyFilter === 'FRIENDS_ONLY' ? 'active' : ''}
+              onClick={() => setPrivacyFilter('FRIENDS_ONLY')}>
+              👥 Friends
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className='rooms-header'>
+        <h3>Available Rooms ({filteredGames.length})</h3>
       </div>
 
       <div className='rooms-list'>
         {filteredGames.length === 0 ? (
           <div className='no-rooms'>
-            <p>No {statusFilter !== 'ALL' ? statusFilter.toLowerCase() : ''} rooms available</p>
+            <p>
+              No {statusFilter !== 'ALL' ? statusFilter.toLowerCase() : ''}{' '}
+              {privacyFilter !== 'ALL' ? 
+                (privacyFilter === 'PUBLIC' ? 'public' : 'friends-only') : ''
+              } rooms available
+            </p>
             <p>Create a new room to get started!</p>
           </div>
         ) : (
@@ -101,13 +174,15 @@ const ConnectFourLobby = ({
                   <span className={`status ${game.state.status.toLowerCase()}`}>
                     {game.state.status === 'WAITING_TO_START' ? 'Waiting' : 'Playing'}
                   </span>
-                  <span className='players'>{game.players.length}/2 Players</span>
-                  {game.state.roomSettings.allowSpectators && 
-                   game.state.roomSettings.privacy !== 'PRIVATE' && (
-                    <span className='spectators-allowed'>👁️ Spectators Allowed</span>
-                  )}
+                  {game.state.roomSettings.allowSpectators &&
+                    game.state.roomSettings.privacy !== 'PRIVATE' && (
+                      <span className='spectators-allowed'>👁️ Spectators Allowed</span>
+                    )}
                   {game.state.roomSettings.privacy === 'PRIVATE' && (
                     <span className='privacy-indicator'>🔒 Private Room</span>
+                  )}
+                  {game.state.roomSettings.privacy === 'FRIENDS_ONLY' && (
+                    <span className='privacy-indicator friends-only'>👥 Friends Only</span>
                   )}
                 </div>
                 <div className='room-players'>
@@ -124,14 +199,14 @@ const ConnectFourLobby = ({
                     Join Game
                   </button>
                 )}
-                {game.state.roomSettings.allowSpectators && 
-                 game.state.roomSettings.privacy !== 'PRIVATE' && (
-                  <button
-                    className='btn-spectate'
-                    onClick={() => onJoinRoom(game.gameID, undefined, true)}>
-                    Spectate
-                  </button>
-                )}
+                {game.state.roomSettings.allowSpectators &&
+                  game.state.roomSettings.privacy !== 'PRIVATE' && (
+                    <button
+                      className='btn-spectate'
+                      onClick={() => onJoinRoom(game.gameID, undefined, true)}>
+                      Spectate
+                    </button>
+                  )}
               </div>
             </div>
           ))

@@ -177,7 +177,6 @@ export interface ConnectFourRoomSettings {
   privacy: RoomPrivacy;
   allowSpectators: boolean;
   roomCode?: string;
-  invitedFriends?: string[]; // List of specifically invited friends
 }
 
 /**

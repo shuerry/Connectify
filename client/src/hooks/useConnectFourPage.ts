@@ -27,21 +27,30 @@ const useConnectFourPage = () => {
   const [isSpectator, setIsSpectator] = useState(false);
   const [pendingRoomCode, setPendingRoomCode] = useState<string | null>(null);
 
-  // Persistence functions
-  const saveGameState = useCallback((game: GameInstance<ConnectFourGameState>, spectator: boolean) => {
-    try {
-      localStorage.setItem('connectfour_current_game', JSON.stringify(game));
-      localStorage.setItem('connectfour_is_spectator', JSON.stringify(spectator));
-    } catch (error) {
-      console.error('Failed to save game state:', error);
-    }
-  }, []);
+  // Persistence functions - user-specific storage
+  const saveGameState = useCallback(
+    (game: GameInstance<ConnectFourGameState>, spectator: boolean) => {
+      try {
+        if (!user?.username) return;
+        const gameKey = `connectfour_current_game_${user.username}`;
+        const spectatorKey = `connectfour_is_spectator_${user.username}`;
+        localStorage.setItem(gameKey, JSON.stringify(game));
+        localStorage.setItem(spectatorKey, JSON.stringify(spectator));
+      } catch (error) {
+        console.error('Failed to save game state:', error);
+      }
+    },
+    [user?.username],
+  );
 
   const loadGameState = useCallback(() => {
     try {
-      const savedGame = localStorage.getItem('connectfour_current_game');
-      const savedSpectator = localStorage.getItem('connectfour_is_spectator');
-      
+      if (!user?.username) return null;
+      const gameKey = `connectfour_current_game_${user.username}`;
+      const spectatorKey = `connectfour_is_spectator_${user.username}`;
+      const savedGame = localStorage.getItem(gameKey);
+      const savedSpectator = localStorage.getItem(spectatorKey);
+
       if (savedGame && savedSpectator) {
         const game = JSON.parse(savedGame) as GameInstance<ConnectFourGameState>;
         const spectator = JSON.parse(savedSpectator) as boolean;
@@ -51,22 +60,20 @@ const useConnectFourPage = () => {
       console.error('Failed to load game state:', error);
     }
     return null;
-  }, []);
+  }, [user?.username]);
 
   const clearGameState = useCallback(() => {
     try {
-      localStorage.removeItem('connectfour_current_game');
-      localStorage.removeItem('connectfour_is_spectator');
+      if (!user?.username) return;
+      const gameKey = `connectfour_current_game_${user.username}`;
+      const spectatorKey = `connectfour_is_spectator_${user.username}`;
+      localStorage.removeItem(gameKey);
+      localStorage.removeItem(spectatorKey);
     } catch (error) {
       console.error('Failed to clear game state:', error);
     }
-  }, []);
-  const [gameInvitations, setGameInvitations] = useState<Array<{
-    gameID: string;
-    roomName: string;
-    inviterUsername: string;
-    roomCode?: string;
-  }>>([]);
+  }, [user?.username]);
+
 
   // Load available games (fallback to HTTP)
   const loadGames = useCallback(async () => {
@@ -86,7 +93,7 @@ const useConnectFourPage = () => {
     if (!user) {
       return; // Wait for user to be loaded, don't redirect immediately
     }
-    
+
     if (!user.username) {
       navigate('/');
       return;
@@ -97,7 +104,7 @@ const useConnectFourPage = () => {
     if (savedState && !currentGame) {
       setCurrentGame(savedState.game);
       setIsSpectator(savedState.spectator);
-      
+
       // Rejoin the game via socket
       if (socket) {
         socket.emit('joinGame', savedState.game.gameID);
@@ -117,13 +124,17 @@ const useConnectFourPage = () => {
           const invitation = JSON.parse(pendingInvitation);
           // Clear the pending invitation
           localStorage.removeItem('connectfour_pending_invitation');
-          
+
           // Set the room code for auto-population
           if (invitation.roomCode) {
             setPendingRoomCode(invitation.roomCode);
-            alert(`Welcome! Room code "${invitation.roomCode}" can now be entered in the "Join by Code" field below.`);
+            alert(
+              `Welcome! Room code "${invitation.roomCode}" can now be entered in the "Join by Code" field below.`,
+            );
           } else {
-            alert(`Welcome! Look for "${invitation.roomName}" by ${invitation.inviterUsername} in the public games list below.`);
+            alert(
+              `Welcome! Look for "${invitation.roomName}" by ${invitation.inviterUsername} in the public games list below.`,
+            );
           }
         }
       } catch (error) {
@@ -145,7 +156,7 @@ const useConnectFourPage = () => {
         'connectFourRoomsUpdate',
         handleRoomsUpdate as unknown as (rooms: unknown[]) => void,
       );
-      
+
       // Join user room for notifications and request latest rooms
       socket.emit('joinUserRoom', user.username);
       socket.emit('requestConnectFourRooms');
@@ -235,28 +246,16 @@ const useConnectFourPage = () => {
       }
     };
 
-    const handleGameInvitation = (data: {
-      gameID: string;
-      roomName: string;
-      inviterUsername: string;
-      roomCode?: string;
-    }) => {
-      if (user && data.inviterUsername !== user.username) {
-        // Add invitation to the list
-        setGameInvitations(prev => [...prev, data]);
-      }
-    };
+
 
     socket.on('gameUpdate', handleGameUpdate);
     socket.on('gameError', handleGameError);
     socket.on('playerDisconnected', handlePlayerDisconnected);
-    socket.on('gameInvitation', handleGameInvitation);
 
     return () => {
       socket.off('gameUpdate', handleGameUpdate);
       socket.off('gameError', handleGameError);
       socket.off('playerDisconnected', handlePlayerDisconnected);
-      socket.off('gameInvitation', handleGameInvitation);
     };
   }, [currentGame, user, socket, handleLeaveGame, isSpectator, saveGameState]);
 
@@ -268,30 +267,8 @@ const useConnectFourPage = () => {
       const response = await createConnectFourRoom(user.username, roomSettings);
       setShowCreateModal(false);
 
-      // Send chat invitations to friends for friends-only rooms
-      if (roomSettings.privacy === 'FRIENDS_ONLY' && roomSettings.invitedFriends) {
-        const { sendGameInvitation } = await import('../services/messageService');
-        for (const friendUsername of roomSettings.invitedFriends) {
-          try {
-            await sendGameInvitation(
-              user.username,
-              friendUsername,
-              response.gameID,
-              roomSettings.roomName,
-              'Connect Four',
-              response.roomCode
-            );
-          } catch (inviteError) {
-            // eslint-disable-next-line no-console
-            console.error(`Failed to send invitation to ${friendUsername}:`, inviteError);
-          }
-        }
-        alert(
-          `Room created! Invitations sent to ${roomSettings.invitedFriends.length} friend(s) via chat.`
-        );
-      }
       // Show room code for private rooms
-      else if (roomSettings.privacy === 'PRIVATE' && response.roomCode) {
+      if (roomSettings.privacy === 'PRIVATE' && response.roomCode) {
         alert(
           `Room created! Room code: ${response.roomCode}\n\nShare this code with others to let them join, or send the code via direct message.`,
         );
@@ -373,37 +350,7 @@ const useConnectFourPage = () => {
     });
   };
 
-  // Handle invitation acceptance
-  const handleAcceptInvitation = async (gameID: string, roomCode?: string) => {
-    if (!user || !socket) return;
 
-    try {
-      const game = await joinConnectFourRoom(user.username, gameID, roomCode, false);
-      setCurrentGame(game);
-      setIsSpectator(false);
-      saveGameState(game, false);
-      socket.emit('joinGame', gameID);
-      socket.emit('registerPresence', {
-        gameID,
-        playerID: user.username,
-        isSpectator: false,
-      });
-
-      // Remove invitation from list
-      setGameInvitations(prev => prev.filter(inv => inv.gameID !== gameID));
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Error accepting invitation:', err);
-      alert('Failed to join game. It may no longer be available.');
-      // Remove invitation even if joining failed
-      setGameInvitations(prev => prev.filter(inv => inv.gameID !== gameID));
-    }
-  };
-
-  // Handle invitation decline
-  const handleDeclineInvitation = (gameID: string) => {
-    setGameInvitations(prev => prev.filter(inv => inv.gameID !== gameID));
-  };
 
   // (handleLeaveGame moved above)
 
@@ -418,9 +365,6 @@ const useConnectFourPage = () => {
     handleJoinByCode,
     handleMakeMove,
     handleLeaveGame,
-    gameInvitations,
-    handleAcceptInvitation,
-    handleDeclineInvitation,
     error,
     pendingRoomCode,
   };

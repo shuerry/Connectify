@@ -29,7 +29,7 @@ const gameController = (socket: FakeSOSocket) => {
       .filter(g => g.gameType === 'Connect Four') as unknown as ConnectFourGame[];
 
     return activeInstances
-      .filter(g => g.state.roomSettings.privacy === 'PUBLIC')
+      .filter(g => g.state.roomSettings.privacy === 'PUBLIC' || g.state.roomSettings.privacy === 'FRIENDS_ONLY')
       .map(g => g.getPublicRoomInfo());
   };
 
@@ -93,17 +93,7 @@ const gameController = (socket: FakeSOSocket) => {
         game: gameInstance,
       });
 
-      // Send invitations to selected friends for friends-only rooms
-      if (roomSettings.privacy === 'FRIENDS_ONLY' && roomSettings.invitedFriends) {
-        for (const friendUsername of roomSettings.invitedFriends) {
-          socket.to(`user:${friendUsername}`).emit('gameInvitation', {
-            gameID: newGameID,
-            roomName: roomSettings.roomName,
-            inviterUsername: playerID,
-            roomCode: connectFourGame.state.roomSettings.roomCode,
-          });
-        }
-      }
+
 
       // Notify lobby clients about updated public rooms
       broadcastConnectFourRooms();
@@ -142,6 +132,18 @@ const gameController = (socket: FakeSOSocket) => {
   const joinConnectFourRoom = async (req: JoinConnectFourRoomRequest, res: Response) => {
     try {
       const { gameID, playerID, roomCode, asSpectator } = req.body;
+
+      // Check if user is already in the game
+      const existingGame = GameManager.getInstance().getGame(gameID);
+      if (existingGame && existingGame.gameType === 'Connect Four') {
+        const connectFourGame = existingGame as unknown as ConnectFourGame;
+        const isPlayer = connectFourGame.state.player1 === playerID || connectFourGame.state.player2 === playerID;
+        const isSpectator = connectFourGame.state.spectators.includes(playerID);
+        
+        if (isPlayer || isSpectator) {
+          throw new Error('You are already in this game');
+        }
+      }
 
       const game = await GameManager.getInstance().joinGame(
         gameID,
@@ -200,6 +202,14 @@ const gameController = (socket: FakeSOSocket) => {
       }
 
       const gameID = match.id as GameInstanceID;
+
+      // Check if user is already in the game
+      const isPlayer = match.state.player1 === playerID || match.state.player2 === playerID;
+      const isSpectator = match.state.spectators.includes(playerID);
+      
+      if (isPlayer || isSpectator) {
+        throw new Error('You are already in this game');
+      }
 
       const game = await GameManager.getInstance().joinGame(
         gameID,

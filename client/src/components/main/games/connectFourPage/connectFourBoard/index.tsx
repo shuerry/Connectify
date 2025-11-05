@@ -46,8 +46,6 @@ const ConnectFourBoard = ({
     (showToast as unknown as { t?: number }).t = window.setTimeout(() => setToastMsg(null), 1800);
   }, []);
 
-
-
   // Handle column click
   const handleColumnClick = (col: number) => {
     if (status !== 'IN_PROGRESS') {
@@ -81,12 +79,12 @@ const ConnectFourBoard = ({
         showToast('Game is not in progress');
         return;
       }
-      
+
       if (!isPlayer) {
         showToast('You are not a player in this game');
         return;
       }
-      
+
       if (!isMyTurn) {
         showToast(`Not your turn - wait for ${currentTurn}'s move`);
         return;
@@ -209,11 +207,7 @@ const ConnectFourBoard = ({
                   key={`${rowIndex}-${colIndex}`}
                   className={`${getCellClassName(rowIndex, colIndex)} ${
                     cell ? 'occupied' : 'empty'
-                  } ${
-                    isMyTurn && status === 'IN_PROGRESS'
-                      ? 'clickable'
-                      : ''
-                  }`}
+                  } ${isMyTurn && status === 'IN_PROGRESS' ? 'clickable' : ''}`}
                   onClick={() => handleColumnClick(colIndex)}>
                   <div className='disc'></div>
                 </div>
@@ -235,9 +229,7 @@ const ConnectFourBoard = ({
       <div className='spectators-section'>
         <div className='spectators-header'>
           <h4>👀 Spectators ({spectators.length})</h4>
-          {spectators.length === 0 && (
-            <p className='no-spectators'>No spectators watching</p>
-          )}
+          {spectators.length === 0 && <p className='no-spectators'>No spectators watching</p>}
         </div>
         {spectators.length > 0 && (
           <div className='spectator-names'>
@@ -280,13 +272,10 @@ const ConnectFourBoard = ({
         <p>Click on a column or press keys 1-7 to drop your disc</p>
       </div>
       {toastMsg && <div className='cf-toast'>{toastMsg}</div>}
-      
+
       {/* Room Share Modal */}
       {showShareModal && (
-        <RoomShareModal 
-          onClose={() => setShowShareModal(false)} 
-          gameInstance={gameInstance}
-        />
+        <RoomShareModal onClose={() => setShowShareModal(false)} gameInstance={gameInstance} />
       )}
     </div>
   );
