@@ -26,7 +26,9 @@ const useAnswerPage = () => {
   const { user, socket } = useUserContext();
   const [questionID, setQuestionID] = useState<string>(qid || '');
   const [question, setQuestion] = useState<PopulatedDatabaseQuestion | null>(null);
-  const [reports, setReports] = useState<Array<{ reporter: string; reason: string; createdAt: string }>>([]);
+  const [reports, setReports] = useState<
+    Array<{ reporter: string; reason: string; createdAt: string }>
+  >([]);
 
   /**
    * Function to handle navigation to the "New Answer" page.

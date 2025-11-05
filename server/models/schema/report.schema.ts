@@ -11,5 +11,3 @@ const reportSchema: Schema = new Schema(
 );
 
 export default reportSchema;
-
-

@@ -44,9 +44,9 @@ const DirectMessage = () => {
               <h2>Chat with: {selectedUser}</h2>
               <div className='chat-messages'>
                 {messages.map(message => (
-                  <MessageCard 
-                    key={String(message._id)} 
-                    message={message} 
+                  <MessageCard
+                    key={String(message._id)}
+                    message={message}
                     onMessageUpdate={refreshMessages}
                   />
                 ))}

@@ -12,5 +12,3 @@ export interface DatabaseReport {
 const ReportModel: Model<DatabaseReport> = mongoose.model<DatabaseReport>('Report', reportSchema);
 
 export default ReportModel;
-
-

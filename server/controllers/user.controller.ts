@@ -13,12 +13,12 @@ import {
   getUsersList,
   loginUser,
   saveUser,
-    updateUser,
-    addFriend,
-    removeFriend,
-    blockUser,
-    unblockUser,
-    getRelations,
+  updateUser,
+  addFriend,
+  removeFriend,
+  blockUser,
+  unblockUser,
+  getRelations,
 } from '../services/user.service';
 
 const userController = (socket: FakeSOSocket) => {

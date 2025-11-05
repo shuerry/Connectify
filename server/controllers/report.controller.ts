@@ -1,5 +1,4 @@
-import express, { Response } from 'express';
-import { Request } from 'express';
+import express, { Response, Request } from 'express';
 import { createReport, getReportsForQuestion } from '../services/report.service';
 
 const reportController = () => {
@@ -39,5 +38,3 @@ const reportController = () => {
 };
 
 export default reportController;
-
-

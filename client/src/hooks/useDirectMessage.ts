@@ -79,7 +79,7 @@ const useDirectMessage = () => {
 
     const handleMessageUpdate = (messageUpdate: { msg: DatabaseMessage }) => {
       const { msg } = messageUpdate;
-      
+
       // Only update if this message is relevant to the current conversation
       if (
         (msg.msgFrom === user.username && msg.msgTo === selectedUser) ||
@@ -89,7 +89,7 @@ const useDirectMessage = () => {
           const existingIndex = prevMessages.findIndex(m => m._id === msg._id);
           if (existingIndex >= 0) {
             // Update existing message
-            return prevMessages.map((m, index) => index === existingIndex ? msg : m);
+            return prevMessages.map((m, index) => (index === existingIndex ? msg : m));
           } else {
             // Add new message
             return [...prevMessages, msg];

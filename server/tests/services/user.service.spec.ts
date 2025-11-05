@@ -412,7 +412,8 @@ describe('removeFriend', () => {
     };
 
     // Mock the first findOneAndUpdate call (removing from user's list)
-    jest.spyOn(UserModel, 'findOneAndUpdate')
+    jest
+      .spyOn(UserModel, 'findOneAndUpdate')
       .mockImplementationOnce((filter?: any) => {
         expect(filter.username).toBeDefined();
         const query: any = {};
@@ -625,10 +626,7 @@ describe('getUsersWhoBlocked', () => {
   });
 
   it('should return list of users who blocked the given user', async () => {
-    const blockingUsers = [
-      { username: 'blocker1' },
-      { username: 'blocker2' },
-    ];
+    const blockingUsers = [{ username: 'blocker1' }, { username: 'blocker2' }];
 
     jest.spyOn(UserModel, 'find').mockImplementation((filter?: any) => {
       expect(filter.blockedUsers).toBeDefined();

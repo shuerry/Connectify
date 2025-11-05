@@ -36,14 +36,15 @@ const UserCardView = (props: UserProps) => {
         const relations = await getRelations(currentUser.username);
         setIsFriend(relations.friends.includes(user.username));
         setIsBlocked(relations.blockedUsers.includes(user.username));
-        
+
         // Check if there's a pending friend request from current user to this user
         const messages = await getDirectMessages(currentUser.username, user.username);
         const hasPendingRequest = messages.some(
-          msg => msg.type === 'friendRequest' && 
-                 msg.msgFrom === currentUser.username && 
-                 msg.msgTo === user.username && 
-                 msg.friendRequestStatus === 'pending'
+          msg =>
+            msg.type === 'friendRequest' &&
+            msg.msgFrom === currentUser.username &&
+            msg.msgTo === user.username &&
+            msg.friendRequestStatus === 'pending',
         );
         setFriendRequestSent(hasPendingRequest);
       } catch {
@@ -67,7 +68,9 @@ const UserCardView = (props: UserProps) => {
         friendRequestStatus: 'pending',
       });
       setFriendRequestSent(true);
-    } catch {}
+    } catch {
+      throw new Error('Failed to send friend request');
+    }
   };
 
   const onRemoveFriend = async (e: React.MouseEvent) => {
@@ -75,7 +78,9 @@ const UserCardView = (props: UserProps) => {
     try {
       await removeFriend(currentUser.username, user.username);
       setIsFriend(false);
-    } catch {}
+    } catch {
+      throw new Error('Failed to remove friend');
+    }
   };
 
   const onBlockUser = async (e: React.MouseEvent) => {
@@ -84,7 +89,9 @@ const UserCardView = (props: UserProps) => {
       await blockUser(currentUser.username, user.username);
       setIsBlocked(true);
       setIsFriend(false); // Blocking removes from friends
-    } catch {}
+    } catch {
+      throw new Error('Failed to block user');
+    }
   };
 
   return (
@@ -98,13 +105,19 @@ const UserCardView = (props: UserProps) => {
       {currentUser.username !== user.username && !isBlocked && (
         <div style={{ display: 'flex', gap: 8 }}>
           {isFriend ? (
-            <button type='button' onClick={onRemoveFriend}>Remove Friend</button>
+            <button type='button' onClick={onRemoveFriend}>
+              Remove Friend
+            </button>
           ) : friendRequestSent ? (
             <span style={{ color: 'blue' }}>Friend Request Sent</span>
           ) : (
-            <button type='button' onClick={onSendFriendRequest}>Send Friend Request</button>
+            <button type='button' onClick={onSendFriendRequest}>
+              Send Friend Request
+            </button>
           )}
-          <button type='button' onClick={onBlockUser}>Block</button>
+          <button type='button' onClick={onBlockUser}>
+            Block
+          </button>
         </div>
       )}
       {currentUser.username !== user.username && isBlocked && (
