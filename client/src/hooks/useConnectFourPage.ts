@@ -37,6 +37,7 @@ const useConnectFourPage = () => {
         localStorage.setItem(gameKey, JSON.stringify(game));
         localStorage.setItem(spectatorKey, JSON.stringify(spectator));
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Failed to save game state:', error);
       }
     },
