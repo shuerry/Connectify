@@ -3,8 +3,6 @@ import { getTagCountMap } from '../services/tag.service';
 import TagModel from '../models/tags.model';
 import { DatabaseTag } from '../types/types';
 
-// Testing commits
-
 const tagController = () => {
   const router: Router = express.Router();
 
