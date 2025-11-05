@@ -28,7 +28,9 @@ const FriendsListPage = () => {
     try {
       await removeFriend(currentUser.username, target);
       setFriends(prev => prev.filter(u => u.username !== target));
-    } catch {}
+    } catch {
+      throw new Error('Failed to remove friend');
+    }
   };
 
   return (
@@ -46,7 +48,9 @@ const FriendsListPage = () => {
               <div className='userStats'>
                 <div>joined {new Date(u.dateJoined).toUTCString()}</div>
               </div>
-              <button type='button' onClick={() => onRemove(u.username)}>Remove</button>
+              <button type='button' onClick={() => onRemove(u.username)}>
+                Remove
+              </button>
             </div>
           ))}
         </div>
@@ -56,5 +60,3 @@ const FriendsListPage = () => {
 };
 
 export default FriendsListPage;
-
-

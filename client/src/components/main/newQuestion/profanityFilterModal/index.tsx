@@ -1,12 +1,6 @@
 import './index.css';
 
-const ProfanityFilterModal = ({
-  reason,
-  onClose,
-}: {
-  reason: string;
-  onClose: () => void;
-}) => {
+const ProfanityFilterModal = ({ reason, onClose }: { reason: string; onClose: () => void }) => {
   return (
     <div className='modal-backdrop' onClick={onClose}>
       <div className='modal-container' onClick={e => e.stopPropagation()}>
@@ -21,5 +15,3 @@ const ProfanityFilterModal = ({
 };
 
 export default ProfanityFilterModal;
-
-

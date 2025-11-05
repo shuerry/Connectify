@@ -44,7 +44,10 @@ export const getMessages = async (): Promise<DatabaseMessage[]> => {
  * @param {string} user2 - Second user's username
  * @returns {Promise<DatabaseMessage[]>} - An array of messages or an empty array if error occurs.
  */
-export const getDirectMessages = async (user1: string, user2: string): Promise<DatabaseMessage[]> => {
+export const getDirectMessages = async (
+  user1: string,
+  user2: string,
+): Promise<DatabaseMessage[]> => {
   try {
     const messages: DatabaseMessage[] = await MessageModel.find({
       $or: [

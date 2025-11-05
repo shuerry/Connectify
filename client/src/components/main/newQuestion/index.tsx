@@ -30,12 +30,7 @@ const NewQuestionPage = () => {
   const [filterReason, setFilterReason] = useState('');
 
   // Testing banned word to see if content filtering works, will switch to actual library or seeded data later
-  const bannedWords = useMemo(
-    () => [
-      'damn',
-    ],
-    []
-  );
+  const bannedWords = useMemo(() => ['damn'], []);
 
   const findBannedWords = (input: string): string[] => {
     const lower = input.toLowerCase();
@@ -93,7 +88,7 @@ const NewQuestionPage = () => {
             const hits = findBannedWords(textToCheck);
             if (hits.length > 0) {
               setFilterReason(
-                `Your post contains inappropriate language. Please remove: ${hits.join(', ')}`
+                `Your post contains inappropriate language. Please remove: ${hits.join(', ')}`,
               );
               setIsFilterModalOpen(true);
               return;
@@ -105,10 +100,7 @@ const NewQuestionPage = () => {
         <div className='mandatory_indicator'>* indicates mandatory fields</div>
       </div>
       {isFilterModalOpen && (
-        <ProfanityFilterModal
-          reason={filterReason}
-          onClose={() => setIsFilterModalOpen(false)}
-        />
+        <ProfanityFilterModal reason={filterReason} onClose={() => setIsFilterModalOpen(false)} />
       )}
     </Form>
   );

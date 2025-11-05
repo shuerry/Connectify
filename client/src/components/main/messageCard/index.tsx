@@ -14,11 +14,11 @@ import { respondToFriendRequest, respondToGameInvitation } from '../../../servic
  * @param message: The message object to display.
  * @param onMessageUpdate: Callback function to refresh messages after friend request response.
  */
-const MessageCard = ({ 
-  message, 
-  onMessageUpdate 
-}: { 
-  message: DatabaseMessage; 
+const MessageCard = ({
+  message,
+  onMessageUpdate,
+}: {
+  message: DatabaseMessage;
   onMessageUpdate?: () => void;
 }) => {
   const { user: currentUser } = useUserContext();
@@ -31,7 +31,7 @@ const MessageCard = ({
         onMessageUpdate();
       }
     } catch (error) {
-      console.error('Error responding to friend request:', error);
+      throw new Error('Failed to respond to friend request');
     }
   };
 
@@ -91,16 +91,14 @@ const MessageCard = ({
           <div className='friend-request-actions'>
             {message.friendRequestStatus === 'pending' && (
               <>
-                <button 
-                  className='accept-button' 
-                  onClick={() => handleFriendRequestResponse('accepted')}
-                >
+                <button
+                  className='accept-button'
+                  onClick={() => handleFriendRequestResponse('accepted')}>
                   Accept
                 </button>
-                <button 
-                  className='decline-button' 
-                  onClick={() => handleFriendRequestResponse('declined')}
-                >
+                <button
+                  className='decline-button'
+                  onClick={() => handleFriendRequestResponse('declined')}>
                   Decline
                 </button>
               </>

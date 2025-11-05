@@ -33,5 +33,3 @@ export const getReportsForQuestion = async (
     return { error: 'Error when fetching reports' };
   }
 };
-
-

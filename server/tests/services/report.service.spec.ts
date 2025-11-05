@@ -1,8 +1,7 @@
-import ReportModel from '../../models/reports.model';
+import ReportModel, { DatabaseReport } from '../../models/reports.model';
 import { Query } from 'mongoose';
 import UserModel from '../../models/users.model';
 import { createReport, getReportsForQuestion } from '../../services/report.service';
-import { DatabaseReport } from '../../models/reports.model';
 
 jest.mock('../../models/reports.model');
 jest.mock('../../models/users.model');
@@ -16,8 +15,12 @@ describe('report.service', () => {
     test('creates a report and adds question to reporter hiddenQuestions', async () => {
       const input = { qid: 'q1', reporter: 'user1', reason: 'spam' };
 
-      jest.spyOn(ReportModel, 'create').mockResolvedValue({ _id: 'r1', ...input, createdAt: new Date() } as any);
-      jest.spyOn(UserModel, 'findOneAndUpdate').mockResolvedValue({ username: 'user1', hiddenQuestions: ['q1'] } as any);
+      jest
+        .spyOn(ReportModel, 'create')
+        .mockResolvedValue({ _id: 'r1', ...input, createdAt: new Date() } as any);
+      jest
+        .spyOn(UserModel, 'findOneAndUpdate')
+        .mockResolvedValue({ username: 'user1', hiddenQuestions: ['q1'] } as any);
 
       const result = await createReport(input);
 
@@ -48,7 +51,10 @@ describe('report.service', () => {
       ];
       jest
         .spyOn(ReportModel, 'find')
-        .mockReturnValue({ sort: jest.fn().mockResolvedValue(mockReports) } as unknown as Query<DatabaseReport[], typeof ReportModel>);
+        .mockReturnValue({ sort: jest.fn().mockResolvedValue(mockReports) } as unknown as Query<
+          DatabaseReport[],
+          typeof ReportModel
+        >);
 
       const result = await getReportsForQuestion(qid);
       expect(Array.isArray(result)).toBe(true);
@@ -60,12 +66,12 @@ describe('report.service', () => {
 
     test('returns error on failure', async () => {
       const qid = 'q1';
-      jest.spyOn(ReportModel, 'find').mockImplementation(() => { throw new Error('db'); });
+      jest.spyOn(ReportModel, 'find').mockImplementation(() => {
+        throw new Error('db');
+      });
 
       const result = await getReportsForQuestion(qid);
       expect(result).toEqual({ error: 'Error when fetching reports' });
     });
   });
 });
-
-

@@ -162,7 +162,7 @@ export interface EditQuestionRequest extends Request {
     title: string;
     text: string;
     tags: Tag[];
-    username: string; 
+    username: string;
   };
 }
 

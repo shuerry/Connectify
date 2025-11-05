@@ -10,7 +10,9 @@ describe('report.controller', () => {
   describe('POST /api/report', () => {
     test('creates a report and returns 200', async () => {
       const body = { qid: 'q1', reporter: 'alice', reason: 'spam' };
-      jest.spyOn(reportService, 'createReport').mockResolvedValue({ _id: 'r1', ...body, createdAt: new Date() } as any);
+      jest
+        .spyOn(reportService, 'createReport')
+        .mockResolvedValue({ _id: 'r1', ...body, createdAt: new Date() } as any);
 
       const res = await supertest(app).post('/api/report').send(body);
       expect(res.status).toBe(200);
@@ -34,7 +36,9 @@ describe('report.controller', () => {
   describe('GET /api/report/question/:qid', () => {
     test('returns list of reports', async () => {
       const qid = 'q1';
-      const reports = [{ _id: 'r1', qid, reporter: 'user2', reason: 'offensive', createdAt: new Date() }];
+      const reports = [
+        { _id: 'r1', qid, reporter: 'user2', reason: 'offensive', createdAt: new Date() },
+      ];
       jest.spyOn(reportService, 'getReportsForQuestion').mockResolvedValue(reports as any);
 
       const res = await supertest(app).get(`/api/report/question/${qid}`);
@@ -45,11 +49,11 @@ describe('report.controller', () => {
 
     test('returns 500 on service error', async () => {
       const qid = 'q1';
-      jest.spyOn(reportService, 'getReportsForQuestion').mockResolvedValue({ error: 'error message' });
+      jest
+        .spyOn(reportService, 'getReportsForQuestion')
+        .mockResolvedValue({ error: 'error message' });
       const res = await supertest(app).get(`/api/report/question/${qid}`);
       expect(res.status).toBe(500);
     });
   });
 });
-
-

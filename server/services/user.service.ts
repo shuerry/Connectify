@@ -164,8 +164,7 @@ export const addFriend = async (
       { username },
       { $addToSet: { friends: friendUsername } },
       { new: true },
-    )
-      .select('-password');
+    ).select('-password');
 
     if (!updated) {
       throw Error('Error updating friends');
@@ -191,7 +190,7 @@ export const removeFriend = async (
       { $pull: { friends: friendUsername } },
       { new: true },
     );
-    
+
     await UserModel.findOneAndUpdate(
       { username: friendUsername },
       { $pull: { friends: username } },
@@ -199,8 +198,7 @@ export const removeFriend = async (
     );
 
     // Return the updated user
-    const updated = await UserModel.findOne({ username })
-      .select('-password');
+    const updated = await UserModel.findOne({ username }).select('-password');
 
     if (!updated) {
       throw Error('Error updating friends');
@@ -224,8 +222,7 @@ export const blockUser = async (
       { username },
       { $addToSet: { blockedUsers: targetUsername }, $pull: { friends: targetUsername } },
       { new: true },
-    )
-      .select('-password');
+    ).select('-password');
 
     if (!updated) {
       throw Error('Error blocking user');
@@ -249,8 +246,7 @@ export const unblockUser = async (
       { username },
       { $pull: { blockedUsers: targetUsername } },
       { new: true },
-    )
-      .select('-password');
+    ).select('-password');
 
     if (!updated) {
       throw Error('Error unblocking user');

@@ -28,7 +28,9 @@ const BlockedListPage = () => {
     try {
       await unblockUser(currentUser.username, target);
       setBlocked(prev => prev.filter(u => u.username !== target));
-    } catch {}
+    } catch {
+      throw new Error('Failed to unblock user');
+    }
   };
 
   return (
@@ -46,7 +48,9 @@ const BlockedListPage = () => {
               <div className='userStats'>
                 <div>joined {new Date(u.dateJoined).toUTCString()}</div>
               </div>
-              <button type='button' onClick={() => onUnblock(u.username)}>Unblock</button>
+              <button type='button' onClick={() => onUnblock(u.username)}>
+                Unblock
+              </button>
             </div>
           ))}
         </div>
@@ -56,5 +60,3 @@ const BlockedListPage = () => {
 };
 
 export default BlockedListPage;
-
-

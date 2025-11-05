@@ -79,7 +79,7 @@ export const getQuestionsByOrder = async (
         ordered = sortQuestionsByMostViews(qlist);
         break;
     }
-    
+
     // If no viewer, return ordered list
     if (!viewerUsername) return ordered;
 
@@ -330,7 +330,7 @@ export const updateQuestion = async (
   try {
     // First, check if the question exists and if the user is authorized to edit it
     const existingQuestion = await QuestionModel.findById(qid);
-    
+
     if (!existingQuestion) {
       return { error: 'Question not found' };
     }
@@ -365,7 +365,7 @@ export const updateQuestion = async (
         text: text.trim(),
         tags: processedTags.map(tag => tag._id),
       },
-      { new: true }
+      { new: true },
     ).populate<{
       tags: DatabaseTag[];
       answers: PopulatedDatabaseAnswer[];
