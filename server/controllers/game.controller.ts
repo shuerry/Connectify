@@ -47,12 +47,13 @@ const gameController = (socket: FakeSOSocket) => {
   const broadcastConnectFourRooms = () => {
     try {
       const rooms = getPublicConnectFourRooms();
+      const clientCount = socket.sockets.sockets.size;
       // eslint-disable-next-line no-console
-      console.log(`Broadcasting ${rooms.length} Connect Four rooms to all clients`);
-      // Broadcast to the global lobby room (all users in lobby)
-      socket.to('connectfour-lobby').emit('connectFourRoomsUpdate', rooms);
-      // Also emit directly in case some clients aren't in the lobby room yet
-      socket.emit('connectFourRoomsUpdate', rooms);
+      console.log(
+        `Broadcasting ${rooms.length} Connect Four rooms to ${clientCount} connected clients`,
+      );
+      // Use sockets.emit to broadcast to ALL connected sockets
+      socket.sockets.emit('connectFourRoomsUpdate', rooms);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error broadcasting Connect Four rooms:', error);
@@ -378,11 +379,6 @@ const gameController = (socket: FakeSOSocket) => {
     const joinedGames = new Set<string>();
     const presence = new Map<string, { playerID: string; isSpectator?: boolean }>();
 
-    // Automatically join the Connect Four lobby room for real-time updates
-    conn.join('connectfour-lobby');
-    // eslint-disable-next-line no-console
-    console.log(`Client ${conn.id} joined Connect Four lobby`);
-
     // Send current rooms list immediately upon connection
     conn.emit('connectFourRoomsUpdate', getPublicConnectFourRooms());
     conn.on('joinGame', (gameID: string) => {
@@ -496,7 +492,10 @@ const gameController = (socket: FakeSOSocket) => {
 
     // client requests the latest list of public Connect Four rooms
     conn.on('requestConnectFourRooms', () => {
-      conn.emit('connectFourRoomsUpdate', getPublicConnectFourRooms());
+      const rooms = getPublicConnectFourRooms();
+      // eslint-disable-next-line no-console
+      console.log(`Client ${conn.id} requested Connect Four rooms, sending ${rooms.length} rooms`);
+      conn.emit('connectFourRoomsUpdate', rooms);
     });
   });
 
@@ -505,6 +504,24 @@ const gameController = (socket: FakeSOSocket) => {
   router.post('/join', joinGame);
   router.post('/leave', leaveGame);
   router.get('/games', getGames);
+
+  // Debug endpoint to check socket server status
+  router.get('/socket-debug', (req, res) => {
+    const clientCount = socket.sockets.sockets.size;
+    const rooms = getPublicConnectFourRooms();
+
+    // Trigger a manual broadcast for testing
+    broadcastConnectFourRooms();
+
+    res.json({
+      message: 'Socket server is running',
+      connectedClients: clientCount,
+      connectFourRooms: rooms.length,
+      roomDetails: rooms,
+      timestamp: new Date().toISOString(),
+      broadcastTriggered: true,
+    });
+  });
 
   // Connect Four specific routes
   router.post('/connectfour/create', createConnectFourRoom);

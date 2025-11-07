@@ -5,7 +5,10 @@ import { io } from 'socket.io-client';
 import FakeStackOverflow from './components/fakestackoverflow';
 
 // ensures that the socket connections work properly in production as well.
-const SERVER_URL: string | undefined = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
+// In production, use the current origin; in development, use localhost
+const SERVER_URL: string =
+  import.meta.env.VITE_SERVER_URL ||
+  (import.meta.env.DEV ? 'http://localhost:8000' : window.location.origin);
 
 const App = () => {
   const [socket, setSocket] = useState<FakeSOSocket | null>(null);
