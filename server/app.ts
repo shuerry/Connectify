@@ -65,6 +65,12 @@ function startServer() {
 socket.on('connection', socket => {
   console.log('A user connected ->', socket.id);
 
+  // Allow users to join their personal notification room
+  socket.on('joinUserRoom', (username: string) => {
+    socket.join(`user:${username}`);
+    console.log(`User ${username} joined personal room`);
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected');
   });

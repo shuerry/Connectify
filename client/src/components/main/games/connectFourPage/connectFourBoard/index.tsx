@@ -6,6 +6,7 @@ import {
   ConnectFourColor,
   BoardPosition,
 } from '../../../../../types/types';
+import RoomShareModal from '../roomShareModal';
 
 interface ConnectFourBoardProps {
   gameInstance: GameInstance<ConnectFourGameState>;
@@ -37,20 +38,13 @@ const ConnectFourBoard = ({
         : null;
   const isMyTurn = isPlayer && playerColor === currentTurn;
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
     window.clearTimeout((showToast as unknown as { t?: number }).t);
     (showToast as unknown as { t?: number }).t = window.setTimeout(() => setToastMsg(null), 1800);
   }, []);
-
-  // Check if column is full
-  const isColumnFull = useCallback(
-    (col: number): boolean => {
-      return board[0][col] !== null;
-    },
-    [board],
-  );
 
   // Handle column click
   const handleColumnClick = (col: number) => {
@@ -66,34 +60,43 @@ const ConnectFourBoard = ({
       showToast('Not your turn');
       return;
     }
-    if (isColumnFull(col)) {
-      showToast('Column is full');
-      return;
-    }
 
+    // Allow moves on full columns - server will handle as draw condition
     onMakeMove(col);
   };
 
   // Handle keyboard input
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (status !== 'IN_PROGRESS') return;
-      if (!isPlayer) return;
-      if (!isMyTurn) return;
-
       const key = e.key;
       const col = parseInt(key) - 1;
 
-      if (col >= 0 && col < 7 && !isColumnFull(col)) {
-        onMakeMove(col);
-      } else if (col >= 0 && col < 7 && isColumnFull(col)) {
-        showToast('Column is full');
+      // Only respond to number keys 1-7
+      if (!(col >= 0 && col < 7)) return;
+
+      // Check game state conditions and provide specific error messages
+      if (status !== 'IN_PROGRESS') {
+        showToast('Game is not in progress');
+        return;
       }
+
+      if (!isPlayer) {
+        showToast('You are not a player in this game');
+        return;
+      }
+
+      if (!isMyTurn) {
+        showToast(`Not your turn - wait for ${currentTurn}'s move`);
+        return;
+      }
+
+      // Allow moves on full columns - server will handle as draw condition
+      onMakeMove(col);
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [status, isPlayer, isMyTurn, board, onMakeMove, isColumnFull, showToast]);
+  }, [status, isPlayer, isMyTurn, currentTurn, onMakeMove, showToast]);
 
   // Check if a position is a winning position
   const isWinningPosition = (row: number, col: number): boolean => {
@@ -149,9 +152,16 @@ const ConnectFourBoard = ({
             </span>
           )}
         </div>
-        <button className='btn-leave' onClick={onLeaveGame}>
-          Leave Game
-        </button>
+        <div className='header-actions'>
+          {state.roomSettings.roomCode && isPlayer && (
+            <button className='btn-share' onClick={() => setShowShareModal(true)}>
+              📤 Invite Friends
+            </button>
+          )}
+          <button className='btn-leave' onClick={onLeaveGame}>
+            Leave Game
+          </button>
+        </div>
       </div>
       <div className='players-info'>
         <div className={`player-card ${currentTurn === state.player1Color ? 'active' : ''}`}>
@@ -197,11 +207,7 @@ const ConnectFourBoard = ({
                   key={`${rowIndex}-${colIndex}`}
                   className={`${getCellClassName(rowIndex, colIndex)} ${
                     cell ? 'occupied' : 'empty'
-                  } ${
-                    !isColumnFull(colIndex) && isMyTurn && status === 'IN_PROGRESS'
-                      ? 'clickable'
-                      : ''
-                  }`}
+                  } ${isMyTurn && status === 'IN_PROGRESS' ? 'clickable' : ''}`}
                   onClick={() => handleColumnClick(colIndex)}>
                   <div className='disc'></div>
                 </div>
@@ -219,23 +225,33 @@ const ConnectFourBoard = ({
           </div>
         )}
       </div>
-      {/* Spectators List */}
-      {spectators.length > 0 && (
-        <div className='spectators-list'>
-          <h4>Spectators ({spectators.length})</h4>
+      {/* Spectators List - Always show section to make it more visible */}
+      <div className='spectators-section'>
+        <div className='spectators-header'>
+          <h4>👀 Spectators ({spectators.length})</h4>
+          {spectators.length === 0 && <p className='no-spectators'>No spectators watching</p>}
+        </div>
+        {spectators.length > 0 && (
           <div className='spectator-names'>
             {spectators.map((spectator, index) => (
               <span key={index} className='spectator-badge'>
-                {spectator}
+                👤 {spectator}
+                {spectator === currentUser && <span className='you-indicator'> (You)</span>}
               </span>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {isSpectator && (
         <div className='spectator-notice'>
-          <span>👁️ You are spectating this game</span>
+          <div className='spectator-status'>
+            <span className='spectator-icon'>👁️</span>
+            <div>
+              <strong>You are spectating this game</strong>
+              <p>You can watch the game but cannot make moves</p>
+            </div>
+          </div>
         </div>
       )}
       {/* Game Info Section */}
@@ -256,6 +272,11 @@ const ConnectFourBoard = ({
         <p>Click on a column or press keys 1-7 to drop your disc</p>
       </div>
       {toastMsg && <div className='cf-toast'>{toastMsg}</div>}
+
+      {/* Room Share Modal */}
+      {showShareModal && (
+        <RoomShareModal onClose={() => setShowShareModal(false)} gameInstance={gameInstance} />
+      )}
     </div>
   );
 };

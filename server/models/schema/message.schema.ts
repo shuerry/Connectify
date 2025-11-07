@@ -8,9 +8,10 @@ import { Schema } from 'mongoose';
  * - `msg`: The text of the message.
  * - `msgFrom`: The username of the user sending the message.
  * - `msgDateTime`: The date and time the message was sent.
- * - `type`: The type of message, either 'global', 'direct', or 'friendRequest'.
- * - `msgTo`: The username of the recipient (for direct messages and friend requests).
+ * - `type`: The type of message, either 'global', 'direct', 'friendRequest', or 'gameInvitation'.
+ * - `msgTo`: The username of the recipient (for direct messages, friend requests, and game invitations).
  * - `friendRequestStatus`: The status of friend request ('pending', 'accepted', 'declined').
+ * - `gameInvitation`: Game invitation details (for game invitation messages).
  */
 const messageSchema: Schema = new Schema(
   {
@@ -25,7 +26,7 @@ const messageSchema: Schema = new Schema(
     },
     type: {
       type: String,
-      enum: ['global', 'direct', 'friendRequest'],
+      enum: ['global', 'direct', 'friendRequest', 'gameInvitation'],
     },
     msgTo: {
       type: String,
@@ -33,6 +34,33 @@ const messageSchema: Schema = new Schema(
     friendRequestStatus: {
       type: String,
       enum: ['pending', 'accepted', 'declined'],
+    },
+    gameInvitation: {
+      type: {
+        gameID: {
+          type: String,
+          required: false,
+        },
+        roomName: {
+          type: String,
+          required: false,
+        },
+        roomCode: {
+          type: String,
+          required: false,
+        },
+        gameType: {
+          type: String,
+          enum: ['Connect Four'],
+          required: false,
+        },
+        status: {
+          type: String,
+          enum: ['pending', 'accepted', 'declined', 'expired'],
+          required: false,
+        },
+      },
+      required: false,
     },
   },
   { collection: 'Message' },

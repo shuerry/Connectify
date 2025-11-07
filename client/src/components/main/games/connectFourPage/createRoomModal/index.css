@@ -185,6 +185,16 @@
   cursor: pointer;
 }
 
+.checkbox-label input[type='checkbox']:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.checkbox-label input[type='checkbox']:disabled + span {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .help-text {
   margin: 8px 0 0 32px;
   font-size: 14px;
