@@ -49,7 +49,9 @@ const gameController = (socket: FakeSOSocket) => {
       const rooms = getPublicConnectFourRooms();
       // eslint-disable-next-line no-console
       console.log(`Broadcasting ${rooms.length} Connect Four rooms to all clients`);
-      // Emit to all connected clients
+      // Broadcast to the global lobby room (all users in lobby)
+      socket.to('connectfour-lobby').emit('connectFourRoomsUpdate', rooms);
+      // Also emit directly in case some clients aren't in the lobby room yet
       socket.emit('connectFourRoomsUpdate', rooms);
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -177,7 +179,10 @@ const gameController = (socket: FakeSOSocket) => {
         throw new Error(game.error);
       }
 
+      // Emit to all players in the game room
       socket.in(gameID).emit('gameUpdate', { gameInstance: game });
+      // Also use 'to' to ensure all sockets in the room get the update
+      socket.to(gameID).emit('gameUpdate', { gameInstance: game });
       res.status(200).json(game);
 
       // Lobby update (public rooms list may change status/player counts)
@@ -243,7 +248,9 @@ const gameController = (socket: FakeSOSocket) => {
         throw new Error(game.error);
       }
 
+      // Emit to all players in the game room
       socket.in(gameID).emit('gameUpdate', { gameInstance: game });
+      socket.to(gameID).emit('gameUpdate', { gameInstance: game });
       res.status(200).json(game);
 
       // Update lobby clients in case player counts or statuses changed
@@ -370,6 +377,14 @@ const gameController = (socket: FakeSOSocket) => {
     // Track per-socket presence so we can auto-leave on disconnect
     const joinedGames = new Set<string>();
     const presence = new Map<string, { playerID: string; isSpectator?: boolean }>();
+
+    // Automatically join the Connect Four lobby room for real-time updates
+    conn.join('connectfour-lobby');
+    // eslint-disable-next-line no-console
+    console.log(`Client ${conn.id} joined Connect Four lobby`);
+
+    // Send current rooms list immediately upon connection
+    conn.emit('connectFourRoomsUpdate', getPublicConnectFourRooms());
     conn.on('joinGame', (gameID: string) => {
       conn.join(gameID);
 
