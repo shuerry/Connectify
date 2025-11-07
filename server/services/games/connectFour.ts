@@ -274,7 +274,10 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       throw new Error('You are already in this game');
     }
 
-    // Check if joining as player or spectator will be handled by caller
+    // Update the players array
+    this._players.push(playerID);
+
+    // Update game state based on player position
     if (!this.state.player1) {
       this.state = { ...this.state, player1: playerID };
     } else if (!this.state.player2) {
@@ -374,7 +377,7 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       const roomCreator = this.state.player1;
       const hasCorrectCode = roomCode === actualCode;
       const isFriend = Boolean(roomCreator && playerFriends?.includes(roomCreator));
-      
+
       return hasCorrectCode || isFriend;
     }
 

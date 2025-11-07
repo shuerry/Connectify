@@ -1,12 +1,13 @@
+/* eslint-disable no-console */
 import express, { Response, Request } from 'express';
 import { FakeSOSocket, AddMessageRequest } from '../types/types';
-import { 
-  saveMessage, 
-  getMessages, 
-  getDirectMessages, 
+import {
+  saveMessage,
+  getMessages,
+  getDirectMessages,
   updateFriendRequestStatus,
   sendGameInvitation,
-  updateGameInvitationStatus
+  updateGameInvitationStatus,
 } from '../services/message.service';
 
 const messageController = (socket: FakeSOSocket) => {
@@ -109,7 +110,14 @@ const messageController = (socket: FakeSOSocket) => {
       console.log('Received game invitation request:', req.body);
       const { fromUsername, toUsername, gameID, roomName, gameType, roomCode } = req.body;
       console.log('Calling sendGameInvitation service...');
-      const result = await sendGameInvitation(fromUsername, toUsername, gameID, roomName, gameType, roomCode);
+      const result = await sendGameInvitation(
+        fromUsername,
+        toUsername,
+        gameID,
+        roomName,
+        gameType,
+        roomCode,
+      );
       console.log('Service result:', result);
 
       if ('error' in result) {

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useState, useEffect } from 'react';
 import './index.css';
 import { GameInstance, ConnectFourGameState } from '../../../../../types/types';
@@ -47,10 +48,10 @@ const ConnectFourLobby = ({
 
   const filteredGames = games.filter(game => {
     const { privacy } = game.state.roomSettings;
-    
+
     // First apply privacy filter
     let showRoom = false;
-    
+
     if (privacy === 'PUBLIC') {
       // Show public rooms if filter allows
       showRoom = privacyFilter === 'ALL' || privacyFilter === 'PUBLIC';
@@ -59,13 +60,14 @@ const ConnectFourLobby = ({
       const roomCreator = game.state.player1;
       const isFriendOfCreator =
         roomCreator === currentUser || (roomCreator && friends.includes(roomCreator));
-      
-      showRoom = !!isFriendOfCreator && (privacyFilter === 'ALL' || privacyFilter === 'FRIENDS_ONLY');
+
+      showRoom =
+        !!isFriendOfCreator && (privacyFilter === 'ALL' || privacyFilter === 'FRIENDS_ONLY');
     }
     // Don't show private rooms in the lobby (they need room codes)
-    
+
     if (!showRoom) return false;
-    
+
     // Then apply status filter
     if (statusFilter === 'ALL') return true;
     if (statusFilter === 'WAITING') return game.state.status === 'WAITING_TO_START';
@@ -127,7 +129,7 @@ const ConnectFourLobby = ({
             </button>
           </div>
         </div>
-        
+
         <div className='filter-section'>
           <h4>Room Type</h4>
           <div className='filter-buttons'>
@@ -139,7 +141,7 @@ const ConnectFourLobby = ({
             <button
               className={privacyFilter === 'PUBLIC' ? 'active' : ''}
               onClick={() => setPrivacyFilter('PUBLIC')}>
-               Public
+              Public
             </button>
             <button
               className={privacyFilter === 'FRIENDS_ONLY' ? 'active' : ''}
@@ -159,9 +161,12 @@ const ConnectFourLobby = ({
           <div className='no-rooms'>
             <p>
               No {statusFilter !== 'ALL' ? statusFilter.toLowerCase() : ''}{' '}
-              {privacyFilter !== 'ALL' ? 
-                (privacyFilter === 'PUBLIC' ? 'public' : 'friends-only') : ''
-              } rooms available
+              {privacyFilter !== 'ALL'
+                ? privacyFilter === 'PUBLIC'
+                  ? 'public'
+                  : 'friends-only'
+                : ''}{' '}
+              rooms available
             </p>
             <p>Create a new room to get started!</p>
           </div>

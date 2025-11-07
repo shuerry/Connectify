@@ -138,7 +138,7 @@ export const sendGameInvitation = async (
     // Validate both sender and recipient exist
     const [fromUser, toUser] = await Promise.all([
       UserModel.findOne({ username: fromUsername }),
-      UserModel.findOne({ username: toUsername })
+      UserModel.findOne({ username: toUsername }),
     ]);
 
     if (!fromUser) {

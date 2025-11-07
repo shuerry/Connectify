@@ -137,7 +137,7 @@ class GameManager {
       // Verify access for Connect Four games
       if (gameToJoin.gameType === 'Connect Four') {
         const connectFourGame = gameToJoin as unknown as ConnectFourGame;
-        
+
         // Get player's friends list for friends-only room access
         let playerFriends: string[] = [];
         if (connectFourGame.state.roomSettings.privacy === 'FRIENDS_ONLY') {
@@ -147,7 +147,7 @@ class GameManager {
           }
           playerFriends = relations.friends;
         }
-        
+
         if (!connectFourGame.verifyAccess(roomCode, playerFriends)) {
           if (connectFourGame.state.roomSettings.privacy === 'FRIENDS_ONLY') {
             throw new Error('Access denied: This is a friends-only room');

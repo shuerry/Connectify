@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -37,7 +38,6 @@ const useConnectFourPage = () => {
         localStorage.setItem(gameKey, JSON.stringify(game));
         localStorage.setItem(spectatorKey, JSON.stringify(spectator));
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error('Failed to save game state:', error);
       }
     },
@@ -74,7 +74,6 @@ const useConnectFourPage = () => {
       console.error('Failed to clear game state:', error);
     }
   }, [user?.username]);
-
 
   // Load available games (fallback to HTTP)
   const loadGames = useCallback(async () => {
@@ -247,8 +246,6 @@ const useConnectFourPage = () => {
       }
     };
 
-
-
     socket.on('gameUpdate', handleGameUpdate);
     socket.on('gameError', handleGameError);
     socket.on('playerDisconnected', handlePlayerDisconnected);
@@ -281,7 +278,6 @@ const useConnectFourPage = () => {
       saveGameState(response.game, false);
       socket.emit('joinGame', response.gameID);
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Error creating room:', err);
       alert('Failed to create room. Please try again.');
     }
@@ -308,7 +304,6 @@ const useConnectFourPage = () => {
         isSpectator: asSpectator,
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Error joining room:', err);
       alert('Failed to join room. It may be full, private, or no longer available.');
     }
@@ -330,7 +325,6 @@ const useConnectFourPage = () => {
         isSpectator: false,
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Error joining by code:', err);
       alert('Failed to join room. Please check the code and try again.');
     }
@@ -350,8 +344,6 @@ const useConnectFourPage = () => {
       },
     });
   };
-
-
 
   // (handleLeaveGame moved above)
 

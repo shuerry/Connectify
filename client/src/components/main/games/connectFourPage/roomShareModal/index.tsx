@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useState, useEffect } from 'react';
 import './index.css';
 import { ConnectFourGameState, GameInstance } from '../../../../../types/types';
@@ -83,7 +84,7 @@ const RoomShareModal = ({ onClose, gameInstance }: RoomShareModalProps) => {
             roomSettings.roomCode,
           );
           console.log(`Successfully sent invitation to ${friendUsername}`);
-          sentCount++;
+          sentCount = +1;
         } catch (inviteError) {
           console.error(`Failed to send invitation to ${friendUsername}:`, inviteError);
           // Show specific error if available

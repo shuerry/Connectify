@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import api from './config';
 import { DatabaseMessage, Message } from '../types/types';
 
@@ -138,16 +139,18 @@ const sendGameInvitation = async (
       throw new Error(`Server returned status ${res.status}: ${res.statusText}`);
     }
     return res.data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('sendGameInvitation API error:', error);
-    if (error.response) {
-      console.error('Error response:', error.response.status, error.response.data);
-      throw new Error(`Server error: ${error.response.status} - ${error.response.data}`);
-    } else if (error.request) {
-      console.error('Network error:', error.request);
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response: { status: number; data: unknown } };
+      console.error('Error response:', axiosError.response.status, axiosError.response.data);
+      throw new Error(`Server error: ${axiosError.response.status} - ${axiosError.response.data}`);
+    } else if (error && typeof error === 'object' && 'request' in error) {
+      const networkError = error as { request: unknown };
+      console.error('Network error:', networkError.request);
       throw new Error('Network error: Could not connect to server');
     } else {
-      throw new Error(`Request error: ${error.message}`);
+      throw new Error(`Request error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 };

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
