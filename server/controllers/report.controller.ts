@@ -1,6 +1,8 @@
 import express, { Response, Request } from 'express';
 import { createReport, getReportsForQuestion } from '../services/report.service';
 
+// Test comment
+
 const reportController = () => {
   const router = express.Router();
 
