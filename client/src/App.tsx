@@ -43,7 +43,7 @@ const App = () => {
       // Enhanced connection debugging
       newSocket.on('connect', () => {
         // eslint-disable-next-line no-console
-        console.log(`✅ Socket connected successfully!`, {
+        console.log(` Socket connected successfully!`, {
           socketId: newSocket.id,
           serverUrl: SERVER_URL,
           transport: newSocket.io.engine.transport.name,
@@ -53,7 +53,7 @@ const App = () => {
 
       newSocket.on('disconnect', reason => {
         // eslint-disable-next-line no-console
-        console.log(`❌ Socket disconnected: ${reason}`, {
+        console.log(` Socket disconnected: ${reason}`, {
           serverUrl: SERVER_URL,
           timestamp: new Date().toISOString(),
         });
@@ -61,7 +61,7 @@ const App = () => {
 
       newSocket.on('connect_error', error => {
         // eslint-disable-next-line no-console
-        console.error('🔥 Socket connection error:', {
+        console.error(' Socket connection error:', {
           error: error.message,
           serverUrl: SERVER_URL,
           timestamp: new Date().toISOString(),
@@ -70,12 +70,12 @@ const App = () => {
 
       newSocket.on('reconnect', attemptNumber => {
         // eslint-disable-next-line no-console
-        console.log(`🔄 Socket reconnected after ${attemptNumber} attempts`);
+        console.log(` Socket reconnected after ${attemptNumber} attempts`);
       });
 
       newSocket.on('reconnect_error', error => {
         // eslint-disable-next-line no-console
-        console.error('🔄❌ Socket reconnection failed:', error.message);
+        console.error(' Socket reconnection failed:', error.message);
       });
 
       setSocket(newSocket);

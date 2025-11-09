@@ -60,6 +60,15 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
   }
 
   /**
+   * Clean up duplicate players from the players array (maintenance method)
+   */
+  private _cleanupPlayers(): void {
+    // Remove duplicates while preserving order
+    const uniquePlayers = [...new Set(this._players)];
+    this._players = uniquePlayers;
+  }
+
+  /**
    * Creates an empty Connect Four board.
    */
   private _createEmptyBoard(): (ConnectFourColor | null)[][] {
@@ -284,15 +293,15 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       throw new Error('You are already in this game');
     }
 
-    // Update the players array
-    this._players.push(playerID);
-
     // Update game state - since player1 is set in constructor, this must be player2
     if (!this.state.player2) {
       this.state = { ...this.state, player2: playerID, status: 'IN_PROGRESS' };
     } else {
       throw new Error('Cannot join game: game is full');
     }
+
+    // Clean up any duplicate players that might exist
+    this._cleanupPlayers();
   }
 
   /**
@@ -390,6 +399,15 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
     }
 
     return false;
+  }
+
+  /**
+   * Override toModel to ensure clean player data
+   */
+  public toModel() {
+    // Ensure no duplicate players in the model
+    this._cleanupPlayers();
+    return super.toModel();
   }
 
   /**
