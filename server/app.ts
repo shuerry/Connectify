@@ -79,12 +79,18 @@ function startServer() {
 
 socket.on('connection', clientSocket => {
   const totalClients = socket.sockets.sockets.size;
+  const clientIP = clientSocket.handshake.address;
+  const userAgent = clientSocket.handshake.headers['user-agent'];
   console.log(`A user connected -> ${clientSocket.id} (Total clients: ${totalClients})`);
+  console.log(`  IP: ${clientIP}, User-Agent: ${userAgent?.substring(0, 50)}...`);
 
   // Allow users to join their personal notification room
   clientSocket.on('joinUserRoom', (username: string) => {
     clientSocket.join(`user:${username}`);
     console.log(`User ${username} joined personal room (Socket: ${clientSocket.id})`);
+    console.log(
+      `  Users in room user:${username}: ${socket.sockets.adapter.rooms.get(`user:${username}`)?.size || 0}`,
+    );
   });
 
   clientSocket.on('disconnect', () => {

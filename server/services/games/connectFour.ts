@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid';
 import {
   GameMove,
   ConnectFourGameState,
@@ -22,19 +21,21 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
   /**
    * Constructor for the ConnectFourGame class, initializes the game state and type.
    */
-  public constructor(
-    creatorID: string,
-    roomSettings: ConnectFourRoomSettings,
-    player1Color: ConnectFourColor = 'RED',
-  ) {
-    // Generate room code for private rooms if not provided
-    const finalRoomSettings = {
-      ...roomSettings,
-      roomCode:
-        roomSettings.privacy === 'PRIVATE' && !roomSettings.roomCode
-          ? nanoid(6).toUpperCase()
-          : roomSettings.roomCode,
+  constructor(creatorID: string, roomSettings: Partial<ConnectFourRoomSettings>) {
+    // Generate a random room code for private/friends-only rooms
+    const roomCode = ['PRIVATE', 'FRIENDS_ONLY'].includes(roomSettings.privacy || 'PUBLIC')
+      ? Math.random().toString(36).substr(2, 6).toUpperCase()
+      : undefined;
+
+    const finalRoomSettings: ConnectFourRoomSettings = {
+      roomName: roomSettings.roomName || 'Connect Four Game',
+      privacy: roomSettings.privacy || 'PUBLIC',
+      allowSpectators: roomSettings.allowSpectators ?? true,
+      roomCode,
     };
+
+    // Generate random colors, ensuring they're different
+    const player1Color: ConnectFourColor = Math.random() < 0.5 ? 'RED' : 'YELLOW';
 
     super(
       {
@@ -53,6 +54,9 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       },
       'Connect Four',
     );
+
+    // Add the creator to the players array immediately
+    this._players.push(creatorID);
   }
 
   /**
@@ -270,6 +274,12 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       throw new Error('Cannot join game: already started');
     }
 
+    // Special case: if this is the creator (player1) trying to join, they're already in the game
+    if (this.state.player1 === playerID) {
+      // Creator is already in the game, no need to add again
+      return;
+    }
+
     if (this._players.includes(playerID)) {
       throw new Error('You are already in this game');
     }
@@ -277,10 +287,8 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
     // Update the players array
     this._players.push(playerID);
 
-    // Update game state based on player position
-    if (!this.state.player1) {
-      this.state = { ...this.state, player1: playerID };
-    } else if (!this.state.player2) {
+    // Update game state - since player1 is set in constructor, this must be player2
+    if (!this.state.player2) {
       this.state = { ...this.state, player2: playerID, status: 'IN_PROGRESS' };
     } else {
       throw new Error('Cannot join game: game is full');

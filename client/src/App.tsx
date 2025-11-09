@@ -15,17 +15,41 @@ const App = () => {
 
   useEffect(() => {
     if (!socket) {
-      setSocket(
-        io(SERVER_URL, {
-          path: '/socket.io',
-          withCredentials: true,
-          // Production-friendly client configuration
-          transports: ['polling', 'websocket'],
-          upgrade: true,
-          timeout: 20000,
-          forceNew: true,
-        }),
-      );
+      const newSocket = io(SERVER_URL, {
+        path: '/socket.io',
+        withCredentials: true,
+        // Production-friendly client configuration
+        transports: ['polling', 'websocket'],
+        upgrade: true,
+        timeout: 20000,
+        forceNew: true,
+        // Additional isolation for multi-browser testing
+        multiplex: false,
+        rememberUpgrade: false,
+        // Add random query to ensure unique connections
+        query: {
+          t: Date.now().toString(),
+          r: Math.random().toString(36).substring(7),
+        },
+      });
+
+      // Add connection debugging for multi-browser testing
+      newSocket.on('connect', () => {
+        // eslint-disable-next-line no-console
+        console.log(`Socket connected with ID: ${newSocket.id} to ${SERVER_URL}`);
+      });
+
+      newSocket.on('disconnect', reason => {
+        // eslint-disable-next-line no-console
+        console.log(`Socket disconnected: ${reason}`);
+      });
+
+      newSocket.on('connect_error', error => {
+        // eslint-disable-next-line no-console
+        console.error('Socket connection error:', error);
+      });
+
+      setSocket(newSocket);
     }
 
     return () => {
