@@ -32,8 +32,15 @@ const gameController = (socket: FakeSOSocket) => {
       return activeInstances
         .filter(g => {
           const privacy = g.state.roomSettings.privacy;
-          // Include PUBLIC and FRIENDS_ONLY rooms in the lobby
-          return privacy === 'PUBLIC' || privacy === 'FRIENDS_ONLY';
+          const status = g.state.status;
+          const players = g.toModel().players;
+
+          // Filter criteria - ONLY show games that meet ALL conditions:
+          const hasValidPrivacy = privacy === 'PUBLIC' || privacy === 'FRIENDS_ONLY';
+          const isActiveGame = status !== 'OVER'; // Remove completed games
+          const hasNoDuplicatePlayers = new Set(players).size === players.length; // Remove games with duplicate players
+
+          return hasValidPrivacy && isActiveGame && hasNoDuplicatePlayers;
         })
         .map(g => g.getPublicRoomInfo());
     } catch (error) {
@@ -43,9 +50,41 @@ const gameController = (socket: FakeSOSocket) => {
     }
   };
 
+  // Clean up completed games from memory
+  const cleanupCompletedGames = () => {
+    try {
+      const gameManager = GameManager.getInstance();
+      const activeInstances = gameManager
+        .getActiveGameInstances()
+        .filter(g => g.gameType === 'Connect Four') as unknown as ConnectFourGame[];
+
+      let removedCount = 0;
+      activeInstances.forEach(g => {
+        const isCompleted = g.state.status === 'OVER';
+        const players = g.toModel().players;
+        const hasDuplicatePlayers = new Set(players).size !== players.length;
+
+        if (isCompleted || hasDuplicatePlayers) {
+          gameManager.removeGame(g.id);
+          removedCount += 1;
+        }
+      });
+
+      if (removedCount > 0) {
+        // eslint-disable-next-line no-console
+        console.log(`Cleaned up ${removedCount} completed/problematic games`);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error cleaning up games:', error);
+    }
+  };
+
   // broadcast current public Connect Four rooms to all clients
   const broadcastConnectFourRooms = () => {
     try {
+      // Clean up first, then get and broadcast
+      cleanupCompletedGames();
       const rooms = getPublicConnectFourRooms();
       // eslint-disable-next-line no-console
       console.log(`Broadcasting ${rooms.length} Connect Four rooms to all clients`);
