@@ -754,6 +754,7 @@ paths:
           schema:
             $ref: '#/components/schemas/GameType'
           required: false
+          allowReserved: true
           description: Filter games by type (e.g., Nim).
         - in: query
           name: status
