@@ -160,11 +160,14 @@ const gameController = (socket: FakeSOSocket) => {
       const existingGame = GameManager.getInstance().getGame(gameID);
       if (existingGame && existingGame.gameType === 'Connect Four') {
         const connectFourGame = existingGame as unknown as ConnectFourGame;
-        const isPlayer =
-          connectFourGame.state.player1 === playerID || connectFourGame.state.player2 === playerID;
+        const isPlayer1 = connectFourGame.state.player1 === playerID;
+        const isPlayer2 = connectFourGame.state.player2 === playerID;
         const isSpectator = connectFourGame.state.spectators.includes(playerID);
 
-        if (isPlayer || isSpectator) {
+        // Allow creator (player1) to join their own game if it's still waiting to start
+        if (isPlayer1 && connectFourGame.state.status === 'WAITING_TO_START') {
+          // Creator joining their own game - this is allowed
+        } else if (isPlayer2 || isSpectator) {
           throw new Error('You are already in this game');
         }
       }
