@@ -49,10 +49,13 @@ const socket: FakeSOSocket = new Server(server, {
     origin: ALLOWED_CLIENT_ORIGINS,
     credentials: true,
   },
-  // Production-friendly Socket.IO configuration
-  transports: ['websocket', 'polling'],
+  // Production-friendly Socket.IO configuration for Render.com
+  transports: ['polling', 'websocket'], // Start with polling, then upgrade
   pingTimeout: 60000,
   pingInterval: 25000,
+  upgradeTimeout: 30000,
+  allowEIO3: true,
+  allowUpgrades: true,
   // Allow all origins in production if CLIENT_URLS not properly set
   ...(process.env.NODE_ENV === 'production' &&
     !process.env.CLIENT_URLS && {

@@ -187,9 +187,13 @@ const gameController = (socket: FakeSOSocket) => {
         `Player ${playerID} joined game ${gameID}. Broadcasting to ${socketsInRoom} sockets in room.`,
       );
 
+      // Broadcast to game room participants
       socket.in(gameID).emit('gameUpdate', { gameInstance: game });
-      // Also use 'to' to ensure all sockets in the room get the update
       socket.to(gameID).emit('gameUpdate', { gameInstance: game });
+
+      // Also broadcast to all connected clients as fallback for Render.com
+      socket.sockets.emit('gameUpdate', { gameInstance: game });
+
       res.status(200).json(game);
 
       // Lobby update (public rooms list may change status/player counts)
@@ -362,7 +366,10 @@ const gameController = (socket: FakeSOSocket) => {
       }
 
       game.applyMove(move);
+      // Broadcast to game room participants
       socket.in(gameID).emit('gameUpdate', { gameInstance: game.toModel() });
+      // Also broadcast to all clients as fallback for Render.com
+      socket.sockets.emit('gameUpdate', { gameInstance: game.toModel() });
 
       await game.saveGameState();
 

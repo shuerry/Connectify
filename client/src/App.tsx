@@ -19,6 +19,11 @@ const App = () => {
         io(SERVER_URL, {
           path: '/socket.io',
           withCredentials: true,
+          // Production-friendly client configuration
+          transports: ['polling', 'websocket'],
+          upgrade: true,
+          timeout: 20000,
+          forceNew: true,
         }),
       );
     }
