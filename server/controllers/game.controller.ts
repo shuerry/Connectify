@@ -181,6 +181,12 @@ const gameController = (socket: FakeSOSocket) => {
       }
 
       // Emit to all players in the game room
+      const socketsInRoom = socket.sockets.adapter.rooms.get(gameID)?.size || 0;
+      // eslint-disable-next-line no-console
+      console.log(
+        `Player ${playerID} joined game ${gameID}. Broadcasting to ${socketsInRoom} sockets in room.`,
+      );
+
       socket.in(gameID).emit('gameUpdate', { gameInstance: game });
       // Also use 'to' to ensure all sockets in the room get the update
       socket.to(gameID).emit('gameUpdate', { gameInstance: game });
@@ -383,11 +389,15 @@ const gameController = (socket: FakeSOSocket) => {
     conn.emit('connectFourRoomsUpdate', getPublicConnectFourRooms());
     conn.on('joinGame', (gameID: string) => {
       conn.join(gameID);
+      // eslint-disable-next-line no-console
+      console.log(`Socket ${conn.id} joined game room ${gameID}`);
 
       // Send current game state to the joining player
       const game = GameManager.getInstance().getGame(gameID as GameInstanceID);
       if (game) {
         conn.emit('gameUpdate', { gameInstance: game.toModel() });
+        // eslint-disable-next-line no-console
+        console.log(`Sent game state to socket ${conn.id} for game ${gameID}`);
       }
     });
 

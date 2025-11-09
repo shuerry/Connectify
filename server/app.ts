@@ -49,6 +49,18 @@ const socket: FakeSOSocket = new Server(server, {
     origin: ALLOWED_CLIENT_ORIGINS,
     credentials: true,
   },
+  // Production-friendly Socket.IO configuration
+  transports: ['websocket', 'polling'],
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  // Allow all origins in production if CLIENT_URLS not properly set
+  ...(process.env.NODE_ENV === 'production' &&
+    !process.env.CLIENT_URLS && {
+      cors: {
+        origin: true,
+        credentials: true,
+      },
+    }),
 });
 
 function connectDatabase() {
@@ -62,17 +74,19 @@ function startServer() {
   });
 }
 
-socket.on('connection', socket => {
-  console.log('A user connected ->', socket.id);
+socket.on('connection', clientSocket => {
+  const totalClients = socket.sockets.sockets.size;
+  console.log(`A user connected -> ${clientSocket.id} (Total clients: ${totalClients})`);
 
   // Allow users to join their personal notification room
-  socket.on('joinUserRoom', (username: string) => {
-    socket.join(`user:${username}`);
-    console.log(`User ${username} joined personal room`);
+  clientSocket.on('joinUserRoom', (username: string) => {
+    clientSocket.join(`user:${username}`);
+    console.log(`User ${username} joined personal room (Socket: ${clientSocket.id})`);
   });
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
+  clientSocket.on('disconnect', () => {
+    const remainingClients = socket.sockets.sockets.size;
+    console.log(`User disconnected -> ${clientSocket.id} (Remaining clients: ${remainingClients})`);
   });
 });
 
