@@ -18,19 +18,10 @@ const App = () => {
       const newSocket = io(SERVER_URL, {
         path: '/socket.io',
         withCredentials: true,
-        // Production-friendly client configuration
+        // Simplified client configuration for better reliability
         transports: ['polling', 'websocket'],
-        upgrade: true,
-        timeout: 20000,
+        timeout: 10000,
         forceNew: true,
-        // Additional isolation for multi-browser testing
-        multiplex: false,
-        rememberUpgrade: false,
-        // Add random query to ensure unique connections
-        query: {
-          t: Date.now().toString(),
-          r: Math.random().toString(36).substring(7),
-        },
       });
 
       // Add connection debugging for multi-browser testing
