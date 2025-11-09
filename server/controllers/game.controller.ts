@@ -35,7 +35,7 @@ const gameController = (socket: FakeSOSocket) => {
           const privacy = g.state.roomSettings.privacy;
           const status = g.state.status;
           const players = g.toModel().players;
-          
+
           // Filter criteria:
           // 1. Only PUBLIC or FRIENDS_ONLY rooms
           // 2. Only active games (not OVER)
@@ -43,7 +43,7 @@ const gameController = (socket: FakeSOSocket) => {
           const hasValidPrivacy = privacy === 'PUBLIC' || privacy === 'FRIENDS_ONLY';
           const isActiveGame = status !== 'OVER';
           const hasNoDuplicatePlayers = new Set(players).size === players.length;
-          
+
           return hasValidPrivacy && isActiveGame && hasNoDuplicatePlayers;
         })
         .map(g => g.getPublicRoomInfo());
@@ -67,7 +67,7 @@ const gameController = (socket: FakeSOSocket) => {
         const isCompleted = g.state.status === 'OVER';
         const players = g.toModel().players;
         const hasDuplicatePlayers = new Set(players).size !== players.length;
-        
+
         // Remove completed games or games with duplicate players
         if (isCompleted || hasDuplicatePlayers) {
           gameManager.removeGame(g.id);
@@ -90,7 +90,7 @@ const gameController = (socket: FakeSOSocket) => {
     try {
       // Clean up first, then broadcast
       cleanupCompletedGames();
-      
+
       const rooms = getPublicConnectFourRooms();
       const clientCount = socket.sockets.sockets.size;
       // eslint-disable-next-line no-console

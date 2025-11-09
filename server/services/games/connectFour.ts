@@ -276,9 +276,9 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
   }
 
   /**
-   * Override the base join method to handle Connect Four specific logic
+   * Joins a player to the game.
    */
-  public join(playerID: string): void {
+  protected _join(playerID: string): void {
     if (this.state.status !== 'WAITING_TO_START') {
       throw new Error('Cannot join game: already started');
     }
@@ -293,9 +293,6 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       throw new Error('You are already in this game');
     }
 
-    // Add player to the internal array first (before state update)
-    this._players.push(playerID);
-
     // Update game state - since player1 is set in constructor, this must be player2
     if (!this.state.player2) {
       this.state = { ...this.state, player2: playerID, status: 'IN_PROGRESS' };
@@ -305,14 +302,6 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
 
     // Clean up any duplicate players that might exist
     this._cleanupPlayers();
-  }
-
-  /**
-   * Protected _join method for base class compatibility (not used directly)
-   */
-  protected _join(playerID: string): void {
-    // This method is required by the base class but we override the public join method instead
-    // The actual logic is in the public join method above
   }
 
   /**
