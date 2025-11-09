@@ -28,52 +28,7 @@ const useConnectFourPage = () => {
   const [isSpectator, setIsSpectator] = useState(false);
   const [pendingRoomCode, setPendingRoomCode] = useState<string | null>(null);
 
-  // Persistence functions - user-specific storage
-  const saveGameState = useCallback(
-    (game: GameInstance<ConnectFourGameState>, spectator: boolean) => {
-      try {
-        if (!user?.username) return;
-        const gameKey = `connectfour_current_game_${user.username}`;
-        const spectatorKey = `connectfour_is_spectator_${user.username}`;
-        localStorage.setItem(gameKey, JSON.stringify(game));
-        localStorage.setItem(spectatorKey, JSON.stringify(spectator));
-      } catch (error) {
-        console.error('Failed to save game state:', error);
-      }
-    },
-    [user?.username],
-  );
-
-  const loadGameState = useCallback(() => {
-    try {
-      if (!user?.username) return null;
-      const gameKey = `connectfour_current_game_${user.username}`;
-      const spectatorKey = `connectfour_is_spectator_${user.username}`;
-      const savedGame = localStorage.getItem(gameKey);
-      const savedSpectator = localStorage.getItem(spectatorKey);
-
-      if (savedGame && savedSpectator) {
-        const game = JSON.parse(savedGame) as GameInstance<ConnectFourGameState>;
-        const spectator = JSON.parse(savedSpectator) as boolean;
-        return { game, spectator };
-      }
-    } catch (error) {
-      console.error('Failed to load game state:', error);
-    }
-    return null;
-  }, [user?.username]);
-
-  const clearGameState = useCallback(() => {
-    try {
-      if (!user?.username) return;
-      const gameKey = `connectfour_current_game_${user.username}`;
-      const spectatorKey = `connectfour_is_spectator_${user.username}`;
-      localStorage.removeItem(gameKey);
-      localStorage.removeItem(spectatorKey);
-    } catch (error) {
-      console.error('Failed to clear game state:', error);
-    }
-  }, [user?.username]);
+  // No local persistence - rely purely on real-time server updates
 
   // Load available games (fallback to HTTP)
   const loadGames = useCallback(async () => {
