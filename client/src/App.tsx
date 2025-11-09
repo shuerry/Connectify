@@ -8,7 +8,17 @@ import FakeStackOverflow from './components/fakestackoverflow';
 // In production, use the current origin; in development, use localhost
 const SERVER_URL: string =
   import.meta.env.VITE_SERVER_URL ||
-  (import.meta.env.DEV ? 'http://localhost:8000' : window.location.origin);
+  (import.meta.env.DEV ? 'http://localhost:8000' : 'https://cs4530-f25-509-6v2m.onrender.com');
+
+// Debug logging to verify connection URL
+// eslint-disable-next-line no-console
+console.log('Socket.IO Configuration Debug:', {
+  VITE_SERVER_URL: import.meta.env.VITE_SERVER_URL,
+  isDev: import.meta.env.DEV,
+  windowOrigin: typeof window !== 'undefined' ? window.location.origin : 'undefined',
+  finalServerURL: SERVER_URL,
+  environment: import.meta.env.NODE_ENV || 'development',
+});
 
 const App = () => {
   const [socket, setSocket] = useState<FakeSOSocket | null>(null);
