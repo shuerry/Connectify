@@ -40,7 +40,7 @@ const App = () => {
         reconnectionAttempts: 10,
       });
 
-      // Enhanced connection debugging with comprehensive event tracking
+      // Enhanced connection debugging
       newSocket.on('connect', () => {
         // eslint-disable-next-line no-console
         console.log(`✅ Socket connected successfully!`, {
@@ -63,7 +63,6 @@ const App = () => {
         // eslint-disable-next-line no-console
         console.error('🔥 Socket connection error:', {
           error: error.message,
-          stack: error.stack,
           serverUrl: SERVER_URL,
           timestamp: new Date().toISOString(),
         });
@@ -78,29 +77,6 @@ const App = () => {
         // eslint-disable-next-line no-console
         console.error('🔄❌ Socket reconnection failed:', error.message);
       });
-
-      // Debug all Socket.IO events
-      newSocket.onAny((eventName, ...args) => {
-        // eslint-disable-next-line no-console
-        console.log(`📡 Socket event received: ${eventName}`, args);
-      });
-
-      // Test server connectivity
-      fetch(`${SERVER_URL}/api/games/socket-debug`)
-        .then(response => {
-          if (response.ok) {
-            return response.json();
-          }
-          throw new Error(`HTTP ${response.status}`);
-        })
-        .then(data => {
-          // eslint-disable-next-line no-console
-          console.log('✅ Server API is reachable:', data);
-        })
-        .catch(error => {
-          // eslint-disable-next-line no-console
-          console.error('❌ Server API test failed:', error.message);
-        });
 
       setSocket(newSocket);
     }
