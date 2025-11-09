@@ -8,6 +8,7 @@ import {
   CreateConnectFourRoomRequest,
   JoinConnectFourRoomRequest,
   GameInstanceID,
+  ConnectFourGameState,
 } from '../types/types';
 import findGames from '../services/game.service';
 import GameManager from '../services/games/gameManager';
@@ -189,6 +190,17 @@ const gameController = (socket: FakeSOSocket) => {
       console.log(
         `Player ${playerID} joined game ${gameID}. Broadcasting to ${socketsInRoom} sockets in room.`,
       );
+      // eslint-disable-next-line no-console
+      console.log(`Game state after join:`, {
+        gameID,
+        status: game.state.status,
+        ...(game.gameType === 'Connect Four' && {
+          player1: (game.state as ConnectFourGameState).player1,
+          player2: (game.state as ConnectFourGameState).player2,
+          spectators: (game.state as ConnectFourGameState).spectators,
+        }),
+        players: game.players,
+      });
 
       // Broadcast to game room participants
       socket.in(gameID).emit('gameUpdate', { gameInstance: game });
@@ -541,6 +553,42 @@ const gameController = (socket: FakeSOSocket) => {
       timestamp: new Date().toISOString(),
       broadcastTriggered: true,
     });
+  });
+
+  // Debug endpoint to get detailed game state information
+  router.get('/game-debug/:gameID', (req, res) => {
+    try {
+      const { gameID } = req.params;
+      const game = GameManager.getInstance().getGame(gameID as GameInstanceID);
+
+      if (!game) {
+        return res.status(404).json({ error: 'Game not found' });
+      }
+
+      const debugInfo = {
+        gameID,
+        gameType: game.gameType,
+        status: game.state.status,
+        playerCount: game.toModel().players.length,
+        players: game.toModel().players,
+        ...(game.gameType === 'Connect Four' && {
+          connectFourState: {
+            player1: (game.state as ConnectFourGameState).player1,
+            player2: (game.state as ConnectFourGameState).player2,
+            player1Color: (game.state as ConnectFourGameState).player1Color,
+            player2Color: (game.state as ConnectFourGameState).player2Color,
+            currentTurn: (game.state as ConnectFourGameState).currentTurn,
+            totalMoves: (game.state as ConnectFourGameState).totalMoves,
+            spectators: (game.state as ConnectFourGameState).spectators,
+            roomSettings: (game.state as ConnectFourGameState).roomSettings,
+          },
+        }),
+      };
+
+      return res.status(200).json(debugInfo);
+    } catch (error) {
+      return res.status(500).json({ error: (error as Error).message });
+    }
   });
 
   // Connect Four specific routes
