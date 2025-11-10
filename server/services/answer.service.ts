@@ -10,10 +10,10 @@ import {
 } from '../types/types';
 import AnswerModel from '../models/answers.model';
 import QuestionModel from '../models/questions.model';
-import sendAnswerNotification from './notification.service';
 import NotificationService from './notification.service';
 import UserModel from '../models/users.model';
-import { populateDocument } from '../utils/database.util';
+
+const notifier = new NotificationService();
 
 /**
  * Records the most recent answer time for a given question based on its answers.
@@ -75,6 +75,46 @@ export const addAnswerToQuestion = async (
     }
 
     // Send notifications to followers here
+    (async () => {
+      try {
+        const q = await QuestionModel.populate(result, {
+          path: 'followers',
+          select: 'email username',
+        });
+
+        if (!q || !Array.isArray(q.followers) || q.followers.length === 0) return;
+
+        // Load follower users to get email + username
+        const followers = await UserModel.find({ _id: { $in: q.followers } })
+          .select({ email: 1, username: 1 })
+          .lean();
+
+        if (!followers || followers.length === 0) return;
+
+        // Build the email list, excluding the answer author and missing emails
+        const toEmail = followers
+          .filter((u: any) => u && u.email && u.username !== ans.ansBy)
+          .map((u: any) => u.email);
+
+        if (toEmail.length === 0) return;
+
+        const truncate = (s: string, n = 180) =>
+          s.length <= n ? s : s.slice(0, n).trimEnd() + '…';
+
+        const payload: AnswerNotificationPayload = {
+          toEmail,
+          authorName: ans.ansBy,
+          questionTitle: (q as any).title,
+          answerPreview: truncate(ans.text),
+          questionId: result._id.toString(),
+        };
+
+        await notifier.sendAnswerNotification(payload);
+      } catch (notifyErr) {
+        console.warn('Answer notification failed:', notifyErr);
+      }
+    })();
+
 
     return result;
   } catch (error) {
