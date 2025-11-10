@@ -14,7 +14,7 @@ import FollowComponent from '../followComponent';
  * It also includes the functionality to vote, ask a new question, post a new answer, and edit the question.
  */
 const AnswerPage = () => {
-  const { questionID, question, handleNewComment, handleNewAnswer, handleQuestionUpdate } =
+  const { questionID, question, reports, handleNewComment, handleNewAnswer, handleQuestionUpdate } =
     useAnswerPage();
 
   if (!question) {
@@ -26,6 +26,27 @@ const AnswerPage = () => {
       <div style={{ float: 'right' }}>
         <FollowComponent question={question} />
       </div>
+      {question.askedBy === (question && question.askedBy) && reports.length > 0 && (
+        <div
+          className='right_padding'
+          style={{
+            background: '#fff3cd',
+            border: '1px solid #ffeeba',
+            color: '#856404',
+            padding: '8px 12px',
+            marginBottom: '12px',
+          }}>
+          <strong>This post has been reported</strong>
+          <div style={{ marginTop: 6 }}>
+            {reports.slice(0, 3).map((r, idx) => (
+              <div key={idx}>
+                - {r.reason} (by {r.reporter})
+              </div>
+            ))}
+            {reports.length > 3 && <div>…and {reports.length - 3} more</div>}
+          </div>
+        </div>
+      )}
       <VoteComponent question={question} />
       <AnswerHeader ansCount={question.answers.length} title={question.title} />
       <QuestionBody

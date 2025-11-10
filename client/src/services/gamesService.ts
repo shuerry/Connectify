@@ -142,18 +142,32 @@ const joinConnectFourRoom = async (
   roomCode?: string,
   asSpectator?: boolean,
 ): Promise<GameInstance<ConnectFourGameState>> => {
-  const res = await api.post(`${GAMES_API_URL}/connectfour/join`, {
-    playerID,
-    gameID,
-    roomCode,
-    asSpectator,
-  });
+  try {
+    const res = await api.post(`${GAMES_API_URL}/connectfour/join`, {
+      playerID,
+      gameID,
+      roomCode,
+      asSpectator,
+    });
 
-  if (res.status !== 200) {
-    throw new Error('Error while joining Connect Four room');
+    if (res.status !== 200) {
+      throw new Error(`Failed to join room: ${res.data || 'Unknown error'}`);
+    }
+
+    return res.data;
+  } catch (error: unknown) {
+    // Check if it's an axios error with response data
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response: { data: string } };
+      throw new Error(`Failed to join room: ${axiosError.response.data}`);
+    }
+    // If it's already an Error, re-throw it
+    if (error instanceof Error) {
+      throw error;
+    }
+    // Fallback for unknown errors
+    throw new Error('Failed to join Connect Four room');
   }
-
-  return res.data;
 };
 
 /**

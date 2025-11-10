@@ -1,8 +1,10 @@
+import { useMemo, useState } from 'react';
 import useNewQuestion from '../../../hooks/useNewQuestion';
 import Form from '../baseComponents/form';
 import Input from '../baseComponents/input';
 import TextArea from '../baseComponents/textarea';
 import './index.css';
+import ProfanityFilterModal from './profanityFilterModal';
 
 /**
  * NewQuestionPage component allows users to submit a new question with a title,
@@ -23,6 +25,22 @@ const NewQuestionPage = () => {
     tagErr,
     postQuestion,
   } = useNewQuestion();
+
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [filterReason, setFilterReason] = useState('');
+
+  // Testing banned word to see if content filtering works, will switch to actual library or seeded data later
+  const bannedWords = useMemo(() => ['damn'], []);
+
+  const findBannedWords = (input: string): string[] => {
+    const lower = input.toLowerCase();
+    const found = new Set<string>();
+    for (const word of bannedWords) {
+      const pattern = new RegExp(`\\b${word.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+      if (pattern.test(lower)) found.add(word);
+    }
+    return Array.from(found);
+  };
 
   return (
     <Form>
@@ -66,12 +84,24 @@ const NewQuestionPage = () => {
         <button
           className='form_postBtn'
           onClick={() => {
+            const textToCheck = `${title} ${text} ${tagNames}`;
+            const hits = findBannedWords(textToCheck);
+            if (hits.length > 0) {
+              setFilterReason(
+                `Your post contains inappropriate language. Please remove: ${hits.join(', ')}`,
+              );
+              setIsFilterModalOpen(true);
+              return;
+            }
             postQuestion();
           }}>
           Post Question
         </button>
         <div className='mandatory_indicator'>* indicates mandatory fields</div>
       </div>
+      {isFilterModalOpen && (
+        <ProfanityFilterModal reason={filterReason} onClose={() => setIsFilterModalOpen(false)} />
+      )}
     </Form>
   );
 };

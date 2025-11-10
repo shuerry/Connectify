@@ -1,6 +1,5 @@
 import './index.css';
 import useDirectMessage from '../../../hooks/useDirectMessage';
-import ChatsListCard from './chatsListCard';
 import UsersListPage from '../usersListPage';
 import MessageCard from '../messageCard';
 import NotifComponent from '../notifComponent';
@@ -11,18 +10,16 @@ import NotifComponent from '../notifComponent';
  */
 const DirectMessage = () => {
   const {
-    selectedChat,
-    chatToCreate,
-    chats,
+    selectedUser,
+    messages,
     newMessage,
     setNewMessage,
     showCreatePanel,
     setShowCreatePanel,
     handleSendMessage,
-    handleChatSelect,
     handleUserSelect,
-    handleCreateChat,
     error,
+    refreshMessages,
   } = useDirectMessage();
 
   return (
@@ -31,35 +28,32 @@ const DirectMessage = () => {
         <button
           className='custom-button'
           onClick={() => setShowCreatePanel(prevState => !prevState)}>
-          {showCreatePanel ? 'Hide Create Chat Panel' : 'Start a Chat'}
+          {showCreatePanel ? 'Hide User Selection' : 'Start a Chat'}
         </button>
         {error && <div className='direct-message-error'>{error}</div>}
         {showCreatePanel && (
           <>
-            <p>Selected user: {chatToCreate}</p>
-            <button className='custom-button' onClick={handleCreateChat}>
-              Create New Chat
-            </button>
+            <p>Select a user to start chatting</p>
             <UsersListPage handleUserSelect={handleUserSelect} />
           </>
         )}
       </div>
       <div className='direct-message-container'>
-        <div className='chats-list'>
-          {chats.map(chat => (
-            <ChatsListCard key={String(chat._id)} chat={chat} handleChatSelect={handleChatSelect} />
-          ))}
-        </div>
         <div className='chat-container'>
-          {selectedChat ? (
+          {selectedUser ? (
             <>
               <div className='chat-header'>
                 <h2>Chat Participants: {Object.keys(selectedChat.participants).join(', ')}</h2>
                 <NotifComponent chat={selectedChat} />
               </div>
+              <h2>Chat with: {selectedUser}</h2>
               <div className='chat-messages'>
-                {selectedChat.messages.map(message => (
-                  <MessageCard key={String(message._id)} message={message} />
+                {messages.map(message => (
+                  <MessageCard
+                    key={String(message._id)}
+                    message={message}
+                    onMessageUpdate={refreshMessages}
+                  />
                 ))}
               </div>
               <div className='message-input'>

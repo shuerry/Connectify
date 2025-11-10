@@ -106,8 +106,8 @@ export interface CreateGameRequest extends Request {
  */
 export interface GetGamesRequest extends Request {
   query: {
-    gameType: GameType;
-    status: GameStatus;
+    gameType?: GameType;
+    status?: GameStatus;
   };
 }
 

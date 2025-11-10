@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid';
 import {
   GameMove,
   ConnectFourGameState,
@@ -22,19 +21,21 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
   /**
    * Constructor for the ConnectFourGame class, initializes the game state and type.
    */
-  public constructor(
-    creatorID: string,
-    roomSettings: ConnectFourRoomSettings,
-    player1Color: ConnectFourColor = 'RED',
-  ) {
-    // Generate room code for private rooms if not provided
-    const finalRoomSettings = {
-      ...roomSettings,
-      roomCode:
-        roomSettings.privacy === 'PRIVATE' && !roomSettings.roomCode
-          ? nanoid(6).toUpperCase()
-          : roomSettings.roomCode,
+  constructor(creatorID: string, roomSettings: Partial<ConnectFourRoomSettings>) {
+    // Generate a random room code for private/friends-only rooms
+    const roomCode = ['PRIVATE', 'FRIENDS_ONLY'].includes(roomSettings.privacy || 'PUBLIC')
+      ? Math.random().toString(36).substr(2, 6).toUpperCase()
+      : undefined;
+
+    const finalRoomSettings: ConnectFourRoomSettings = {
+      roomName: roomSettings.roomName || 'Connect Four Game',
+      privacy: roomSettings.privacy || 'PUBLIC',
+      allowSpectators: roomSettings.allowSpectators ?? true,
+      roomCode,
     };
+
+    // Generate random colors, ensuring they're different
+    const player1Color: ConnectFourColor = Math.random() < 0.5 ? 'RED' : 'YELLOW';
 
     super(
       {
@@ -53,6 +54,18 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       },
       'Connect Four',
     );
+
+    // Add the creator to the players array immediately
+    this._players.push(creatorID);
+  }
+
+  /**
+   * Clean up duplicate players from the players array (maintenance method)
+   */
+  private _cleanupPlayers(): void {
+    // Remove duplicates while preserving order
+    const uniquePlayers = [...new Set(this._players)];
+    this._players = uniquePlayers;
   }
 
   /**
@@ -75,7 +88,7 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
    * Finds the lowest empty row in a column.
    */
   private _getLowestEmptyRow(col: number): number | null {
-    for (let row = ROWS - 1; row >= 0; row--) {
+    for (let row = ROWS - 1; row >= 0; row -= 1) {
       if (this.state.board[row][col] === null) {
         return row;
       }
@@ -199,7 +212,7 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       throw new Error(`Invalid move: column must be between 0 and ${COLS - 1}`);
     }
 
-    // Column-full is handled in applyMove as a draw condition
+    // Note: Column full check moved to applyMove to handle as draw condition
   }
 
   /**
@@ -211,17 +224,9 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
     const { playerID, move: gameMove } = move;
     const row = this._getLowestEmptyRow(gameMove.column);
 
+    // If column is full, reject the move (don't end game as draw)
     if (row === null) {
-      // Column is full -> treat as draw
-      this.state = {
-        ...this.state,
-        status: 'OVER',
-        moves: [...this.state.moves, { ...gameMove, playerID }],
-        totalMoves: this.state.totalMoves + 1,
-        winners: [],
-        lastMoveColumn: gameMove.column,
-      };
-      return;
+      throw new Error('Invalid move: column is full');
     }
 
     const playerColor = this._getPlayerColor(playerID);
@@ -245,8 +250,8 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
         winningPositions,
         lastMoveColumn: gameMove.column,
       };
-    } else if (this._isBoardFull()) {
-      // Draw
+    } else if (newBoard[0].every(cell => cell !== null)) {
+      // Draw - check if the new board is full after placing the piece
       this.state = {
         ...this.state,
         board: newBoard,
@@ -278,18 +283,25 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       throw new Error('Cannot join game: already started');
     }
 
-    if (this._players.includes(playerID)) {
-      throw new Error('Cannot join game: player already in game');
+    // Special case: if this is the creator (player1) trying to join, they're already in the game
+    if (this.state.player1 === playerID) {
+      // Creator is already in the game, no need to add again
+      return;
     }
 
-    // Check if joining as player or spectator will be handled by caller
-    if (!this.state.player1) {
-      this.state = { ...this.state, player1: playerID };
-    } else if (!this.state.player2) {
+    if (this._players.includes(playerID)) {
+      throw new Error('You are already in this game');
+    }
+
+    // Update game state - since player1 is set in constructor, this must be player2
+    if (!this.state.player2) {
       this.state = { ...this.state, player2: playerID, status: 'IN_PROGRESS' };
     } else {
       throw new Error('Cannot join game: game is full');
     }
+
+    // Clean up any duplicate players that might exist
+    this._cleanupPlayers();
   }
 
   /**
@@ -300,12 +312,17 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       throw new Error('Spectators are not allowed in this room');
     }
 
+    // Disable spectators for private rooms
+    if (this.state.roomSettings.privacy === 'PRIVATE') {
+      throw new Error('Spectators are not allowed in private rooms');
+    }
+
     if (this.state.spectators.includes(playerID)) {
-      throw new Error('Already spectating this game');
+      throw new Error('You are already spectating this game');
     }
 
     if (this._players.includes(playerID)) {
-      throw new Error('Cannot spectate: already playing in this game');
+      throw new Error('You are already in this game as a player');
     }
 
     this.state = {
@@ -359,7 +376,7 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
   /**
    * Verifies room access with optional room code.
    */
-  public verifyAccess(roomCode?: string): boolean {
+  public verifyAccess(roomCode?: string, playerFriends?: string[]): boolean {
     const { privacy, roomCode: actualCode } = this.state.roomSettings;
 
     if (privacy === 'PUBLIC') {
@@ -370,14 +387,34 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
       return roomCode === actualCode;
     }
 
-    // FRIENDS_ONLY - future feature, for now treat as private
-    return roomCode === actualCode;
+    if (privacy === 'FRIENDS_ONLY') {
+      // For friends-only rooms, allow access if:
+      // 1. Player has the correct room code (for sharing with friends)
+      // 2. Player is friends with the room creator
+      const roomCreator = this.state.player1;
+      const hasCorrectCode = roomCode === actualCode;
+      const isFriend = Boolean(roomCreator && playerFriends?.includes(roomCreator));
+
+      return hasCorrectCode || isFriend;
+    }
+
+    return false;
+  }
+
+  /**
+   * Override toModel to ensure clean player data
+   */
+  public toModel() {
+    // Ensure no duplicate players in the model
+    this._cleanupPlayers();
+    return super.toModel();
   }
 
   /**
    * Gets public room info (without sensitive data like room code).
    */
   public getPublicRoomInfo() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { roomCode, ...publicSettings } = this.state.roomSettings;
     return {
       ...this.toModel(),
@@ -393,4 +430,3 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
 }
 
 export default ConnectFourGame;
-

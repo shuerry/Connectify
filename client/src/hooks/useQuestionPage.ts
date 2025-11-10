@@ -12,7 +12,7 @@ import { getQuestionsByFilter } from '../services/questionService';
  * @returns setQuestionOrder - Function to set the sorting order of questions (e.g., newest, oldest).
  */
 const useQuestionPage = () => {
-  const { socket } = useUserContext();
+  const { socket, user } = useUserContext();
 
   const [searchParams] = useSearchParams();
   const [titleText, setTitleText] = useState<string>('All Questions');
@@ -45,7 +45,7 @@ const useQuestionPage = () => {
      */
     const fetchData = async () => {
       try {
-        const res = await getQuestionsByFilter(questionOrder, search);
+        const res = await getQuestionsByFilter(questionOrder, search, user.username);
         setQlist(res || []);
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -103,7 +103,7 @@ const useQuestionPage = () => {
       socket.off('answerUpdate', handleAnswerUpdate);
       socket.off('viewsUpdate', handleViewsUpdate);
     };
-  }, [questionOrder, search, socket]);
+  }, [questionOrder, search, socket, user.username]);
 
   return { titleText, qlist, setQuestionOrder };
 };

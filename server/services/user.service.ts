@@ -30,6 +30,8 @@ export const saveUser = async (user: User): Promise<UserResponse> => {
       email: result.email,
       dateJoined: result.dateJoined,
       biography: result.biography,
+      friends: result.friends,
+      blockedUsers: result.blockedUsers,
     };
 
     return safeUser;
@@ -149,5 +151,145 @@ export const updateUser = async (
     return updatedUser;
   } catch (error) {
     return { error: `Error occurred when updating user: ${error}` };
+  }
+};
+
+/**
+ * Adds a friend relation for a user.
+ */
+export const addFriend = async (
+  username: string,
+  friendUsername: string,
+): Promise<UserResponse> => {
+  try {
+    const updated = await UserModel.findOneAndUpdate(
+      { username },
+      { $addToSet: { friends: friendUsername } },
+      { new: true },
+    ).select('-password');
+
+    if (!updated) {
+      throw Error('Error updating friends');
+    }
+
+    return updated;
+  } catch (error) {
+    return { error: `Error when adding friend: ${error}` };
+  }
+};
+
+/**
+ * Removes a friend relation for a user. Also removes the user from the friend's list.
+ */
+export const removeFriend = async (
+  username: string,
+  friendUsername: string,
+): Promise<UserResponse> => {
+  try {
+    // Remove from both users' friend lists
+    await UserModel.findOneAndUpdate(
+      { username },
+      { $pull: { friends: friendUsername } },
+      { new: true },
+    );
+
+    await UserModel.findOneAndUpdate(
+      { username: friendUsername },
+      { $pull: { friends: username } },
+      { new: true },
+    );
+
+    // Return the updated user
+    const updated = await UserModel.findOne({ username }).select('-password');
+
+    if (!updated) {
+      throw Error('Error updating friends');
+    }
+
+    return updated;
+  } catch (error) {
+    return { error: `Error when removing friend: ${error}` };
+  }
+};
+
+/**
+ * Blocks a target user. Also removes them from friends if present.
+ */
+export const blockUser = async (
+  username: string,
+  targetUsername: string,
+): Promise<UserResponse> => {
+  try {
+    const updated = await UserModel.findOneAndUpdate(
+      { username },
+      { $addToSet: { blockedUsers: targetUsername }, $pull: { friends: targetUsername } },
+      { new: true },
+    ).select('-password');
+
+    if (!updated) {
+      throw Error('Error blocking user');
+    }
+
+    return updated;
+  } catch (error) {
+    return { error: `Error when blocking user: ${error}` };
+  }
+};
+
+/**
+ * Unblocks a target user.
+ */
+export const unblockUser = async (
+  username: string,
+  targetUsername: string,
+): Promise<UserResponse> => {
+  try {
+    const updated = await UserModel.findOneAndUpdate(
+      { username },
+      { $pull: { blockedUsers: targetUsername } },
+      { new: true },
+    ).select('-password');
+
+    if (!updated) {
+      throw Error('Error unblocking user');
+    }
+
+    return updated;
+  } catch (error) {
+    return { error: `Error when unblocking user: ${error}` };
+  }
+};
+
+/**
+ * Helper to fetch relations for a given user.
+ */
+export const getRelations = async (
+  username: string,
+): Promise<{ friends: string[]; blockedUsers: string[] } | { error: string }> => {
+  try {
+    const user = await UserModel.findOne({ username }).select('friends blockedUsers');
+    if (!user) {
+      throw Error('User not found');
+    }
+    return {
+      friends: user.friends ?? [],
+      blockedUsers: user.blockedUsers ?? [],
+    };
+  } catch (error) {
+    return { error: `Error when fetching relations: ${error}` };
+  }
+};
+
+/**
+ * Returns the list of usernames who have blocked the provided username.
+ */
+export const getUsersWhoBlocked = async (
+  username: string,
+): Promise<string[] | { error: string }> => {
+  try {
+    const users = await UserModel.find({ blockedUsers: username }).select('username');
+    return users.map(u => u.username);
+  } catch (error) {
+    return { error: `Error when fetching users who blocked ${username}: ${error}` };
   }
 };

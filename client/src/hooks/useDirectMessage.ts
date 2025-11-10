@@ -1,13 +1,7 @@
-import { ObjectId } from 'mongodb';
 import { useEffect, useState } from 'react';
-import {
-  ChatUpdatePayload,
-  Message,
-  PopulatedDatabaseChat,
-  SafeDatabaseUser,
-} from '../types/types';
+import { DatabaseMessage, Message, SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
-import { createChat, getChatById, getChatsByUser, sendMessage } from '../services/chatService';
+import { addDirectMessage, getDirectMessages } from '../services/messageService';
 
 /**
  * useDirectMessage is a custom hook that provides state and functions for direct messaging between users.
@@ -17,54 +11,48 @@ import { createChat, getChatById, getChatsByUser, sendMessage } from '../service
 const useDirectMessage = () => {
   const { user, socket } = useUserContext();
   const [showCreatePanel, setShowCreatePanel] = useState<boolean>(false);
-  const [chatToCreate, setChatToCreate] = useState<string>('');
-  const [selectedChat, setSelectedChat] = useState<PopulatedDatabaseChat | null>(null);
-  const [chats, setChats] = useState<PopulatedDatabaseChat[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string>('');
+  const [messages, setMessages] = useState<DatabaseMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const handleJoinChat = (chatID: ObjectId) => {
-    socket.emit('joinChat', String(chatID));
-  };
-
   const handleSendMessage = async () => {
-    if (newMessage.trim() && selectedChat?._id) {
-      const message: Omit<Message, 'type'> = {
+    if (newMessage.trim() && selectedUser) {
+      const message: Message = {
         msg: newMessage,
         msgFrom: user.username,
         msgDateTime: new Date(),
+        type: 'direct',
+        msgTo: selectedUser,
       };
 
-      const chat = await sendMessage(message, selectedChat._id);
-
-      setSelectedChat(chat);
-      setError(null);
-      setNewMessage('');
+      try {
+        await addDirectMessage(message);
+        setError(null);
+        setNewMessage('');
+        // Refresh messages
+        const updatedMessages = await getDirectMessages(user.username, selectedUser);
+        setMessages(updatedMessages);
+      } catch (err) {
+        setError('Failed to send message');
+      }
     } else {
       setError('Message cannot be empty');
     }
   };
 
-  const handleChatSelect = async (chatID: ObjectId | undefined) => {
-    if (!chatID) {
-      setError('Invalid chat ID');
-      return;
-    }
-
-    const chat = await getChatById(chatID);
-    setSelectedChat(chat);
-    handleJoinChat(chatID);
-  };
-
-  const handleUserSelect = (selectedUser: SafeDatabaseUser) => {
-    setChatToCreate(selectedUser.username);
+  const handleUserSelect = (selectedUserData: SafeDatabaseUser) => {
+    setSelectedUser(selectedUserData.username);
+    setShowCreatePanel(false);
   };
 
   const handleCreateChat = async () => {
-    if (!chatToCreate) {
+    if (!selectedUser) {
       setError('Please select a user to chat with');
       return;
     }
+    // Chat is created by selecting a user
+  };
 
     // Change 'false' later to use a default notif setting in user preferences
     const participants = {
@@ -76,12 +64,27 @@ const useDirectMessage = () => {
     setSelectedChat(chat);
     handleJoinChat(chat._id);
     setShowCreatePanel(false);
+  const refreshMessages = async () => {
+    if (selectedUser) {
+      try {
+        const userMessages = await getDirectMessages(user.username, selectedUser);
+        setMessages(userMessages);
+      } catch (err) {
+        setError('Failed to fetch messages');
+      }
+    }
   };
 
   useEffect(() => {
-    const fetchChats = async () => {
-      const userChats = await getChatsByUser(user.username);
-      setChats(userChats);
+    const fetchMessages = async () => {
+      if (selectedUser) {
+        try {
+          const userMessages = await getDirectMessages(user.username, selectedUser);
+          setMessages(userMessages);
+        } catch (err) {
+          setError('Failed to fetch messages');
+        }
+      }
     };
 
     const handleChatUpdate = (chatUpdate: ChatUpdatePayload) => {
@@ -112,32 +115,48 @@ const useDirectMessage = () => {
         default: {
           setError('Invalid chat update type');
         }
+    const handleMessageUpdate = (messageUpdate: { msg: DatabaseMessage }) => {
+      const { msg } = messageUpdate;
+
+      // Only update if this message is relevant to the current conversation
+      if (
+        (msg.msgFrom === user.username && msg.msgTo === selectedUser) ||
+        (msg.msgFrom === selectedUser && msg.msgTo === user.username)
+      ) {
+        setMessages(prevMessages => {
+          const existingIndex = prevMessages.findIndex(m => m._id === msg._id);
+          if (existingIndex >= 0) {
+            // Update existing message
+            return prevMessages.map((m, index) => (index === existingIndex ? msg : m));
+          } else {
+            // Add new message
+            return [...prevMessages, msg];
+          }
+        });
       }
     };
 
-    fetchChats();
+    fetchMessages();
 
-    socket.on('chatUpdate', handleChatUpdate);
+    socket.on('messageUpdate', handleMessageUpdate);
 
     return () => {
-      socket.off('chatUpdate', handleChatUpdate);
-      socket.emit('leaveChat', String(selectedChat?._id));
+      socket.off('messageUpdate', handleMessageUpdate);
     };
-  }, [user.username, socket, selectedChat?._id]);
+  }, [user.username, selectedUser, socket]);
 
   return {
-    selectedChat,
-    chatToCreate,
-    chats,
+    selectedUser,
+    messages,
     newMessage,
     setNewMessage,
     showCreatePanel,
     setShowCreatePanel,
     handleSendMessage,
-    handleChatSelect,
     handleUserSelect,
     handleCreateChat,
     error,
+    refreshMessages,
   };
 };
 

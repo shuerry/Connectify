@@ -42,9 +42,10 @@ const questionController = (socket: FakeSOSocket) => {
     const { order } = req.query;
     const { search } = req.query;
     const { askedBy } = req.query;
+    const { viewer } = req.query;
 
     try {
-      let qlist: PopulatedDatabaseQuestion[] = await getQuestionsByOrder(order);
+      let qlist: PopulatedDatabaseQuestion[] = await getQuestionsByOrder(order, viewer);
 
       // Filter by askedBy if provided
       if (askedBy) {

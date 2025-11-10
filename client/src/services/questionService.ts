@@ -14,8 +14,11 @@ const QUESTION_API_URL = `/api/question`;
 const getQuestionsByFilter = async (
   order: string = 'newest',
   search: string = '',
+  viewer?: string,
 ): Promise<PopulatedDatabaseQuestion[]> => {
-  const res = await api.get(`${QUESTION_API_URL}/getQuestion?order=${order}&search=${search}`);
+  const params = new URLSearchParams({ order, search });
+  if (viewer) params.set('viewer', viewer);
+  const res = await api.get(`${QUESTION_API_URL}/getQuestion?${params.toString()}`);
   if (res.status !== 200) {
     throw new Error('Error when fetching or filtering questions');
   }
@@ -134,4 +137,29 @@ export {
   downvoteQuestion,
   getCommunityQuestionsById,
   followQuestion,
+};
+
+// Reporting helpers
+export const reportQuestion = async (
+  qid: string,
+  reporter: string,
+  reason: string,
+): Promise<{ _id?: string } | null> => {
+  try {
+    const res = await api.post(`/api/report`, { qid, reporter, reason });
+    return res.status === 200 ? res.data : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const getQuestionReports = async (
+  qid: string,
+): Promise<Array<{ reporter: string; reason: string; createdAt: string }> | null> => {
+  try {
+    const res = await api.get(`/api/report/question/${qid}`);
+    return res.status === 200 ? res.data : null;
+  } catch (e) {
+    return null;
+  }
 };

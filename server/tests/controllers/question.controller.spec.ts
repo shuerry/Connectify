@@ -996,9 +996,7 @@ describe('Test questionController', () => {
     const editQuestionBody = {
       title: 'Updated Question Title',
       text: 'Updated question text content',
-      tags: [
-        { name: 'updated-tag', description: 'Updated tag description' },
-      ],
+      tags: [{ name: 'updated-tag', description: 'Updated tag description' }],
       username: 'testuser',
     };
 
@@ -1026,16 +1024,14 @@ describe('Test questionController', () => {
         .send(editQuestionBody);
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(
-        JSON.parse(JSON.stringify(mockUpdatedQuestion, null, 2))
-      );
+      expect(response.body).toEqual(JSON.parse(JSON.stringify(mockUpdatedQuestion, null, 2)));
       expect(processTagsSpy).toHaveBeenCalledWith(editQuestionBody.tags);
       expect(updateQuestionSpy).toHaveBeenCalledWith(
         validQuestionId,
         'Updated Question Title',
         'Updated question text content',
         [dbTag1],
-        'testuser'
+        'testuser',
       );
     });
 
@@ -1063,8 +1059,8 @@ describe('Test questionController', () => {
 
     test('should return 403 when user is not authorized', async () => {
       processTagsSpy.mockResolvedValueOnce([dbTag1]);
-      updateQuestionSpy.mockResolvedValueOnce({ 
-        error: 'Unauthorized: You can only edit your own questions' 
+      updateQuestionSpy.mockResolvedValueOnce({
+        error: 'Unauthorized: You can only edit your own questions',
       });
 
       const response = await supertest(app)
@@ -1143,8 +1139,8 @@ describe('Test questionController', () => {
 
     test('should handle empty text', async () => {
       processTagsSpy.mockResolvedValueOnce([dbTag1]);
-      updateQuestionSpy.mockResolvedValueOnce({ 
-        error: 'Title and text cannot be empty' 
+      updateQuestionSpy.mockResolvedValueOnce({
+        error: 'Title and text cannot be empty',
       });
 
       const emptyTextBody = {

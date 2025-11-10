@@ -8,6 +8,9 @@ import { Schema } from 'mongoose';
  * - `username`: The username of the user.
  * - `password`: The encrypted password securing the user's account.
  * - `dateJoined`: The date the user joined the platform.
+ * - `biography`: The user's bio.
+ * - `friends`: Array of usernames this user has friended.
+ * - `blockedUsers`: Array of usernames this user has blocked.
  */
 const userSchema: Schema = new Schema(
   {
@@ -30,6 +33,24 @@ const userSchema: Schema = new Schema(
       type: String,
       required: false,
     },
+    friends: [
+      {
+        type: String,
+        default: [],
+      },
+    ],
+    blockedUsers: [
+      {
+        type: String,
+        default: [],
+      },
+    ],
+    hiddenQuestions: [
+      {
+        type: String,
+        default: [],
+      },
+    ],
   },
   { collection: 'User' },
 );
