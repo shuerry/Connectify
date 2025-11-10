@@ -34,4 +34,25 @@
   background: #0062a3;
 }
 
+.modal-preview {
+  margin: 12px 0;
+  padding: 12px;
+  background: #f5f7fb;
+  border-radius: 4px;
+  border: 1px solid #d8e2f1;
+}
+
+.modal-preview-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.modal-preview-body {
+  margin: 0;
+  font-family: 'Courier New', Courier, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 

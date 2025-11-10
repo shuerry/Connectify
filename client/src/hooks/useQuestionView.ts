@@ -51,6 +51,10 @@ const useQuestionView = () => {
     setModalOpen(true);
   };
 
+  const canReport = (question: PopulatedDatabaseQuestion): boolean => {
+    return user.username !== question.askedBy;
+  };
+
   const closeModal = () => {
     setSelectedQuestion(null);
     setModalOpen(false);
@@ -87,6 +91,7 @@ const useQuestionView = () => {
     submitReport,
     setReportOpen,
     isHidden,
+    canReport,
   };
 };
 

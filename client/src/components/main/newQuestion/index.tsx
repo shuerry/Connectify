@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import useNewQuestion from '../../../hooks/useNewQuestion';
 import Form from '../baseComponents/form';
 import Input from '../baseComponents/input';
 import TextArea from '../baseComponents/textarea';
 import './index.css';
 import ProfanityFilterModal from './profanityFilterModal';
+import filter from 'leo-profanity';
 
 /**
  * NewQuestionPage component allows users to submit a new question with a title,
@@ -28,19 +29,6 @@ const NewQuestionPage = () => {
 
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [filterReason, setFilterReason] = useState('');
-
-  // Testing banned word to see if content filtering works, will switch to actual library or seeded data later
-  const bannedWords = useMemo(() => ['damn'], []);
-
-  const findBannedWords = (input: string): string[] => {
-    const lower = input.toLowerCase();
-    const found = new Set<string>();
-    for (const word of bannedWords) {
-      const pattern = new RegExp(`\\b${word.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
-      if (pattern.test(lower)) found.add(word);
-    }
-    return Array.from(found);
-  };
 
   return (
     <Form>
@@ -85,7 +73,7 @@ const NewQuestionPage = () => {
           className='form_postBtn'
           onClick={() => {
             const textToCheck = `${title} ${text} ${tagNames}`;
-            const hits = findBannedWords(textToCheck);
+            const hits = filter.badWordsUsed(textToCheck);
             if (hits.length > 0) {
               setFilterReason(
                 `Your post contains inappropriate language. Please remove: ${hits.join(', ')}`,
