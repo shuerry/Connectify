@@ -6,6 +6,7 @@ import {
   UserByUsernameRequest,
   FakeSOSocket,
   UpdateBiographyRequest,
+  UpdateEmailRequest,
 } from '../types/types';
 import {
   deleteUserByUsername,
@@ -199,6 +200,33 @@ const userController = (socket: FakeSOSocket) => {
   };
 
   /**
+   * Updates a user's email.
+   * @param req The request containing the username and new email in the body.
+   * @param res The response, either confirming the update or returning an error.
+   * @returns A promise resolving to void.
+   */
+  const updateEmail = async (req: UpdateEmailRequest, res: Response): Promise<void> => {
+    try {
+      // Validate that request has username and email
+      const { username, email } = req.body;
+
+      // Call the same updateUser(...) service used by resetPassword
+      const updatedUser = await updateUser(username, { email });
+
+      if ('error' in updatedUser) {
+        throw new Error(updatedUser.error);
+      }
+
+      // Emit socket event for real-time updates
+      socket.emit('userUpdate', {
+        user: updatedUser,
+        type: 'updated',
+      });
+
+      res.status(200).json(updatedUser);
+    } catch (error) {
+      res.status(500).send(`Error when updating user email: ${error}`);
+  /**
    * Adds a friend to the given user.
    */
   const addFriendRoute = async (req: express.Request, res: Response): Promise<void> => {
@@ -302,6 +330,7 @@ const userController = (socket: FakeSOSocket) => {
   router.get('/getUsers', getUsers);
   router.delete('/deleteUser/:username', deleteUser);
   router.patch('/updateBiography', updateBiography);
+  router.patch('/updateEmail', updateEmail);
   router.post('/addFriend', addFriendRoute);
   router.post('/removeFriend', removeFriendRoute);
   router.post('/blockUser', blockUserRoute);

@@ -39,6 +39,7 @@ const questionSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Community',
     },
+    followers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   },
   { collection: 'Question' },
 );

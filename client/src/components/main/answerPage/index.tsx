@@ -7,6 +7,7 @@ import QuestionBody from './questionBody';
 import VoteComponent from '../voteComponent';
 import CommentSection from '../commentSection';
 import useAnswerPage from '../../../hooks/useAnswerPage';
+import FollowComponent from '../followComponent';
 
 /**
  * AnswerPage component that displays the full content of a question along with its answers.
@@ -22,6 +23,9 @@ const AnswerPage = () => {
 
   return (
     <>
+      <div style={{ float: 'right' }}>
+        <FollowComponent question={question} />
+      </div>
       {question.askedBy === (question && question.askedBy) && reports.length > 0 && (
         <div
           className='right_padding'

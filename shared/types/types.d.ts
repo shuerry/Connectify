@@ -9,3 +9,5 @@ export * from './tag';
 export * from './user';
 export * from './collection';
 export * from './community';
+export * from './notification';
+

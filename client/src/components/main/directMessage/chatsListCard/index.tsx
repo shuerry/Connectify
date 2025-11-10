@@ -17,7 +17,7 @@ const ChatsListCard = ({
 }) => (
   <div onClick={() => handleChatSelect(chat._id)} className='chats-list-card'>
     <p>
-      <strong>Chat with:</strong> {chat.participants.join(', ')}
+      <strong>Chat with:</strong> {Object.keys(chat.participants).join(', ')}
     </p>
   </div>
 );

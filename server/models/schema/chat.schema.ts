@@ -9,12 +9,11 @@ import { Schema } from 'mongoose';
  */
 const chatSchema = new Schema(
   {
-    participants: [
-      {
-        type: String,
-        required: true,
-      },
-    ],
+    participants: {
+      type: Map,
+      of: Boolean,
+      required: true,
+    },
     messages: [
       {
         type: Schema.Types.ObjectId,

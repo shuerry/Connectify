@@ -66,7 +66,7 @@ export const sendMessage = async (
  * @returns The newly created chat data.
  * @throws Throws an error if the chat creation fails or if the status code is not 200.
  */
-export const createChat = async (participants: string[]): Promise<PopulatedDatabaseChat> => {
+export const createChat = async (participants: Record<string, boolean>): Promise<PopulatedDatabaseChat> => {
   const res = await api.post(`${CHAT_API_URL}/createChat`, { participants, messages: [] });
 
   if (res.status !== 200) {
@@ -75,3 +75,14 @@ export const createChat = async (participants: string[]): Promise<PopulatedDatab
 
   return res.data;
 };
+
+export const toggleNotify = async (
+  chatID: ObjectId,
+  username: string,
+): Promise<PopulatedDatabaseChat> => {
+  const res = await api.post(`${CHAT_API_URL}/${chatID}/toggleNotify`, { username });
+  if (res.status !== 200) {
+    throw new Error('Error when toggling notification status for chat');
+  }
+  return res.data;
+}

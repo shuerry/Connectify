@@ -5,6 +5,7 @@ import {
   deleteUser,
   resetPassword,
   updateBiography,
+  updateEmail,
 } from '../services/userService';
 import { SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
@@ -24,6 +25,8 @@ const useProfileSettings = () => {
   const [loading, setLoading] = useState(false);
   const [editBioMode, setEditBioMode] = useState(false);
   const [newBio, setNewBio] = useState('');
+  const [editEmailMode, setEditEmailMode] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -119,6 +122,30 @@ const useProfileSettings = () => {
   };
 
   /**
+   * Handler for updating the email
+   */
+  const handleUpdateEmail = async () => {
+    if (!username) return;
+    try {
+      // Await the async call to update the email
+      const updatedUser = await updateEmail(username, newEmail);
+
+      // Ensure state updates occur sequentially after the API call completes
+      await new Promise(resolve => {
+        setUserData(updatedUser); // Update the user data
+        setEditEmailMode(false); // Exit edit mode
+        resolve(null); // Resolve the promise
+      });
+
+      setSuccessMessage('Email updated!');
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage('Failed to update email.');
+      setSuccessMessage(null);
+    }
+  };
+
+  /**
    * Handler for deleting the user (triggers confirmation modal)
    */
   const handleDeleteUser = () => {
@@ -155,6 +182,10 @@ const useProfileSettings = () => {
     setEditBioMode,
     newBio,
     setNewBio,
+    newEmail,
+    setNewEmail,
+    editEmailMode,
+    setEditEmailMode,
     successMessage,
     errorMessage,
     showConfirmation,
@@ -166,6 +197,7 @@ const useProfileSettings = () => {
     togglePasswordVisibility,
     handleResetPassword,
     handleUpdateBiography,
+    handleUpdateEmail,
     handleDeleteUser,
     handleViewCollectionsPage,
   };

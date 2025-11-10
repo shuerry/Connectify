@@ -3,6 +3,8 @@ import ChatModel from '../models/chat.model';
 import UserModel from '../models/users.model';
 import { Chat, ChatResponse, DatabaseChat, MessageResponse, DatabaseUser } from '../types/types';
 import { saveMessage } from './message.service';
+import NotificationService from './notification.service';
+import MessageModel from '../models/messages.model';
 
 /**
  * Saves a new chat, storing any messages provided as part of the argument.
@@ -55,6 +57,59 @@ export const addMessageToChat = async (
       throw new Error('Chat not found');
     }
 
+    const messageDoc = await MessageModel.findById(messageId).lean();
+    if (!messageDoc) {
+      throw new Error('Message not found after save');
+    }
+
+    const senderUsername: string = messageDoc.msgFrom;
+    const messagePreview: string = (messageDoc.msg || '')
+      .toString()
+      .replace(/\s+/g, ' ')
+      .slice(0, 140);
+
+    // Will be helpful later when we have group chats
+    const groupName = undefined;
+
+    // Send notification to participants who have notifications enabled
+    const participantsMap = updatedChat.participants as unknown as Map<string, boolean>;
+
+    const toEmail: string[] = [];
+
+    for (const [username, isEnabled] of participantsMap.entries()) {
+      if (!isEnabled) continue;
+      if (username === senderUsername) continue;
+
+    const recipientUser = await UserModel.findOne({ username }).lean();
+    if (!recipientUser || !recipientUser.email) {
+      console.warn(
+      `Skipping notify for "${username}" (no user or no email) in chat: ${chatId}`,
+    );
+    continue;
+  }
+
+  toEmail.push(recipientUser.email);
+}
+
+    if (toEmail.length > 0) {
+      try {
+        await new NotificationService().sendChatNotification({
+          toEmail,
+          fromName: senderUsername,
+          chatId,
+          messagePreview,
+          groupName,
+          isMention: false,
+        });
+      } catch (notifyErr) {
+        console.error(
+          `Failed to send chat notification to chat: ${chatId}:`,
+          notifyErr,
+        );
+      }
+    }
+
+
     return updatedChat;
   } catch (error) {
     return { error: `Error adding message to chat: ${error}` };
@@ -87,13 +142,17 @@ export const getChat = async (chatId: string): Promise<ChatResponse> => {
  */
 export const getChatsByParticipants = async (p: string[]): Promise<DatabaseChat[]> => {
   try {
-    const chats = await ChatModel.find({ participants: { $all: p } }).lean();
+    const andConditions = p.map(username => ({
+      [`participants.${username}`]: { $exists: true },
+    }));
+
+    const chats = await ChatModel.find({ $and: andConditions }).lean<DatabaseChat[]>();
 
     if (!chats) {
       throw new Error('Chat not found with the provided participants');
     }
 
-    return chats;
+    return chats ?? [];
   } catch {
     return [];
   }
@@ -107,20 +166,22 @@ export const getChatsByParticipants = async (p: string[]): Promise<DatabaseChat[
  */
 export const addParticipantToChat = async (
   chatId: string,
-  userId: string,
+  username: string,
 ): Promise<ChatResponse> => {
   try {
     // Validate if user exists
-    const userExists: DatabaseUser | null = await UserModel.findById(userId);
+    const userExists: DatabaseUser | null = await UserModel.findOne({ username });
 
     if (!userExists) {
       throw new Error('User does not exist.');
     }
 
+    const updatePath = `participants.${username}`;
+
     // Add participant if not already in the chat
     const updatedChat: DatabaseChat | null = await ChatModel.findOneAndUpdate(
-      { _id: chatId, participants: { $ne: userId } },
-      { $push: { participants: userId } },
+      { _id: chatId, [updatePath]: { $ne: true } },
+      { $set: { [updatePath]: true } },
       { new: true }, // Return the updated document
     );
 
@@ -131,5 +192,33 @@ export const addParticipantToChat = async (
     return updatedChat;
   } catch (error) {
     return { error: `Error adding participant to chat: ${(error as Error).message}` };
+  }
+};
+
+/**
+ * Toggles the notification preference for a participant in a chat.
+ * @param chatId - The ID of the chat to update.
+ * @param username - The username of the participant whose preference is to be toggled.
+ * @returns {Promise<ChatResponse>} - The updated chat or an error message.
+ */
+export const toggleNotify = async (
+  chatId: string,
+  username: string,
+): Promise<ChatResponse> => {
+  try {
+    const chat = await ChatModel.findById(chatId);
+    if (!chat) {
+      throw new Error('Chat not found');
+    }
+
+    const participantsMap = chat.participants as unknown as Map<string, boolean>;
+
+    const current = participantsMap.get(username) ?? false;
+    participantsMap.set(username, !current);
+
+    const updatedChat = await chat.save();
+    return updatedChat as DatabaseChat;
+  } catch (error) {
+    return { error: `Error toggling notification status: ${(error as Error).message}` };
   }
 };

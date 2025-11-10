@@ -4,6 +4,7 @@ import { Answer, PopulatedDatabaseAnswer } from './answer';
 import { DatabaseTag, Tag } from './tag';
 import { Comment, DatabaseComment } from './comment';
 import { DatabaseCommunity } from './community';
+import { SafeDatabaseUser } from './user';
 
 /**
  * Type representing the possible ordering options for questions.
@@ -26,6 +27,8 @@ export type OrderType = 'newest' | 'unanswered' | 'active' | 'mostViewed';
  * - `upVotes`: An array of usernames who have upvoted the question.
  * - `downVotes`: An array of usernames who have downvoted the question.
  * - `comments`: An array of comments related to the question.
+ * - `community`: The ObjectId of the community the question belongs to, or `null`.
+ * - 'followers': An array of usernames who follow the question.
  */
 export interface Question {
   title: string;
@@ -39,6 +42,7 @@ export interface Question {
   downVotes: string[];
   comments: Comment[];
   community: ObjectId | null;
+  followers: User[];
 }
 
 /**
@@ -47,14 +51,17 @@ export interface Question {
  * - `tags`: An array of ObjectIds referencing tags associated with the question.
  * - `answers`: An array of ObjectIds referencing answers associated with the question.
  * - `comments`: An array of ObjectIds referencing comments associated with the question.
+ * - `community`: An ObjectId referencing the community the question belongs to, or `null`.
+ * - `followers`: An array of ObjectIds referencing users who follow the question.
  */
 export interface DatabaseQuestion
-  extends Omit<Question, 'tags' | 'answers' | 'comments' | 'community'> {
+  extends Omit<Question, 'tags' | 'answers' | 'comments' | 'community' | 'followers'> {
   _id: ObjectId;
   tags: ObjectId[];
   answers: ObjectId[];
   comments: ObjectId[];
   community: ObjectId | null;
+  followers: ObjectId[];
 }
 
 /**
@@ -62,13 +69,16 @@ export interface DatabaseQuestion
  * - `tags`: An array of populated `DatabaseTag` objects.
  * - `answers`: An array of populated `PopulatedDatabaseAnswer` objects.
  * - `comments`: An array of populated `DatabaseComment` objects.
+ * - `community`: A populated `DatabaseCommunity` object or `null`.
+ * - `followers`: An array of usernames who follow the question.
  */
 export interface PopulatedDatabaseQuestion
-  extends Omit<DatabaseQuestion, 'tags' | 'answers' | 'comments' | 'community'> {
+  extends Omit<DatabaseQuestion, 'tags' | 'answers' | 'comments' | 'community' | 'followers'> {
   tags: DatabaseTag[];
   answers: PopulatedDatabaseAnswer[];
   comments: DatabaseComment[];
   community: DatabaseCommunity | null;
+  followers: User[];
 }
 
 /**
@@ -88,6 +98,17 @@ export type VoteInterface = { msg: string; upVotes: string[]; downVotes: string[
  *   and updated downVotes, or an error message.
  */
 export type VoteResponse = VoteInterface | { error: string };
+
+/**
+ * Type representing an object with the follower success message and updated followers list.  
+ */
+export type FollowInterface = { msg: string; followers: User[] };
+
+/** Type representing possible responses for a follow-related operation.
+ * - Either an object with the follower success message and updated followers list,
+ *   or an error message.
+ */
+export type FollowResponse = FollowInterface | { error: string };
 
 /**
  * Interface for the request query to find questions using a search string.
@@ -133,6 +154,17 @@ export interface AddQuestionRequest extends Request {
  * - `username`: The username of the user casting the vote (body).
  */
 export interface VoteRequest extends Request {
+  body: {
+    qid: string;
+    username: string;
+  };
+}
+
+/** Interface for the request body when following a question.
+ * - `qid`: The unique identifier of the question being followed (body).
+ * - `username`: The username of the user who wants to follow the question (body).
+ */
+export interface FollowRequest extends Request {
   body: {
     qid: string;
     username: string;

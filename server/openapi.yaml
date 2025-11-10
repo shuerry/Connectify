@@ -1476,10 +1476,13 @@ components:
         - messages
       properties:
         participants:
-          type: array
-          minItems: 1
-          items:
-            type: string
+          type: object
+          description: Map of usernames to their notification preferences.
+          minProperties: 1
+          additionalProperties: false
+          patternProperties:
+            "^.+$":
+              type: boolean
         messages:
           type: array
           items:

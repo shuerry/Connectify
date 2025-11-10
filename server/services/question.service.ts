@@ -5,6 +5,7 @@ import {
   DatabaseCommunity,
   DatabaseQuestion,
   DatabaseTag,
+  FollowResponse,
   OrderType,
   PopulatedDatabaseAnswer,
   PopulatedDatabaseQuestion,
@@ -26,6 +27,7 @@ import {
   sortQuestionsByNewest,
   sortQuestionsByUnanswered,
 } from '../utils/sort.util';
+import { getUserByUsername } from './user.service';
 
 /**
  * Checks if keywords exist in a question's title or text.
@@ -400,5 +402,45 @@ export const getCommunityQuestions = async (communityId: string): Promise<Databa
     return questions;
   } catch (error) {
     return [];
+  }
+};
+
+/**
+ * Adds a follower to a question.
+ *
+ * @param qid - The ID of the question to follow
+ * @param username - The username of the user who wants to follow the question
+ * @returns {Promise<FollowResponse>} - The success message or error message
+ */
+export const addFollowerToQuestion = async (
+  qid: string,
+  username: string
+): Promise<FollowResponse> => {
+  try {
+    const followerUser = await getUserByUsername(username);
+    if (!followerUser || (followerUser as any).error) {
+      return { error: 'User not found' };
+    }
+
+    const followerId = (followerUser as any)._id;
+
+    const result: DatabaseQuestion | null = await QuestionModel.findOneAndUpdate(
+      { _id: qid },
+      { $addToSet: { followers: followerId } },
+      { new: true }
+    ).populate('followers', '-password');
+
+    if (!result) {
+      return { error: 'Error adding follower!' };
+    }
+
+    return {
+      msg: 'Question followed successfully',
+      followers: result.followers || [],
+    };
+  } catch (err) {
+    return {
+      error: 'Error when following question',
+    };
   }
 };
