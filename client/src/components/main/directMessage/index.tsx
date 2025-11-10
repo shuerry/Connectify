@@ -44,11 +44,11 @@ const DirectMessage = () => {
         {error && <div className='direct-message-error'>{error}</div>}
         {showCreatePanel && (
           <>
-            <UsersListPage handleUserSelect={handleUserSelect} />
             <p>Selected user: {chatToCreate}</p>
             <button className='custom-button' onClick={handleCreateChat}>
               Create Chat
             </button>
+            <UsersListPage handleUserSelect={handleUserSelect} />
           </>
         )}
       </div>

@@ -18,6 +18,7 @@ import {
   PopulatedDatabaseChat,
 } from '../types/types';
 import { saveMessage } from '../services/message.service';
+import { getRelations } from '../services/user.service';
 
 /*
  * This controller handles chat-related routes.
@@ -40,6 +41,34 @@ const chatController = (socket: FakeSOSocket) => {
     const formattedMessages = messages.map(m => ({ ...m, type: 'direct' as 'direct' | 'global' }));
 
     try {
+      // Validate that for 2-person chats, participants must be friends
+      const participantUsernames = Object.keys(participants);
+      if (participantUsernames.length === 2) {
+        const [user1, user2] = participantUsernames;
+        
+        // Check if user1 has user2 as a friend
+        const user1Relations = await getRelations(user1);
+        if ('error' in user1Relations) {
+          throw new Error(user1Relations.error);
+        }
+        
+        if (!user1Relations.friends.includes(user2)) {
+          res.status(403).send('Users must be friends to create a direct message chat');
+          return;
+        }
+        
+        // Check if user2 has user1 as a friend (bidirectional check)
+        const user2Relations = await getRelations(user2);
+        if ('error' in user2Relations) {
+          throw new Error(user2Relations.error);
+        }
+        
+        if (!user2Relations.friends.includes(user1)) {
+          res.status(403).send('Users must be friends to create a direct message chat');
+          return;
+        }
+      }
+
       const savedChat = await saveChat({ participants, messages: formattedMessages });
 
       if ('error' in savedChat) {

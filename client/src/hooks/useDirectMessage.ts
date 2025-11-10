@@ -11,6 +11,7 @@ import {
 import useUserContext from './useUserContext';
 import { createChat, getChatById, getChatsByUser, sendMessage } from '../services/chatService';
 import { getDirectMessages } from '../services/messageService';
+import { getRelations } from '../services/userService';
 
 /**
  * useDirectMessage is a custom hook that provides state and functions for direct messaging between users.
@@ -89,18 +90,40 @@ const useDirectMessage = () => {
       return;
     }
 
-    const chat = await createChat({ [user.username]: true, [chatToCreate]: true });
-    setSelectedChat(chat);
-    handleJoinChat(chat._id);
-    setShowCreatePanel(false);
-
-    // Fetch direct messages (friend requests, game invitations, etc.) between participants
+    // Check if users are friends before creating chat
     try {
-      const directMsgs = await getDirectMessages(user.username, chatToCreate);
-      setDirectMessages(directMsgs);
+      const relations = await getRelations(user.username);
+      if (!relations.friends.includes(chatToCreate)) {
+        setError('You can only message users who are your friends');
+        return;
+      }
     } catch (err) {
-      console.error('Error fetching direct messages:', err);
-      setDirectMessages([]);
+      setError('Error checking friend status');
+      return;
+    }
+
+    try {
+      const chat = await createChat({ [user.username]: true, [chatToCreate]: true });
+      setSelectedChat(chat);
+      handleJoinChat(chat._id);
+      setShowCreatePanel(false);
+      setError(null);
+
+      // Fetch direct messages (friend requests, game invitations, etc.) between participants
+      try {
+        const directMsgs = await getDirectMessages(user.username, chatToCreate);
+        setDirectMessages(directMsgs);
+      } catch (err) {
+        console.error('Error fetching direct messages:', err);
+        setDirectMessages([]);
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Error creating chat';
+      if (errorMessage.includes('must be friends')) {
+        setError('You can only message users who are your friends');
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 
