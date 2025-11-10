@@ -54,16 +54,6 @@ const useDirectMessage = () => {
     // Chat is created by selecting a user
   };
 
-    // Change 'false' later to use a default notif setting in user preferences
-    const participants = {
-      [user.username]: false,
-      [chatToCreate]: false,
-    };
-
-    const chat = await createChat(participants);
-    setSelectedChat(chat);
-    handleJoinChat(chat._id);
-    setShowCreatePanel(false);
   const refreshMessages = async () => {
     if (selectedUser) {
       try {
@@ -87,34 +77,6 @@ const useDirectMessage = () => {
       }
     };
 
-    const handleChatUpdate = (chatUpdate: ChatUpdatePayload) => {
-      const { chat, type } = chatUpdate;
-
-      switch (type) {
-        case 'created': {
-          if (chat.participants && chat.participants[user.username]) {
-            setChats(prevChats => [chat, ...prevChats]);
-          }
-          return;
-        }
-        case 'newMessage': {
-          setSelectedChat(chat);
-          return;
-        }
-        case 'newParticipant': {
-          if (chat.participants && chat.participants[user.username]) {
-            setChats(prevChats => {
-              if (prevChats.some(c => chat._id === c._id)) {
-                return prevChats.map(c => (c._id === chat._id ? chat : c));
-              }
-              return [chat, ...prevChats];
-            });
-          }
-          return;
-        }
-        default: {
-          setError('Invalid chat update type');
-        }
     const handleMessageUpdate = (messageUpdate: { msg: DatabaseMessage }) => {
       const { msg } = messageUpdate;
 

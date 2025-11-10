@@ -74,6 +74,8 @@ export const addAnswerToQuestion = async (
       throw new Error('Error when adding answer to question');
     }
 
+    // Send notifications to followers here
+
     return result;
   } catch (error) {
     return { error: 'Error when adding answer to question' };

@@ -42,10 +42,6 @@ const DirectMessage = () => {
         <div className='chat-container'>
           {selectedUser ? (
             <>
-              <div className='chat-header'>
-                <h2>Chat Participants: {Object.keys(selectedChat.participants).join(', ')}</h2>
-                <NotifComponent chat={selectedChat} />
-              </div>
               <h2>Chat with: {selectedUser}</h2>
               <div className='chat-messages'>
                 {messages.map(message => (

@@ -226,6 +226,8 @@ const userController = (socket: FakeSOSocket) => {
       res.status(200).json(updatedUser);
     } catch (error) {
       res.status(500).send(`Error when updating user email: ${error}`);
+    }
+  };
   /**
    * Adds a friend to the given user.
    */
