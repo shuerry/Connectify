@@ -33,7 +33,7 @@ const app = express();
 const server = http.createServer(app);
 // allow requests from the local dev client or the production client only
 // Build allowed client origins from env (comma-separated) with sensible defaults
-const ALLOWED_CLIENT_ORIGINS: string[] = (
+const allowedClientOrigins: string[] = (
   process.env.CLIENT_URLS
     ? process.env.CLIENT_URLS.split(',')
         .map(o => o.trim())
@@ -46,13 +46,9 @@ const ALLOWED_CLIENT_ORIGINS: string[] = (
 const socket: FakeSOSocket = new Server(server, {
   path: '/socket.io',
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? true : ALLOWED_CLIENT_ORIGINS,
+    origin: allowedClientOrigins,
     credentials: true,
   },
-  // Simplified Socket.IO configuration for better Render.com compatibility
-  transports: ['polling', 'websocket'],
-  pingTimeout: 20000,
-  pingInterval: 10000,
 });
 
 function connectDatabase() {
@@ -66,25 +62,11 @@ function startServer() {
   });
 }
 
-socket.on('connection', clientSocket => {
-  const totalClients = socket.sockets.sockets.size;
-  const clientIP = clientSocket.handshake.address;
-  const userAgent = clientSocket.handshake.headers['user-agent'];
-  console.log(`A user connected -> ${clientSocket.id} (Total clients: ${totalClients})`);
-  console.log(`  IP: ${clientIP}, User-Agent: ${userAgent?.substring(0, 50)}...`);
+socket.on('connection', socket => {
+  console.log('A user connected ->', socket.id);
 
-  // Allow users to join their personal notification room
-  clientSocket.on('joinUserRoom', (username: string) => {
-    clientSocket.join(`user:${username}`);
-    console.log(`User ${username} joined personal room (Socket: ${clientSocket.id})`);
-    console.log(
-      `  Users in room user:${username}: ${socket.sockets.adapter.rooms.get(`user:${username}`)?.size || 0}`,
-    );
-  });
-
-  clientSocket.on('disconnect', () => {
-    const remainingClients = socket.sockets.sockets.size;
-    console.log(`User disconnected -> ${clientSocket.id} (Remaining clients: ${remainingClients})`);
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
   });
 });
 
@@ -103,7 +85,7 @@ app.use(express.json());
 // Minimal CORS for REST API (avoids adding a dependency). Uses same allowed origins as Socket.IO
 app.use((req: Request, res: Response, next: NextFunction) => {
   const requestOrigin = req.headers.origin;
-  const isAllowed = requestOrigin && ALLOWED_CLIENT_ORIGINS.includes(requestOrigin);
+  const isAllowed = requestOrigin && allowedClientOrigins.includes(requestOrigin);
   if (isAllowed) {
     res.header('Access-Control-Allow-Origin', requestOrigin);
     res.header('Vary', 'Origin');
