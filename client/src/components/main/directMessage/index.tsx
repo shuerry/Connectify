@@ -34,6 +34,11 @@ const DirectMessage = () => {
     ? Object.keys(selectedChat.participants).find(username => username !== user.username)
     : null;
 
+  // Find the latest message sent by the current user
+  const latestSentMessage = messages
+    .filter(msg => msg.msgFrom === user.username && msg.type === 'direct')
+    .sort((a, b) => new Date(b.msgDateTime).getTime() - new Date(a.msgDateTime).getTime())[0];
+
   return (
     <>
       <div className='create-panel'>
@@ -72,6 +77,10 @@ const DirectMessage = () => {
                     key={String(message._id)}
                     message={message}
                     onMessageUpdate={refreshChat}
+                    isLatestSentMessage={
+                      latestSentMessage ? String(message._id) === String(latestSentMessage._id) : false
+                    }
+                    otherParticipant={otherParticipant}
                   />
                 ))}
               </div>

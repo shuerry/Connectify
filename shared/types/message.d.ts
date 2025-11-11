@@ -25,6 +25,7 @@ export interface Message {
     gameType: 'Connect Four';
     status: 'pending' | 'accepted' | 'declined' | 'expired';
   };
+  readBy?: string[];
 }
 
 /**

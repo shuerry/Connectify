@@ -18,7 +18,7 @@ import {
   PopulatedDatabaseChat,
   Message,
 } from '../types/types';
-import { saveMessage } from '../services/message.service';
+import { saveMessage, markMessagesAsRead } from '../services/message.service';
 import { getRelations } from '../services/user.service';
 
 /*
@@ -336,6 +336,41 @@ const chatController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Marks messages in a chat as read by a user.
+   * @param req The request object containing the chat ID and username.
+   * @param res The response object to send the result.
+   * @returns {Promise<void>} A promise that resolves when messages are marked as read.
+   * @throws {Error} Throws an error if the operation fails.
+   */
+  const markMessagesAsReadRoute = async (req: ChatIdRequest, res: Response): Promise<void> => {
+    const { chatId } = req.params;
+    const { username } = req.body;
+
+    try {
+      const result = await markMessagesAsRead(chatId, username);
+
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+
+      // Emit chat update to notify other participants
+      const chat = await getChat(chatId);
+      if (!('error' in chat)) {
+        const populatedChat = await populateDocument(chat._id.toString(), 'chat');
+        if (!('error' in populatedChat)) {
+          socket
+            .to(chatId)
+            .emit('chatUpdate', { chat: populatedChat as PopulatedDatabaseChat, type: 'readReceipt' });
+        }
+      }
+
+      res.json(result);
+    } catch (err: unknown) {
+      res.status(500).send(`Error marking messages as read: ${(err as Error).message}`);
+    }
+  };
+
   // Register the routes
   router.post('/createChat', createChatRoute);
   router.post('/:chatId/addMessage', addMessageToChatRoute);
@@ -343,6 +378,7 @@ const chatController = (socket: FakeSOSocket) => {
   router.post('/:chatId/addParticipant', addParticipantToChatRoute);
   router.get('/getChatsByUser/:username', getChatsByUserRoute);
   router.post('/:chatId/toggleNotify', toggleNotifyRoute);
+  router.post('/:chatId/markAsRead', markMessagesAsReadRoute);
 
   return router;
 };

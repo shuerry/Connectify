@@ -216,3 +216,53 @@ export const updateGameInvitationStatus = async (
     return { error: `Error updating game invitation: ${(error as Error).message}` };
   }
 };
+
+/**
+ * Marks messages in a chat as read by a user.
+ * Only marks messages sent by the other participant (not by the reader).
+ * @param {string} chatId - The ID of the chat
+ * @param {string} readerUsername - The username of the user marking messages as read
+ * @returns {Promise<{ success: boolean } | { error: string }>} - Success or error message
+ */
+export const markMessagesAsRead = async (
+  chatId: string,
+  readerUsername: string,
+): Promise<{ success: boolean } | { error: string }> => {
+  try {
+    const ChatModel = (await import('../models/chat.model')).default;
+    const chat = await ChatModel.findById(chatId);
+    
+    if (!chat) {
+      return { error: 'Chat not found' };
+    }
+
+    // Get all messages in the chat
+    const messageIds = chat.messages;
+    
+    // Find messages that are from other participants (not from the reader)
+    // and haven't been read by the reader yet
+    const messagesToMark = await MessageModel.find({
+      _id: { $in: messageIds },
+      msgFrom: { $ne: readerUsername },
+      $or: [
+        { readBy: { $exists: false } },
+        { readBy: { $nin: [readerUsername] } },
+      ],
+    });
+
+    // Mark each message as read by adding the reader's username to readBy array
+    await Promise.all(
+      messagesToMark.map(message =>
+        MessageModel.findByIdAndUpdate(
+          message._id,
+          { $addToSet: { readBy: readerUsername } },
+          { new: true },
+        ),
+      ),
+    );
+
+    return { success: true };
+  } catch (error) {
+    return { error: `Error marking messages as read: ${(error as Error).message}` };
+  }
+};

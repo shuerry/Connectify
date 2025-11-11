@@ -9,7 +9,7 @@ import {
   SafeDatabaseUser,
 } from '../types/types';
 import useUserContext from './useUserContext';
-import { createChat, getChatById, getChatsByUser, sendMessage } from '../services/chatService';
+import { createChat, getChatById, getChatsByUser, sendMessage, markMessagesAsRead } from '../services/chatService';
 import { getDirectMessages } from '../services/messageService';
 import { getRelations } from '../services/userService';
 
@@ -112,6 +112,13 @@ const useDirectMessage = () => {
     const chat = await getChatById(chatID);
     setSelectedChat(chat);
     handleJoinChat(chatID);
+
+    // Mark messages as read when viewing the chat
+    try {
+      await markMessagesAsRead(chatID, user.username);
+    } catch (err) {
+      console.error('Error marking messages as read:', err);
+    }
 
     // Fetch direct messages (friend requests, game invitations, etc.) between participants
     const participants = Object.keys(chat.participants);
@@ -226,6 +233,14 @@ const useDirectMessage = () => {
         case 'newMessage': {
           if (selectedChat?._id && chat._id === selectedChat._id) {
             setSelectedChat(chat);
+            refreshChat();
+          }
+          return;
+        }
+        case 'readReceipt': {
+          if (selectedChat?._id && chat._id === selectedChat._id) {
+            setSelectedChat(chat);
+            refreshChat();
           }
           return;
         }
@@ -317,6 +332,7 @@ const useDirectMessage = () => {
           msgTo: msg.msgTo,
           friendRequestStatus: msg.friendRequestStatus,
           gameInvitation: msg.gameInvitation,
+          readBy: msg.readBy || [],
         })),
         ...directMessages.filter(
           dm =>

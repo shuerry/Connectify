@@ -54,7 +54,7 @@ export interface VoteUpdatePayload {
  */
 export interface ChatUpdatePayload {
   chat: PopulatedDatabaseChat;
-  type: 'created' | 'newMessage' | 'newParticipant';
+  type: 'created' | 'newMessage' | 'newParticipant' | 'readReceipt';
 }
 
 /**

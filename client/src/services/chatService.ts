@@ -85,4 +85,23 @@ export const toggleNotify = async (
     throw new Error('Error when toggling notification status for chat');
   }
   return res.data;
-}
+};
+
+/**
+ * Marks messages in a chat as read by a user.
+ *
+ * @param chatID - The ID of the chat.
+ * @param username - The username of the user marking messages as read.
+ * @returns A success response.
+ * @throws Throws an error if the operation fails.
+ */
+export const markMessagesAsRead = async (
+  chatID: ObjectId,
+  username: string,
+): Promise<{ success: boolean }> => {
+  const res = await api.post(`${CHAT_API_URL}/${chatID}/markAsRead`, { username });
+  if (res.status !== 200) {
+    throw new Error('Error when marking messages as read');
+  }
+  return res.data;
+};
