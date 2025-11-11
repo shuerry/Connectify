@@ -1,4 +1,4 @@
-import { JSX, useState } from 'react';
+import { JSX, useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './layout';
 import Login from './auth/login';
@@ -50,8 +50,39 @@ const ProtectedRoute = ({
 const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
   const [user, setUser] = useState<SafeDatabaseUser | null>(null);
 
+  // Logout function to clear user and remembered session
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('rememberedUser');
+  };
+
+  // Check for remembered user on app startup
+  useEffect(() => {
+    const checkRememberedUser = () => {
+      try {
+        const rememberedData = localStorage.getItem('rememberedUser');
+        if (rememberedData) {
+          const { user: rememberedUser, expiresAt } = JSON.parse(rememberedData);
+          
+          // Check if the remembered session is still valid
+          if (Date.now() < expiresAt) {
+            setUser(rememberedUser);
+          } else {
+            // Remove expired session
+            localStorage.removeItem('rememberedUser');
+          }
+        }
+      } catch (error) {
+        // Silent error handling for localStorage issues
+        localStorage.removeItem('rememberedUser');
+      }
+    };
+
+    checkRememberedUser();
+  }, []);
+
   return (
-    <LoginContext.Provider value={{ setUser }}>
+    <LoginContext.Provider value={{ setUser, logout }}>
       <Routes>
         {/* Public Route */}
         <Route path='/' element={<Login />} />

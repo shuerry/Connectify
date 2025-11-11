@@ -17,10 +17,12 @@ const AskQuestionButton = () => {
 
   return (
     <button
-      className='bluebtn'
-      onClick={() => {
-        handleNewQuestion();
-      }}>
+      className='btn btn-primary'
+      onClick={handleNewQuestion}
+    >
+      <svg width='18' height='18' viewBox='0 0 24 24' fill='currentColor' style={{ marginRight: '8px' }}>
+        <path d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'/>
+      </svg>
       Ask a Question
     </button>
   );

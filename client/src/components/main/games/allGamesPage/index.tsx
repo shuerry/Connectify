@@ -43,21 +43,6 @@ const AllGamesPage = () => {
           </div>
         </div>
       )}
-      {/* Available Games List */}
-      <div className='game-available'>
-        <div className='game-list'>
-          {error && <div className='game-error'>{error}</div>}
-          <h2>Available Games</h2>
-          <button className='btn-refresh-list' onClick={fetchGames}>
-            Refresh List
-          </button>
-          <div className='game-items'>
-            {availableGames.map(game => (
-              <GameCard key={game.gameID} game={game} handleJoin={handleJoin} />
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
