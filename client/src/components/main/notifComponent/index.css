@@ -15,10 +15,5 @@
 }
 
 .vote-button-followed {
-  background-color: #38a169;
-  color: white;
-}
-
-.vote-count {
-  margin-left: 0.5rem;
+  background-color: #adadad;
 }

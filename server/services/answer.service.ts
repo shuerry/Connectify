@@ -12,6 +12,7 @@ import AnswerModel from '../models/answers.model';
 import QuestionModel from '../models/questions.model';
 import NotificationService from './notification.service';
 import UserModel from '../models/users.model';
+import e from 'express';
 
 const notifier = new NotificationService();
 
@@ -86,14 +87,14 @@ export const addAnswerToQuestion = async (
 
         // Load follower users to get email + username
         const followers = await UserModel.find({ _id: { $in: q.followers } })
-          .select({ email: 1, username: 1 })
+          .select({ email: 1, username: 1, emailVerified: 1 })
           .lean();
 
         if (!followers || followers.length === 0) return;
 
         // Build the email list, excluding the answer author and missing emails
         const toEmail = followers
-          .filter((u: any) => u && u.email && u.username !== ans.ansBy)
+          .filter((u: any) => u && u.email && u.emailVerified && u.username !== ans.ansBy)
           .map((u: any) => u.email);
 
         if (toEmail.length === 0) return;

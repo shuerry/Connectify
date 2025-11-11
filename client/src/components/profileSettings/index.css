@@ -148,3 +148,8 @@
   gap: 1rem;
   margin-top: 1.5rem;
 }
+
+.unverified-email {
+  color: #888;
+  font-style: italic;
+}

@@ -436,7 +436,7 @@ export const addFollowerToQuestion = async (
       { _id: qid },
       alreadyFollowed ? { $pull: { followers: followerId } } : { $addToSet: { followers: followerId } },
       { new: true }
-    ).populate('followers', 'username email');
+    ).populate('followers', 'username email emailVerified');
 
     if (!result) {
       return { error: 'Error adding follower!' };
