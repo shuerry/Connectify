@@ -20,28 +20,36 @@ interface FollowComponentProps {
  */
 const FollowComponent = ({ question }: FollowComponentProps) => {
   const { user } = useUserContext();
-  const { followed } = useFollowStatus({ question });
+  const { followed, setFollowed } = useFollowStatus({ question });
 
-  /**
-   * Function to handle following a question.
-   */
   const handleFollow = async () => {
+    if (!question?._id || !user?.username) return;
+
+        setFollowed((prev) => !prev);
+
     try {
-      if (question._id) {
-        await followQuestion(question._id, user.username);
+      const res = await followQuestion(question._id, user.username);
+
+      // reconcile with server response if it includes followers
+      if (Array.isArray((res as any)?.followers)) {
+        const isFollowing = (res as any).followers.some(
+          (f: any) => (typeof f === 'string' ? f === user.username : f?.username === user.username)
+        );
+        setFollowed(isFollowing);
       }
-    } catch (error) {
-      // Handle error
+    } catch {
+      // revert on error
+      setFollowed((prev) => !prev);
     }
   };
 
-  // Kept the classnames so that I can reuse the CSS styles
   return (
-    <div className='vote-container'>
+    <div className="vote-container">
       <button
         className={`vote-button ${followed ? 'vote-button-followed' : ''}`}
-        onClick={() => handleFollow()}>
-        Follow
+        onClick={handleFollow}
+      >
+        {followed ? 'Unfollow' : 'Follow'}
       </button>
     </div>
   );

@@ -25,3 +25,11 @@ export interface AnswerNotificationPayload {
         commentPreview?: string;
     };
 }
+
+export interface EmailVerificationPayload {
+    toEmail: string;
+    username: string;
+    token: string;
+    verifyUrl: string;
+    expiresAt: Date;
+}

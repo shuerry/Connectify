@@ -1,0 +1,102 @@
+/* VerifyEmail.css */
+
+/* Container */
+.verify-container {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* Card */
+.verify-card {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* Title */
+.verify-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* Text styles */
+.verify-text-muted {
+  color: #4b5563;
+  font-size: 0.875rem;
+}
+
+.verify-success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.verify-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+/* Section spacing */
+.verify-section {
+  margin-top: 12px;
+}
+
+.verify-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 12px;
+}
+
+/* Buttons & Links */
+.verify-button {
+  background: #4f46e5;
+  color: white;
+  font-size: 0.875rem;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.verify-button:hover {
+  background: #4338ca;
+}
+
+.verify-button-secondary {
+  background: #f3f4f6;
+  color: #111827;
+  font-size: 0.875rem;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.verify-button-secondary:hover {
+  background: #e5e7eb;
+}
+
+.verify-link {
+  font-size: 0.875rem;
+  color: #4f46e5;
+  text-decoration: underline;
+}
+
+.verify-link:hover {
+  color: #4338ca;
+}

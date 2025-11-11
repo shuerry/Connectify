@@ -13,7 +13,7 @@ interface NotifComponentProps {
 }
 
 /**
- * A Notification component that displays notifications for a chat.
+ * A Notification component that displays the notification button for a chat.
  *
  * @param chat - The chat object containing notification information.
  */
@@ -21,7 +21,7 @@ const NotifComponent = ({ chat }: NotifComponentProps) => {
   const { user } = useUserContext();
   const { notify } = useNotifyStatus({ chat });
   /**
-   * Function to handle following a question.
+   * Function to handle following a chat.
    */
   const handleNotify = async () => {
     try {

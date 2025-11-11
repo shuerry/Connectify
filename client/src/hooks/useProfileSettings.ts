@@ -125,25 +125,38 @@ const useProfileSettings = () => {
    * Handler for updating the email
    */
   const handleUpdateEmail = async () => {
-    if (!username) return;
-    try {
-      // Await the async call to update the email
-      const updatedUser = await updateEmail(username, newEmail);
+  if (!username) return;
+  try {
+    // now returns { msg } instead of a user
+    await updateEmail(username, newEmail);
 
-      // Ensure state updates occur sequentially after the API call completes
-      await new Promise(resolve => {
-        setUserData(updatedUser); // Update the user data
-        setEditEmailMode(false); // Exit edit mode
-        resolve(null); // Resolve the promise
-      });
+    setUserData(u =>
+      u
+        ? {
+            ...u,
+            emailVerified: false,
+            emailVerification: {
+              ...(u.emailVerification ?? {}),
+              pendingEmail: newEmail,
+            },
+          }
+        : u
+    );
 
-      setSuccessMessage('Email updated!');
-      setErrorMessage(null);
-    } catch (error) {
-      setErrorMessage('Failed to update email.');
-      setSuccessMessage(null);
-    }
-  };
+    // close edit mode; DO NOT set userData from the response
+    setEditEmailMode(false);
+
+    // show the right message for verification flows
+    setSuccessMessage('Verification email sent');
+    setErrorMessage(null);
+
+    // optional: reflect pending state locally
+    setUserData(u => (u ? { ...u, emailVerified: false } : u));
+  } catch (error) {
+    setErrorMessage('Failed to update email.');
+    setSuccessMessage(null);
+  }
+};
 
   /**
    * Handler for deleting the user (triggers confirmation modal)

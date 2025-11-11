@@ -12,33 +12,31 @@ import { PopulatedDatabaseQuestion } from '../types/types';
  * @returns followed - The user's follow status
  * @returns setFollowed - The function to manually update user's follow status
  */
-
 const useFollowStatus = ({ question }: { question: PopulatedDatabaseQuestion }) => {
-    const { user, socket } = useUserContext();
-    const [followed, setFollowed] = useState<boolean>(false);
+  const { user, socket } = useUserContext();
+  const [followed, setFollowed] = useState<boolean>(false);
 
-    useEffect(() => {
-        /**
-         * Function to get the current follow status for the user.
-         *
-         * @returns The current follow status for the user in the question.
-         */
-        const getFollowStatus = () => {
-            if (!user.username || !question?.followers) {
-                return false;
-            }
-
-            return question.followers.some(
-                (follower: any) => follower.username === user.username
-            );
-        };
-
-        setFollowed(getFollowStatus());
-    }, [question, user.username, socket]);
-
-    return {
-        followed,
+  useEffect(() => {
+    /**
+     * Function to get the current follow status for the user.
+     *
+     * @returns The current follow status for the user in the question.
+     */
+    const getFollowStatus = () => {
+      if (user.username && question?.followers?.find(follower => follower.username === user.username)) {
+        return true;
+      }
+      return false;
     };
+
+    // Set the initial count and vote value
+    setFollowed(getFollowStatus());
+  }, [question, user.username, socket]);
+
+  return {
+    followed,
+    setFollowed,
+  };
 };
 
 export default useFollowStatus;

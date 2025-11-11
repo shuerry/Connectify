@@ -27,6 +27,12 @@ export interface User extends UserCredentials {
   friends?: string[];
   blockedUsers?: string[];
   hiddenQuestions?: string[];
+  emailVerified?: boolean;
+  emailVerification?: {
+    pendingEmail?: string;
+    tokenHash?: string;
+    expiresAt?: Date;
+  };
 }
 
 /**

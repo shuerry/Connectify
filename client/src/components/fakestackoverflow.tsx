@@ -26,6 +26,7 @@ import NewCollectionPage from './main/collections/newCollectionPage';
 import ConnectFourPage from './main/games/connectFourPage';
 import FriendsListPage from './main/friendsList';
 import BlockedListPage from './main/blockedList';
+import VerifyEmail from './main/verifyEmailPage/verifyEmail';
 
 const ProtectedRoute = ({
   user,
@@ -56,6 +57,7 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
         {/* Public Route */}
         <Route path='/' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         {/* Protected Routes */}
         {
           <Route
