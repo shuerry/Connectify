@@ -63,6 +63,7 @@ export const getQuestionsByOrder = async (
       { path: 'tags', model: TagModel },
       { path: 'answers', model: AnswerModel, populate: { path: 'comments', model: CommentModel } },
       { path: 'comments', model: CommentModel },
+      { path: 'followers', model: UserModel, select: 'username email' },
     ]);
 
     let ordered: PopulatedDatabaseQuestion[];
@@ -173,6 +174,7 @@ export const fetchAndIncrementQuestionViewsById = async (
       { path: 'tags', model: TagModel },
       { path: 'answers', model: AnswerModel, populate: { path: 'comments', model: CommentModel } },
       { path: 'comments', model: CommentModel },
+      { path: 'followers', model: UserModel, select: 'username email' },
     ]);
 
     if (!q) {
@@ -377,6 +379,7 @@ export const updateQuestion = async (
       { path: 'tags', model: TagModel },
       { path: 'answers', model: AnswerModel, populate: { path: 'comments', model: CommentModel } },
       { path: 'comments', model: CommentModel },
+      { path: 'followers', model: UserModel, select: 'username email' },
     ]);
 
     if (!updatedQuestion) {
@@ -424,9 +427,14 @@ export const addFollowerToQuestion = async (
 
     const followerId = (followerUser as any)._id;
 
+    const question = await QuestionModel.findById(qid);
+    const alreadyFollowed = question?.followers.includes(followerId);
+
+    console.log('Already followed:', alreadyFollowed);
+
     const result: DatabaseQuestion | null = await QuestionModel.findOneAndUpdate(
       { _id: qid },
-      { $addToSet: { followers: followerId } },
+      alreadyFollowed ? { $pull: { followers: followerId } } : { $addToSet: { followers: followerId } },
       { new: true }
     ).populate('followers', 'username email');
 
@@ -435,7 +443,7 @@ export const addFollowerToQuestion = async (
     }
 
     return {
-      msg: 'Question followed successfully',
+      msg: alreadyFollowed ? 'Question unfollowed successfully' : 'Question followed successfully',
       followers: result.followers || [],
     };
   } catch (err) {
