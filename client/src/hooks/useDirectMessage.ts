@@ -7,6 +7,7 @@ import {
   MessageUpdatePayload,
   PopulatedDatabaseChat,
   SafeDatabaseUser,
+  TypingIndicatorPayload,
 } from '../types/types';
 import useUserContext from './useUserContext';
 import { createChat, getChatById, getChatsByUser, sendMessage, markMessagesAsRead } from '../services/chatService';
@@ -27,7 +28,10 @@ const useDirectMessage = () => {
   const [directMessages, setDirectMessages] = useState<DatabaseMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const selectedChatIdRef = useRef<ObjectId | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef<boolean>(false);
 
   const handleJoinChat = (chatID: ObjectId) => {
     socket.emit('joinChat', String(chatID));
@@ -35,6 +39,16 @@ const useDirectMessage = () => {
 
   const handleSendMessage = async () => {
     if (newMessage.trim() && selectedChat?._id) {
+      // Stop typing indicator when sending message
+      if (isTypingRef.current && selectedChat._id) {
+        socket.emit('typingStop', { chatID: String(selectedChat._id), username: user.username });
+        isTypingRef.current = false;
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+
       // Check if users are friends before sending message
       const participants = Object.keys(selectedChat.participants);
       if (participants.length === 2) {
@@ -352,16 +366,40 @@ const useDirectMessage = () => {
       });
     };
 
+    const handleTypingIndicator = (payload: TypingIndicatorPayload) => {
+      // Only process typing indicators for the current chat
+      if (!selectedChatIdRef.current || payload.chatID !== String(selectedChatIdRef.current)) {
+        return;
+      }
+
+      // Only show typing indicators for other users
+      if (payload.username === user.username) {
+        return;
+      }
+
+      setTypingUsers(prev => {
+        const newSet = new Set(prev);
+        if (payload.isTyping) {
+          newSet.add(payload.username);
+        } else {
+          newSet.delete(payload.username);
+        }
+        return newSet;
+      });
+    };
+
     fetchChats();
 
     // Set up socket listeners
     socket.on('chatUpdate', handleChatUpdate);
     socket.on('messageUpdate', handleMessageUpdate);
+    socket.on('typingIndicator', handleTypingIndicator);
 
     // Also set up listeners when socket connects (in case it's not connected yet)
     const onConnect = () => {
       socket.on('chatUpdate', handleChatUpdate);
       socket.on('messageUpdate', handleMessageUpdate);
+      socket.on('typingIndicator', handleTypingIndicator);
     };
     socket.on('connect', onConnect);
 
@@ -369,6 +407,7 @@ const useDirectMessage = () => {
       socket.off('connect', onConnect);
       socket.off('chatUpdate', handleChatUpdate);
       socket.off('messageUpdate', handleMessageUpdate);
+      socket.off('typingIndicator', handleTypingIndicator);
     };
   }, [user.username, socket, selectedChat?._id]);
 
@@ -399,13 +438,58 @@ const useDirectMessage = () => {
       )
     : [];
 
+  /**
+   * Handles typing events - emits typingStart/typingStop with debouncing
+   */
+  const handleTyping = (value: string) => {
+    setNewMessage(value);
+
+    // Only handle typing if we have a selected chat
+    if (!selectedChat?._id) {
+      return;
+    }
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // If user started typing and wasn't typing before, emit typingStart
+    if (value.length > 0 && !isTypingRef.current) {
+      socket.emit('typingStart', { chatID: String(selectedChat._id), username: user.username });
+      isTypingRef.current = true;
+    }
+
+    // Set timeout to stop typing indicator after 3 seconds of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      if (isTypingRef.current && selectedChat?._id) {
+        socket.emit('typingStop', { chatID: String(selectedChat._id), username: user.username });
+        isTypingRef.current = false;
+      }
+      typingTimeoutRef.current = null;
+    }, 3000);
+  };
+
+  // Cleanup on unmount or when chat changes
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      if (isTypingRef.current && selectedChatIdRef.current) {
+        socket.emit('typingStop', { chatID: String(selectedChatIdRef.current), username: user.username });
+      }
+      setTypingUsers(new Set());
+    };
+  }, [socket, user.username, selectedChatIdRef.current]);
+
   return {
     selectedChat,
     chatToCreate,
     chats,
     messages: allMessages,
     newMessage,
-    setNewMessage,
+    setNewMessage: handleTyping,
     showCreatePanel,
     setShowCreatePanel,
     handleSendMessage,
@@ -414,6 +498,7 @@ const useDirectMessage = () => {
     handleCreateChat,
     refreshChat,
     error,
+    typingUsers,
   };
 };
 

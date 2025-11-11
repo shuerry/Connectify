@@ -305,6 +305,31 @@ const chatController = (socket: FakeSOSocket) => {
         conn.leave(chatID);
       }
     });
+
+    // Handle typing indicators for direct messages
+    conn.on('typingStart', (data: { chatID?: string; username: string }) => {
+      const { chatID, username } = data;
+      if (chatID) {
+        // Direct message chat - emit to others in the chat room
+        conn.to(chatID).emit('typingIndicator', {
+          username,
+          chatID,
+          isTyping: true,
+        });
+      }
+    });
+
+    conn.on('typingStop', (data: { chatID?: string; username: string }) => {
+      const { chatID, username } = data;
+      if (chatID) {
+        // Direct message chat - emit to others in the chat room
+        conn.to(chatID).emit('typingIndicator', {
+          username,
+          chatID,
+          isTyping: false,
+        });
+      }
+    });
   });
 
   /**

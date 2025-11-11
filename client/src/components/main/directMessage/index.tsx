@@ -27,6 +27,7 @@ const DirectMessage = () => {
     chatToCreate,
     refreshChat,
     error,
+    typingUsers,
   } = useDirectMessage();
 
   // Get the other participant's username (excluding current user)
@@ -38,6 +39,14 @@ const DirectMessage = () => {
   const latestSentMessage = messages
     .filter(msg => msg.msgFrom === user.username && msg.type === 'direct')
     .sort((a, b) => new Date(b.msgDateTime).getTime() - new Date(a.msgDateTime).getTime())[0];
+
+  // Get typing indicator text
+  const typingUsersArray = Array.from(typingUsers);
+  const typingText = typingUsersArray.length > 0 
+    ? typingUsersArray.length === 1
+      ? `${typingUsersArray[0]} is typing...`
+      : `${typingUsersArray.length} people are typing...`
+    : null;
 
   return (
     <>
@@ -83,6 +92,16 @@ const DirectMessage = () => {
                     otherParticipant={otherParticipant}
                   />
                 ))}
+                {typingText && (
+                  <div className='typing-indicator' style={{ 
+                    padding: '8px 16px', 
+                    fontStyle: 'italic', 
+                    color: '#666',
+                    fontSize: '0.9em'
+                  }}>
+                    {typingText}
+                  </div>
+                )}
               </div>
               <div className='message-input'>
                 <input

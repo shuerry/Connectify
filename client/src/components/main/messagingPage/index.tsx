@@ -7,7 +7,14 @@ import MessageCard from '../messageCard';
  * and provides functionality to send and receive messages.
  */
 const MessagingPage = () => {
-  const { messages, newMessage, setNewMessage, handleSendMessage, error } = useMessagingPage();
+  const { messages, newMessage, setNewMessage, handleSendMessage, error, typingUsers } = useMessagingPage();
+
+  const typingUsersArray = Array.from(typingUsers);
+  const typingText = typingUsersArray.length > 0 
+    ? typingUsersArray.length === 1
+      ? `${typingUsersArray[0]} is typing...`
+      : `${typingUsersArray.length} people are typing...`
+    : null;
 
   return (
     <div className='chat-room'>
@@ -18,6 +25,16 @@ const MessagingPage = () => {
         {messages.map(message => (
           <MessageCard key={String(message._id)} message={message} />
         ))}
+        {typingText && (
+          <div className='typing-indicator' style={{ 
+            padding: '8px 16px', 
+            fontStyle: 'italic', 
+            color: '#666',
+            fontSize: '0.9em'
+          }}>
+            {typingText}
+          </div>
+        )}
       </div>
       <div className='message-input'>
         <textarea

@@ -224,6 +224,31 @@ const messageController = (socket: FakeSOSocket) => {
     }
   };
 
+  // Handle typing indicators for global chat
+  socket.on('connection', conn => {
+    conn.on('typingStart', (data: { chatID?: string; username: string }) => {
+      const { chatID, username } = data;
+      if (!chatID) {
+        // Global chat - broadcast to all clients except the sender
+        conn.broadcast.emit('typingIndicator', {
+          username,
+          isTyping: true,
+        });
+      }
+    });
+
+    conn.on('typingStop', (data: { chatID?: string; username: string }) => {
+      const { chatID, username } = data;
+      if (!chatID) {
+        // Global chat - broadcast to all clients except the sender
+        conn.broadcast.emit('typingIndicator', {
+          username,
+          isTyping: false,
+        });
+      }
+    });
+  });
+
   // Add appropriate HTTP verbs and their endpoints to the router
   router.post('/addMessage', addMessageRoute);
   router.get('/getMessages', getMessagesRoute);
