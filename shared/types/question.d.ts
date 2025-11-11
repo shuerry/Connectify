@@ -12,8 +12,9 @@ import { SafeDatabaseUser } from './user';
  * - `unanswered`: Sort by questions with no answers.
  * - `active`: Sort by questions with recent activity (views, answers, votes).
  * - `mostViewed`: Sort by the most viewed questions.
+ * - `trending`: Sort by a composite popularity score emphasizing recent votes and comments.
  */
-export type OrderType = 'newest' | 'unanswered' | 'active' | 'mostViewed';
+export type OrderType = 'newest' | 'unanswered' | 'active' | 'mostViewed' | 'trending';
 
 /**
  * Represents a question.
