@@ -1,252 +1,104 @@
-/* Modern Signup Styles - Inheriting from login styles */
-@import '../login/index.css';
-
-/* Additional signup-specific styles */
-.form-hint {
-  font-size: var(--text-xs);
-  color: var(--gray-500);
-  margin-top: var(--space-2);
-  line-height: 1.4;
-}
-
-/* External icon positioning for signup form */
-.auth-card .label-icon {
-  color: var(--primary-600);
-  width: 20px;
-  height: 20px;
+/* Container styles */
+.container {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-}
-
-.auth-card .password-input-wrapper {
-  position: relative;
-  display: flex;
   align-items: center;
+  min-height: 100vh;
+  background-color: #f7f7f7;
+  padding: 20px;
 }
 
-.auth-card .password-input-wrapper .form-input {
-  padding: 16px 50px 16px 16px;
+/* Heading styles */
+.container h2 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 10px;
 }
 
-.auth-card .password-toggle-external {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  color: var(--gray-400);
-  background: none;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  z-index: 2;
+.container h3 {
+  font-size: 1.5rem;
+  color: #555;
+  margin-bottom: 20px;
 }
 
-.auth-card .password-toggle-external:hover {
-  color: var(--gray-600);
-  background-color: var(--gray-100);
+.container h4 {
+  font-size: 1rem;
+  color: #666;
+  margin: 15px 0 5px; /* Adjusted for better spacing */
+  text-align: left; /* Align text to the left */
+  width: 100%; /* Ensure alignment respects the form's width */
+  max-width: 400px; /* Match the form's max width */
 }
 
-.auth-card .password-toggle-external:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--primary-100);
-}
-
-/* Legacy input-wrapper support for any remaining old structure */
-.auth-card .input-wrapper {
-  position: relative;
-}
-
-.auth-card .input-icon {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--gray-400);
-  z-index: 10;
-  pointer-events: none;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.auth-card .password-toggle {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--gray-400);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-}
-
-/* Handle autocomplete dropdown positioning */
-.auth-card .input-wrapper::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.terms-notice {
-  font-size: var(--text-xs);
-  color: var(--gray-500);
-  text-align: center;
-  margin-top: var(--space-4);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--gray-200);
-}
-
-.terms-link {
-  color: var(--primary-600);
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
-  font-size: inherit;
-  padding: 0;
-  margin: 0;
-  transition: color var(--transition-fast);
-}
-
-.terms-link:hover {
-  color: var(--primary-700);
-}
-
-/* Signup-specific brand logo */
-.auth-card .brand-logo {
-  background: linear-gradient(135deg, var(--accent-500) 0%, var(--primary-500) 100%);
-}
-
-/* Enhanced form validation feedback */
-.form-group.has-error .form-input {
-  border-color: var(--error-500);
-  box-shadow: 0 0 0 4px var(--error-100);
-}
-
-.form-group.has-success .form-input {
-  border-color: var(--success-500);
-  box-shadow: 0 0 0 4px var(--success-100);
-}
-
-.validation-message {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-xs);
-  margin-top: var(--space-2);
-}
-
-.validation-message.success {
-  color: var(--success-700);
-}
-
-.validation-message.error {
-  color: var(--error-700);
-}
-
-/* Password strength indicator */
-.password-strength {
-  margin-top: var(--space-3);
-}
-
-.strength-meter {
-  height: 4px;
-  background-color: var(--gray-200);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  margin-bottom: var(--space-2);
-}
-
-.strength-fill {
-  height: 100%;
-  transition: all var(--transition-slow);
-  border-radius: var(--radius-full);
-}
-
-.strength-fill.weak {
-  width: 25%;
-  background-color: var(--error-500);
-}
-
-.strength-fill.fair {
-  width: 50%;
-  background-color: var(--warning-500);
-}
-
-.strength-fill.good {
-  width: 75%;
-  background-color: var(--success-400);
-}
-
-.strength-fill.strong {
+/* Form styles */
+form {
   width: 100%;
-  background-color: var(--success-500);
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.strength-text {
-  font-size: var(--text-xs);
-  font-weight: 500;
+/* Input styles */
+.input-text {
+  padding: 12px;
+  font-size: 16px;
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #fff;
+  color: #333;
+  box-sizing: border-box;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
 }
 
-.strength-text.weak {
-  color: var(--error-700);
+.input-text:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
-.strength-text.fair {
-  color: var(--warning-700);
+/* Button styles */
+.signup-button {
+  padding: 12px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
-.strength-text.good {
-  color: var(--success-600);
+.signup-button:hover {
+  background-color: #0056b3;
 }
 
-.strength-text.strong {
-  color: var(--success-700);
+.signup-button:active {
+  background-color: #003f7f;
 }
 
-/* Enhanced animations for signup */
-@keyframes successPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+/* Signup link styles */
+.login-link {
+  margin-top: 30px; /* Increased spacing */
+  font-size: 14px;
+  color: #007bff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s;
+  text-align: center; /* Center the link */
 }
 
-.form-group.has-success .input-icon,
-.form-group.has-success .label-icon {
-  color: var(--success-500);
-  animation: successPulse 0.3s ease-in-out;
+.login-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
 }
 
-/* Responsive enhancements */
-@media (max-width: 480px) {
-  .terms-notice {
-    font-size: var(--text-xs);
-    line-height: 1.5;
-  }
-  
-  .form-hint {
-    font-size: var(--text-xs);
-  }
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 20px;
+  text-align: center;
 }

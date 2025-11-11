@@ -22,217 +22,89 @@ const SideBarNav = () => {
     setShowUsersOptions(!showUsersOptions);
   };
 
-  const isActiveOption = (path: string) => (location.pathname === path ? 'nav-item-active' : '');
+  const isActiveOption = (path: string) =>
+    location.pathname === path ? 'message-option-selected ' : '';
 
   return (
-    <nav className='modern-sidebar'>
-      <div className='sidebar-content'>
-        {/* Main Navigation */}
-        <section className='nav-section'>
-          <h3 className='nav-section-title'>Main</h3>
-          <div className='nav-items'>
-            <NavLink
-              to='/home'
-              className={({ isActive }) => `nav-item ${isActive ? 'nav-item-active' : ''}`}>
-              <div className='nav-item-icon'>
-                <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
-                  <circle cx='12' cy='12' r='3' stroke='currentColor' strokeWidth='2' />
-                  <path d='M12 1v6m0 6v6m11-7h-6m-6 0H1' stroke='currentColor' strokeWidth='2' />
-                </svg>
-              </div>
-              <span className='nav-item-text'>Questions</span>
-            </NavLink>
-
-            <NavLink
-              to='/tags'
-              className={({ isActive }) => `nav-item ${isActive ? 'nav-item-active' : ''}`}>
-              <div className='nav-item-icon'>
-                <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
-                  <path
-                    d='M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                  <line x1='7' y1='7' x2='7.01' y2='7' stroke='currentColor' strokeWidth='2' />
-                </svg>
-              </div>
-              <span className='nav-item-text'>Tags</span>
-            </NavLink>
-          </div>
-        </section>
-
-        {/* Communication Section */}
-        <section className='nav-section'>
-          <h3 className='nav-section-title'>Communication</h3>
-          <div className='nav-items'>
-            <button
-              onClick={toggleMessagingOptions}
-              className={`nav-item nav-expandable ${showMessagingOptions ? 'nav-item-expanded' : ''}`}>
-              <div className='nav-item-icon'>
-                <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
-                  <path
-                    d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                </svg>
-              </div>
-              <span className='nav-item-text'>Messaging</span>
-              <div className='nav-item-chevron'>
-                <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
-                  <polyline
-                    points='6,9 12,15 18,9'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                </svg>
-              </div>
-            </button>
-
-            {showMessagingOptions && (
-              <div className='nav-subitems animate-slide-up'>
-                <NavLink to='/messaging' className={`nav-subitem ${isActiveOption('/messaging')}`}>
-                  <span className='nav-subitem-text'>Global Messages</span>
-                </NavLink>
-                <NavLink
-                  to='/messaging/direct-message'
-                  className={`nav-subitem ${isActiveOption('/messaging/direct-message')}`}>
-                  <span className='nav-subitem-text'>Direct Messages</span>
-                </NavLink>
-              </div>
-            )}
-
-            <button
-              onClick={toggleUsersOptions}
-              className={`nav-item nav-expandable ${showUsersOptions ? 'nav-item-expanded' : ''}`}>
-              <div className='nav-item-icon'>
-                <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
-                  <path
-                    d='M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                  <circle cx='9' cy='7' r='4' stroke='currentColor' strokeWidth='2' />
-                  <path
-                    d='M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                </svg>
-              </div>
-              <span className='nav-item-text'>Users</span>
-              <div className='nav-item-chevron'>
-                <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
-                  <polyline
-                    points='6,9 12,15 18,9'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                </svg>
-              </div>
-            </button>
-
-            {showUsersOptions && (
-              <div className='nav-subitems animate-slide-up'>
-                <NavLink to='/users' className={`nav-subitem ${isActiveOption('/users')}`}>
-                  <span className='nav-subitem-text'>All Users</span>
-                </NavLink>
-                <NavLink to='/friends' className={`nav-subitem ${isActiveOption('/friends')}`}>
-                  <span className='nav-subitem-text'>Friends</span>
-                </NavLink>
-                <NavLink to='/blocked' className={`nav-subitem ${isActiveOption('/blocked')}`}>
-                  <span className='nav-subitem-text'>Blocked</span>
-                </NavLink>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Entertainment & Community */}
-        <section className='nav-section'>
-          <h3 className='nav-section-title'>Community</h3>
-          <div className='nav-items'>
-            <NavLink
-              to='/games'
-              className={({ isActive }) => `nav-item ${isActive ? 'nav-item-active' : ''}`}>
-              <div className='nav-item-icon'>
-                <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
-                  <rect
-                    x='2'
-                    y='7'
-                    width='20'
-                    height='10'
-                    rx='2'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                  <circle cx='6' cy='12' r='1' fill='currentColor' />
-                  <circle cx='18' cy='10' r='1' fill='currentColor' />
-                  <circle cx='18' cy='14' r='1' fill='currentColor' />
-                </svg>
-              </div>
-              <span className='nav-item-text'>Games</span>
-            </NavLink>
-
-            <NavLink
-              to='/communities'
-              className={({ isActive }) => `nav-item ${isActive ? 'nav-item-active' : ''}`}>
-              <div className='nav-item-icon'>
-                <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
-                  <path
-                    d='M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                  <circle cx='9' cy='7' r='4' stroke='currentColor' strokeWidth='2' />
-                  <path
-                    d='M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                </svg>
-              </div>
-              <span className='nav-item-text'>Communities</span>
-            </NavLink>
-
-            <NavLink
-              to={`/collections/${user.username}`}
-              className={({ isActive }) => `nav-item ${isActive ? 'nav-item-active' : ''}`}>
-              <div className='nav-item-icon'>
-                <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
-                  <path
-                    d='M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                </svg>
-              </div>
-              <span className='nav-item-text'>My Collections</span>
-            </NavLink>
-          </div>
-        </section>
-      </div>
-    </nav>
+    <div id='sideBarNav' className='sideBarNav'>
+      <NavLink
+        to='/home'
+        id='menu_questions'
+        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
+        Questions
+      </NavLink>
+      <NavLink
+        to='/tags'
+        id='menu_tag'
+        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
+        Tags
+      </NavLink>
+      <NavLink
+        to='/messaging'
+        id='menu_messaging'
+        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}
+        onClick={toggleMessagingOptions}>
+        Messaging
+      </NavLink>
+      {showMessagingOptions && (
+        <div className='additional-options'>
+          <NavLink
+            to='/messaging'
+            className={`menu_button message-options ${isActiveOption('/messaging')}`}>
+            Global Messages
+          </NavLink>
+          <NavLink
+            to='/messaging/direct-message'
+            className={`menu_button message-options ${isActiveOption('/messaging/direct-message')}`}>
+            Direct Messages
+          </NavLink>
+        </div>
+      )}
+      <NavLink
+        to='/users'
+        id='menu_users'
+        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}
+        onClick={toggleUsersOptions}>
+        Users
+      </NavLink>
+      {showUsersOptions && (
+        <div className='additional-options'>
+          <NavLink
+            to='/users'
+            className={`menu_button message-options ${isActiveOption('/users')}`}>
+            All
+          </NavLink>
+          <NavLink
+            to='/friends'
+            className={`menu_button message-options ${isActiveOption('/friends')}`}>
+            Friends
+          </NavLink>
+          <NavLink
+            to='/blocked'
+            className={`menu_button message-options ${isActiveOption('/blocked')}`}>
+            Blocked
+          </NavLink>
+        </div>
+      )}
+      <NavLink
+        to='/games'
+        id='menu_games'
+        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
+        Games
+      </NavLink>
+      <NavLink
+        to='/communities'
+        id='menu_communities'
+        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
+        Communities
+      </NavLink>
+      <NavLink
+        to={`/collections/${user.username}`}
+        id='menu_collections'
+        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
+        My Collections
+      </NavLink>
+    </div>
   );
 };
 

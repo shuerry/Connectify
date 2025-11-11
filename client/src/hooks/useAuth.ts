@@ -5,7 +5,7 @@ import { createUser, loginUser } from '../services/userService';
 
 /**
  * Custom hook to manage authentication logic, including handling input changes,
- * form submission, password visibility toggling, remember me functionality, and error validation for both
+ * form submission, password visibility toggling, and error validation for both
  * login and signup processes.
  *
  * @param authType - Specifies the authentication type ('login' or 'signup').
@@ -14,19 +14,16 @@ import { createUser, loginUser } from '../services/userService';
  *   - password: The current value of the password input.
  *   - passwordConfirmation: The current value of the password confirmation input (for signup).
  *   - showPassword: Boolean indicating whether the password is visible.
- *   - rememberMe: Boolean indicating whether to remember the user login (for login).
  *   - err: The current error message, if any.
  *   - handleInputChange: Function to handle changes in input fields.
  *   - handleSubmit: Function to handle form submission.
  *   - togglePasswordVisibility: Function to toggle password visibility.
- *   - toggleRememberMe: Function to toggle remember me checkbox.
  */
 const useAuth = (authType: 'login' | 'signup') => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [passwordConfirmation, setPasswordConfirmation] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [err, setErr] = useState<string>('');
   const { setUser } = useLoginContext();
   const navigate = useNavigate();
@@ -36,13 +33,6 @@ const useAuth = (authType: 'login' | 'signup') => {
    */
   const togglePasswordVisibility = () => {
     setShowPassword(prevState => !prevState);
-  };
-
-  /**
-   * Toggles the remember me checkbox state.
-   */
-  const toggleRememberMe = () => {
-    setRememberMe(prevState => !prevState);
   };
 
   /**
@@ -111,17 +101,6 @@ const useAuth = (authType: 'login' | 'signup') => {
       }
 
       setUser(user);
-      
-      // Handle remember me functionality for login
-      if (authType === 'login' && rememberMe) {
-        localStorage.setItem('rememberedUser', JSON.stringify({
-          user,
-          timestamp: Date.now(),
-          // Store for 30 days
-          expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000)
-        }));
-      }
-      
       navigate('/home');
     } catch (error) {
       setErr((error as Error).message);
@@ -133,12 +112,10 @@ const useAuth = (authType: 'login' | 'signup') => {
     password,
     passwordConfirmation,
     showPassword,
-    rememberMe,
     err,
     handleInputChange,
     handleSubmit,
     togglePasswordVisibility,
-    toggleRememberMe,
   };
 };
 

@@ -1,37 +1,8 @@
-/* Modern Order Button Styles */
-.order-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--gray-700);
-  background-color: white;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
+.btn {
+  background: #ffffff;
+  border: #000000 1px solid;
 }
 
-.order-btn:hover {
-  background-color: var(--primary-50);
-  border-color: var(--primary-300);
-  color: var(--primary-700);
-  transform: translateY(-1px);
-}
-
-.order-btn:active,
-.order-btn.active {
-  background-color: var(--primary-100);
-  border-color: var(--primary-400);
-  color: var(--primary-800);
-  transform: translateY(0);
-}
-
-.order-btn:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--primary-100);
-  border-color: var(--primary-400);
+.btn:hover {
+  background-color: #007bff;
 }
