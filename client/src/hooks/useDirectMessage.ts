@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   ChatUpdatePayload,
   DatabaseMessage,
@@ -27,6 +27,7 @@ const useDirectMessage = () => {
   const [directMessages, setDirectMessages] = useState<DatabaseMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const selectedChatIdRef = useRef<ObjectId | null>(null);
 
   const handleJoinChat = (chatID: ObjectId) => {
     socket.emit('joinChat', String(chatID));
@@ -105,12 +106,14 @@ const useDirectMessage = () => {
     if (!chatID) {
       setError('Invalid chat ID');
       setSelectedChat(null);
+      selectedChatIdRef.current = null;
       setDirectMessages([]);
       return;
     }
 
     const chat = await getChatById(chatID);
     setSelectedChat(chat);
+    selectedChatIdRef.current = chatID;
     handleJoinChat(chatID);
 
     // Mark messages as read when viewing the chat
@@ -173,6 +176,7 @@ const useDirectMessage = () => {
     if (existingChat) {
       // Use existing chat instead of creating a new one
       setSelectedChat(existingChat);
+      selectedChatIdRef.current = existingChat._id;
       handleJoinChat(existingChat._id);
       setShowCreatePanel(false);
       setError(null);
@@ -192,6 +196,7 @@ const useDirectMessage = () => {
     try {
       const chat = await createChat({ [user.username]: true, [chatToCreate]: true });
       setSelectedChat(chat);
+      selectedChatIdRef.current = chat._id;
       handleJoinChat(chat._id);
       setShowCreatePanel(false);
       setError(null);
@@ -239,6 +244,13 @@ const useDirectMessage = () => {
             }
             return prevSelectedChat;
           });
+          
+          // If user is currently viewing this chat, automatically mark messages as read
+          if (selectedChatIdRef.current && String(chat._id) === String(selectedChatIdRef.current)) {
+            markMessagesAsRead(chat._id, user.username).catch(err => {
+              console.error('Error marking messages as read:', err);
+            });
+          }
           
           // Also update the chats list to reflect the new message
           if (user.username in chat.participants) {
