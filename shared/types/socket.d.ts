@@ -216,4 +216,6 @@ export interface ServerToClientEvents {
   gameInvitation: (payload: GameInvitationPayload) => void;
   // Typing indicator events
   typingIndicator: (payload: TypingIndicatorPayload) => void;
+  // Send notification update (for user-specific room)
+  // TODO: add an event for notifications
 }

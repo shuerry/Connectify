@@ -3,8 +3,9 @@ import ChatModel from '../models/chat.model';
 import UserModel from '../models/users.model';
 import { Chat, ChatResponse, DatabaseChat, MessageResponse, DatabaseUser } from '../types/types';
 import { saveMessage } from './message.service';
-import NotificationService from './notification.service';
+import { NotificationService } from './notification.service';
 import MessageModel from '../models/messages.model';
+import NotificationModel from '../models/notification.model';
 
 /**
  * Saves a new chat, storing any messages provided as part of the argument.
@@ -68,10 +69,10 @@ export const addMessageToChat = async (
       .replace(/\s+/g, ' ')
       .slice(0, 140);
 
-    // Will be helpful later when we have group chats
+    // for future group chats
     const groupName = undefined;
 
-    // Send notification to participants who have notifications enabled
+    // ---- PARTICIPANTS ----
     const participantsMap = updatedChat.participants as unknown as Map<string, boolean>;
 
     const toEmail: string[] = [];
@@ -80,16 +81,29 @@ export const addMessageToChat = async (
       if (!isEnabled) continue;
       if (username === senderUsername) continue;
 
-    const recipientUser = await UserModel.findOne({ username }).lean();
-    if (!recipientUser || !recipientUser.email) {
-      console.warn(
-      `Skipping notify for "${username}" (no user or no email) in chat: ${chatId}`,
-    );
-    continue;
-  }
+      const recipientUser = await UserModel.findOne({ username }).lean();
 
-  toEmail.push(recipientUser.email);
-}
+      // --- CREATE DB NOTIFICATION ---
+      await NotificationModel.create({
+        recipient: username,
+        kind: 'chat',
+        title: `New message from ${senderUsername}`,
+        preview: messagePreview,
+        link: `/chat/${chatId}`,
+        actorUsername: senderUsername,
+        meta: { chatId, isMention: false },
+      });
+
+      // ---- EMAIL NOTIFICATIONS ----
+      if (!recipientUser || !recipientUser.email || !recipientUser.emailVerified) {
+        console.warn(
+          `Skipping email notify for "${username}" (no user or no email) in chat: ${chatId}`,
+        );
+        continue;
+      }
+
+      toEmail.push(recipientUser.email);
+    }
 
     if (toEmail.length > 0) {
       try {
@@ -108,7 +122,6 @@ export const addMessageToChat = async (
         );
       }
     }
-
 
     return updatedChat;
   } catch (error) {

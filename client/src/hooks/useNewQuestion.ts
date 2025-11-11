@@ -107,6 +107,7 @@ const useNewQuestion = () => {
       views: [],
       comments: [],
       community: community ? community._id : null,
+      followers: [],
     };
 
     const res = await addQuestion(question);

@@ -1,10 +1,11 @@
 import nodemailer from 'nodemailer';
 import { ChatNotificationPayload, AnswerNotificationPayload } from '../types/types';
 import type { EmailVerificationPayload } from '../types/types';
+import NotificationModel from '../models/notification.model';
 
 type Maybe<T> = T | undefined;
 
-export default class NotificationService {
+export class NotificationService {
   private transporter: Maybe<nodemailer.Transporter>;
   private fromEmail: string;
   private siteUrl: string;
@@ -237,3 +238,40 @@ export default class NotificationService {
     return this.sendMail(Array.isArray(toEmail) ? toEmail : [toEmail], subject, html, text);
   }
 }
+
+export const createNotification = async (payload: {
+  recipient: string;
+  kind: 'answer' | 'chat' | 'system';
+  title?: string;
+  preview?: string;
+  link?: string;
+  actorUsername?: string;
+  meta?: Record<string, unknown>;
+}) => {
+  const n = await NotificationModel.create(payload);
+  return n.toObject();
+};
+
+export const listNotifications = async (username: string, limit = 20, cursor?: string) => {
+  const query: Record<string, unknown> = { recipient: username };
+  if (cursor) query.createdAt = { $lt: new Date(cursor) };
+  const docs = await NotificationModel.find(query).sort({ createdAt: -1 }).limit(limit);
+  return docs.map(d => d.toObject());
+};
+
+export const markRead = async (id: string) => {
+  return NotificationModel.findByIdAndUpdate(id, { isRead: true, readAt: new Date() }, { new: true });
+};
+
+export const markAllRead = async (username: string) => {
+  await NotificationModel.updateMany(
+    { recipient: username, isRead: false },
+    { isRead: true, readAt: new Date() },
+  );
+  return { ok: true };
+};
+
+export const deleteNotification = async (id: string) => {
+  await NotificationModel.findByIdAndDelete(id);
+  return { ok: true };
+};

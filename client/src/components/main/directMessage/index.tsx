@@ -2,7 +2,7 @@ import './index.css';
 import useDirectMessage from '../../../hooks/useDirectMessage';
 import UsersListPage from '../usersListPage';
 import MessageCard from '../messageCard';
-import NotifComponent from '../notifComponent';
+import NotifComponent from '../notifyButton';
 import ChatsListCard from './chatsListCard';
 import useUserContext from '../../../hooks/useUserContext';
 
