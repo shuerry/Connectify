@@ -45,15 +45,25 @@ const VoteComponent = ({ question }: VoteComponentProps) => {
     <div className='vote-container'>
       <button
         className={`vote-button ${voted === 1 ? 'vote-button-upvoted' : ''}`}
-        onClick={() => handleVote('upvote')}>
-        Upvote
+        onClick={() => handleVote('upvote')}
+        aria-label='Upvote'
+        title='Upvote this question'>
+        <svg width='24' height='24' viewBox='0 0 24 24' fill='currentColor'>
+          <path d='M7 14l5-5 5 5H7z'/>
+        </svg>
       </button>
+      
+      <span className='vote-count'>{count}</span>
+      
       <button
         className={`vote-button ${voted === -1 ? 'vote-button-downvoted' : ''}`}
-        onClick={() => handleVote('downvote')}>
-        Downvote
+        onClick={() => handleVote('downvote')}
+        aria-label='Downvote'
+        title='Downvote this question'>
+        <svg width='24' height='24' viewBox='0 0 24 24' fill='currentColor'>
+          <path d='M7 10l5 5 5-5H7z'/>
+        </svg>
       </button>
-      <span className='vote-count'>{count}</span>
     </div>
   );
 };

@@ -1,0 +1,140 @@
+/* Privacy Policy Styles */
+.privacy-container {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  padding: var(--space-6);
+}
+
+.privacy-content {
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.privacy-header {
+  padding: var(--space-8);
+  background: linear-gradient(135deg, var(--accent-600), var(--primary-600));
+  color: white;
+  text-align: center;
+}
+
+.privacy-title {
+  font-size: var(--text-4xl);
+  font-weight: 800;
+  margin: 0 0 var(--space-2) 0;
+  color: white;
+}
+
+.privacy-subtitle {
+  font-size: var(--text-lg);
+  margin: 0;
+  opacity: 0.9;
+}
+
+.privacy-sections {
+  padding: var(--space-8);
+}
+
+.privacy-section {
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.privacy-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.privacy-section h2 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--accent-600);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.privacy-section h3 {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: var(--space-6) 0 var(--space-3) 0;
+}
+
+.privacy-section p {
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
+}
+
+.privacy-section ul {
+  margin: var(--space-4) 0;
+  padding-left: var(--space-6);
+}
+
+.privacy-section li {
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+  position: relative;
+}
+
+.privacy-section li::marker {
+  color: var(--accent-500);
+}
+
+.privacy-footer {
+  padding: var(--space-6) var(--space-8);
+  background-color: var(--bg-tertiary);
+  border-top: 1px solid var(--border-primary);
+  text-align: center;
+}
+
+.privacy-footer p {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.privacy-footer p:last-child {
+  margin-bottom: 0;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .privacy-container {
+    padding: var(--space-4);
+  }
+  
+  .privacy-content {
+    border-radius: var(--radius-md);
+  }
+  
+  .privacy-header {
+    padding: var(--space-6);
+  }
+  
+  .privacy-title {
+    font-size: var(--text-3xl);
+  }
+  
+  .privacy-sections {
+    padding: var(--space-6);
+  }
+  
+  .privacy-footer {
+    padding: var(--space-4) var(--space-6);
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .privacy-section h2 {
+    color: var(--accent-400);
+  }
+}
