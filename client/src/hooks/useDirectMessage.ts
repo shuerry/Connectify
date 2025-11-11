@@ -231,24 +231,56 @@ const useDirectMessage = () => {
           return;
         }
         case 'newMessage': {
-          if (selectedChat?._id && chat._id === selectedChat._id) {
-            setSelectedChat(chat);
-            refreshChat();
+          // Use functional updates to access current state
+          setSelectedChat(prevSelectedChat => {
+            // Update the selected chat if it matches
+            if (prevSelectedChat?._id && String(chat._id) === String(prevSelectedChat._id)) {
+              return chat;
+            }
+            return prevSelectedChat;
+          });
+          
+          // Also update the chats list to reflect the new message
+          if (user.username in chat.participants) {
+            setChats(prevChats => {
+              const existingIndex = prevChats.findIndex(c => String(c._id) === String(chat._id));
+              if (existingIndex >= 0) {
+                // Update existing chat in the list
+                return prevChats.map(c => (String(c._id) === String(chat._id) ? chat : c));
+              }
+              // If not in list but user is a participant, add it
+              return [chat, ...prevChats];
+            });
           }
           return;
         }
         case 'readReceipt': {
-          if (selectedChat?._id && chat._id === selectedChat._id) {
-            setSelectedChat(chat);
-            refreshChat();
+          // Use functional updates to access current state
+          setSelectedChat(prevSelectedChat => {
+            // Update the selected chat if it matches
+            if (prevSelectedChat?._id && String(chat._id) === String(prevSelectedChat._id)) {
+              return chat;
+            }
+            return prevSelectedChat;
+          });
+          
+          // Also update the chats list to reflect the read receipt
+          if (user.username in chat.participants) {
+            setChats(prevChats => {
+              const existingIndex = prevChats.findIndex(c => String(c._id) === String(chat._id));
+              if (existingIndex >= 0) {
+                return prevChats.map(c => (String(c._id) === String(chat._id) ? chat : c));
+              }
+              return prevChats;
+            });
           }
           return;
         }
         case 'newParticipant': {
           if (user.username in chat.participants) {
             setChats(prevChats => {
-              if (prevChats.some(c => chat._id === c._id)) {
-                return prevChats.map(c => (c._id === chat._id ? chat : c));
+              if (prevChats.some(c => String(c._id) === String(chat._id))) {
+                return prevChats.map(c => (String(c._id) === String(chat._id) ? chat : c));
               }
               return [chat, ...prevChats];
             });
@@ -264,60 +296,69 @@ const useDirectMessage = () => {
     const handleMessageUpdate = (messageUpdate: MessageUpdatePayload) => {
       const { msg } = messageUpdate;
       
-      // If this is a direct message (friend request, game invitation, etc.) for the current chat
-      if (selectedChat) {
-        const participants = Object.keys(selectedChat.participants);
-        const otherParticipant = participants.find(p => p !== user.username);
-        
-        if (
-          otherParticipant &&
-          ((msg.msgFrom === user.username && msg.msgTo === otherParticipant) ||
-           (msg.msgFrom === otherParticipant && msg.msgTo === user.username) ||
-           (msg.type === 'friendRequest' && participants.includes(msg.msgFrom) && participants.includes(msg.msgTo || '')))
-        ) {
-          // Update direct messages
-          setDirectMessages(prev => {
-            const existingIndex = prev.findIndex(m => String(m._id) === String(msg._id));
-            if (existingIndex >= 0) {
-              // Update existing message
-              return prev.map((m, idx) => (idx === existingIndex ? msg : m));
-            } else {
-              // Add new message
-              return [...prev, msg].sort((a, b) => 
-                new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime()
-              );
-            }
-          });
-
-          // Also update the chat if the message is in the chat's messages
-          if (selectedChat.messages.some(m => String(m._id) === String(msg._id))) {
-            setSelectedChat(prev => {
-              if (!prev) return prev;
+      // Use functional updates to access current state
+      setSelectedChat(prevSelectedChat => {
+        // If this is a direct message (friend request, game invitation, etc.) for the current chat
+        if (prevSelectedChat) {
+          const participants = Object.keys(prevSelectedChat.participants);
+          const otherParticipant = participants.find(p => p !== user.username);
+          
+          if (
+            otherParticipant &&
+            ((msg.msgFrom === user.username && msg.msgTo === otherParticipant) ||
+             (msg.msgFrom === otherParticipant && msg.msgTo === user.username) ||
+             (msg.type === 'friendRequest' && participants.includes(msg.msgFrom) && participants.includes(msg.msgTo || '')))
+          ) {
+            // Also update the chat if the message is in the chat's messages
+            if (prevSelectedChat.messages.some(m => String(m._id) === String(msg._id))) {
               return {
-                ...prev,
-                messages: prev.messages.map(m => 
+                ...prevSelectedChat,
+                messages: prevSelectedChat.messages.map(m => 
                   String(m._id) === String(msg._id) 
                     ? { ...m, ...msg, user: m.user } // Preserve user field
                     : m
                 ),
               };
-            });
+            }
           }
         }
-      }
+        return prevSelectedChat;
+      });
+
+      // Update direct messages
+      setDirectMessages(prev => {
+        const existingIndex = prev.findIndex(m => String(m._id) === String(msg._id));
+        if (existingIndex >= 0) {
+          // Update existing message
+          return prev.map((m, idx) => (idx === existingIndex ? msg : m));
+        } else {
+          // Add new message
+          return [...prev, msg].sort((a, b) => 
+            new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime()
+          );
+        }
+      });
     };
 
     fetchChats();
 
+    // Set up socket listeners
     socket.on('chatUpdate', handleChatUpdate);
     socket.on('messageUpdate', handleMessageUpdate);
 
+    // Also set up listeners when socket connects (in case it's not connected yet)
+    const onConnect = () => {
+      socket.on('chatUpdate', handleChatUpdate);
+      socket.on('messageUpdate', handleMessageUpdate);
+    };
+    socket.on('connect', onConnect);
+
     return () => {
+      socket.off('connect', onConnect);
       socket.off('chatUpdate', handleChatUpdate);
       socket.off('messageUpdate', handleMessageUpdate);
-      socket.emit('leaveChat', String(selectedChat?._id));
     };
-  }, [user.username, socket, selectedChat]);
+  }, [user.username, socket, selectedChat?._id]);
 
   // Merge chat messages with direct messages (friend requests, game invitations, etc.)
   // Convert MessageInChat to DatabaseMessage format for consistency
