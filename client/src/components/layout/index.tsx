@@ -2,24 +2,20 @@ import './index.css';
 import { Outlet } from 'react-router-dom';
 import SideBarNav from '../main/sideBarNav';
 import Header from '../header';
-import ThemeToggle from '../common/ThemeToggle';
 
 /**
- * Modern Layout component with improved responsive design and clean structure.
+ * Main component represents the layout of the main page, including a sidebar and the main content area.
  */
 const Layout = () => (
-  <div className='app-layout'>
+  <>
     <Header />
-    <div className='layout-container'>
+    <div id='main' className='main'>
       <SideBarNav />
-      <main className='main-content'>
-        <div className='content-wrapper'>
-          <Outlet />
-        </div>
-      </main>
+      <div id='right_main' className='right_main'>
+        <Outlet />
+      </div>
     </div>
-    <ThemeToggle />
-  </div>
+  </>
 );
 
 export default Layout;

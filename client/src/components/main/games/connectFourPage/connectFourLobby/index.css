@@ -10,113 +10,81 @@
 }
 
 .lobby-header h1 {
-  color: var(--gray-900);
+  color: #000000;
   margin-bottom: 10px;
 }
 
 .lobby-header p {
-  color: var(--gray-700);
+  color: #000000;
 }
 
-.lobby-actions-header {
+.lobby-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
   margin-bottom: 20px;
-  padding: 24px;
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
-  border-radius: 12px;
-}
-
-.main-actions-row {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  margin-bottom: 12px;
-}
-
-.or-separator {
-  display: flex;
-  align-items: center;
-  color: var(--gray-500);
-  font-weight: 600;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.or-separator::before,
-.or-separator::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--gray-300);
-  margin: 0 12px;
-}
-
-.join-by-code-section {
-  flex: 1;
-  max-width: 400px;
-}
-
-.code-input-group {
-  display: flex;
-  gap: 8px;
-  align-items: stretch;
-}
-
-.code-input {
-  flex: 1;
-  min-width: 160px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-}
-
-.join-code-btn {
-  min-width: 80px;
-  white-space: nowrap;
-}
-
-.code-hint {
-  font-size: var(--text-xs);
-  color: var(--gray-500);
-  text-align: center;
-  margin-top: 8px;
-  line-height: 1.4;
-}
-
-.create-room-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 28px;
-  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
-  color: white;
-  border: none;
+  padding: 20px;
+  background: #f8f9fa;
   border-radius: 8px;
+}
+
+.btn-create-room {
+  padding: 12px 24px;
+  background: #d7ce23;
+  color: rgb(0, 0, 0);
+  border: none;
+  border-radius: 6px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-sm);
-  white-space: nowrap;
+  transition: background 0.3s;
 }
 
-.create-room-btn:hover {
-  background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-800) 100%);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+.btn-create-room:hover {
+  background: #e0122d;
 }
 
+.join-by-code {
+  display: flex;
+  gap: 10px;
+}
 
+.join-by-code input {
+  padding: 10px 16px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  width: 150px;
+}
+
+.join-by-code button {
+  padding: 10px 20px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.join-by-code button:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+.join-by-code button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+}
 
 .lobby-filters {
   display: flex;
   gap: 30px;
   margin-bottom: 20px;
   padding: 20px;
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
+  background: #f8f9fa;
   border-radius: 8px;
 }
 
@@ -126,7 +94,7 @@
 
 .filter-section h4 {
   margin: 0 0 10px 0;
-  color: var(--gray-700);
+  color: #333;
   font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
@@ -142,29 +110,27 @@
 .filter-buttons button {
   padding: 8px 16px;
   background: white;
-  color: var(--gray-700);
-  border: 2px solid var(--gray-300);
+  border: 2px solid #ddd;
   border-radius: 6px;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.3s;
   font-size: 14px;
   white-space: nowrap;
 }
 
 .filter-buttons button.active {
-  background: var(--primary-600);
+  background: #02121e;
   color: white;
-  border-color: var(--primary-600);
+  border-color: #030e16;
 }
 
 .filter-buttons button:hover {
-  border-color: var(--primary-500);
-  background: var(--gray-50);
+  border-color: #00192a;
+  background: #f5f5f5;
 }
 
 .filter-buttons button.active:hover {
-  background: var(--primary-700);
-  border-color: var(--primary-700);
+  background: #030e16;
 }
 
 .rooms-header {
@@ -173,7 +139,7 @@
 
 .rooms-header h3 {
   margin: 0;
-  color: var(--gray-900);
+  color: #333;
   font-size: 18px;
   font-weight: 600;
 }
@@ -187,35 +153,34 @@
 .no-rooms {
   text-align: center;
   padding: 60px 20px;
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
+  background: #f8f9fa;
   border-radius: 8px;
 }
 
 .no-rooms p {
-  color: var(--gray-600);
+  color: #7f8c8d;
   margin: 10px 0;
 }
 
 .room-card {
   background: white;
-  border: 2px solid var(--gray-200);
+  border: 2px solid #ecf0f1;
   border-radius: 8px;
   padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: all var(--transition-fast);
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .room-card:hover {
-  border-color: var(--primary-400);
-  box-shadow: var(--shadow-md);
+  border-color: #3498db;
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.1);
 }
 
 .room-info h3 {
   margin: 0 0 10px 0;
-  color: var(--gray-900);
+  color: #2c3e50;
 }
 
 .room-details {
@@ -264,7 +229,7 @@
 
 .room-players p {
   margin: 5px 0;
-  color: var(--gray-600);
+  color: #7f8c8d;
   font-size: 14px;
 }
 
@@ -309,15 +274,14 @@
 }
 
 .game-rules-summary {
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
+  background: #f8f9fa;
   padding: 20px;
   border-radius: 8px;
-  border-left: 4px solid var(--primary-600);
+  border-left: 4px solid #000101;
 }
 
 .game-rules-summary h3 {
-  color: var(--gray-900);
+  color: #000000;
   margin: 0 0 15px 0;
 }
 
@@ -329,7 +293,7 @@
 
 .game-rules-summary li {
   padding: 8px 0;
-  color: var(--gray-700);
+  color: #555;
   position: relative;
   padding-left: 25px;
 }
@@ -343,28 +307,8 @@
 }
 
 @media (max-width: 768px) {
-  .main-actions-row {
+  .lobby-actions {
     flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
-  }
-
-  .or-separator {
-    align-self: center;
-  }
-
-  .or-separator::before,
-  .or-separator::after {
-    display: none;
-  }
-
-  .join-by-code-section {
-    max-width: none;
-  }
-
-  .code-input-group {
-    flex-direction: column;
-    gap: 12px;
   }
 
   .lobby-filters {

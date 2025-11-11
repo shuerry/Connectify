@@ -41,78 +41,57 @@ const QuestionView = ({ question }: QuestionProps) => {
   }
 
   return (
-    <div className='question-card'>
-      <div 
-        className='question-content'
-        onClick={() => {
-          if (question._id) {
-            handleAnswer(question._id);
-          }
-        }}
-      >
-        <div className='question-stats'>
-          <div className='stat-item'>
-            <div className='stat-number'>{question.answers.length || 0}</div>
-            <div className='stat-label'>answers</div>
-          </div>
-          <div className='stat-item'>
-            <div className='stat-number'>{question.views.length}</div>
-            <div className='stat-label'>views</div>
-          </div>
-        </div>
-        
-        <div className='question-main'>
-          <h3 className='question-title'>{question.title}</h3>
-          
-          <div className='question-tags'>
-            {question.tags.map(tag => (
-              <button
-                key={String(tag._id)}
-                className='tag-button'
-                onClick={e => {
-                  e.stopPropagation();
-                  clickTag(tag.name);
-                }}>
-                {tag.name}
-              </button>
-            ))}
-          </div>
-          
-          <div className='question-meta'>
-            <div className='asked-by'>
-              <span>asked by</span>
-              <span className='author-name'>{question.askedBy}</span>
-            </div>
-            <div className='asked-time'>{getMetaData(new Date(question.askDateTime))}</div>
-          </div>
+    <div
+      className='question right_padding'
+      onClick={() => {
+        if (question._id) {
+          handleAnswer(question._id);
+        }
+      }}>
+      <div className='postStats'>
+        <div>{question.answers.length || 0} answers</div>
+        <div>{question.views.length} views</div>
+      </div>
+      <div className='question_mid'>
+        <div className='postTitle'>{question.title}</div>
+        <div className='question_tags'>
+          {question.tags.map(tag => (
+            <button
+              key={String(tag._id)}
+              className='question_tag_button'
+              onClick={e => {
+                e.stopPropagation();
+                clickTag(tag.name);
+              }}>
+              {tag.name}
+            </button>
+          ))}
         </div>
       </div>
-      
-      <div className='question-actions'>
-        <button
-          onClick={e => {
-            e.stopPropagation();
-            handleSaveClick(question);
-          }}
-          className='btn btn-secondary btn-sm'>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
-          </svg>
-          Save to Collection
-        </button>
+      <div className='lastActivity'>
+        <div className='question_author'>{question.askedBy}</div>
+        <div>&nbsp;</div>
+        <div className='question_meta'>asked {getMetaData(new Date(question.askDateTime))}</div>
+      </div>
 
-        <button
-          onClick={e => {
-            e.stopPropagation();
-            openReportModal(question);
-          }}
-          className='btn btn-outline btn-sm'>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/>
-          </svg>
-          Report
-        </button>
-      </div>
+      <button
+        onClick={e => {
+          e.stopPropagation();
+          handleSaveClick(question);
+        }}
+        className='collections-btn'>
+        Edit My Collections
+      </button>
+
+      <button
+        onClick={e => {
+          e.stopPropagation();
+          openReportModal(question);
+        }}
+        className='collections-btn'
+        style={{ marginLeft: '8px' }}>
+        Report
+      </button>
 
       {isModalOpen && selectedQuestion && (
         <SaveToCollectionModal question={selectedQuestion} onClose={closeModal} />
@@ -121,30 +100,20 @@ const QuestionView = ({ question }: QuestionProps) => {
       {isReportOpen && reportTarget && (
         <div className='modal-backdrop' onClick={e => e.stopPropagation()}>
           <div className='modal-container' onClick={e => e.stopPropagation()}>
-            <div className='modal-header'>
-              <h2 className='modal-title'>Report Post</h2>
-              <button className='modal-close' onClick={() => setReportOpen(false)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-              </button>
-            </div>
-            <div className='modal-body'>
-              <textarea
-                placeholder='Please describe the reason for reporting this post...'
-                className='form-textarea'
-                rows={5}
-                onClick={e => e.stopPropagation()}
-                onChange={() => {}}
-                id='report-reason-input'
-              />
-            </div>
-            <div className='modal-footer'>
-              <button className='btn btn-secondary' onClick={() => setReportOpen(false)}>
-                Cancel
+            <h2 className='modal-title'>Report Post</h2>
+            <textarea
+              placeholder='Describe the reason'
+              style={{ width: '100%', height: '120px', marginBottom: '12px' }}
+              onClick={e => e.stopPropagation()}
+              onChange={() => {}}
+              id='report-reason-input'
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className='close-btn' onClick={() => setReportOpen(false)}>
+                Close
               </button>
               <button
-                className='btn btn-danger'
+                className='close-btn'
                 onClick={e => {
                   e.stopPropagation();
                   const val = (
@@ -152,7 +121,7 @@ const QuestionView = ({ question }: QuestionProps) => {
                   ).value.trim();
                   if (val) submitReport(val);
                 }}>
-                Submit Report
+                Submit
               </button>
             </div>
           </div>

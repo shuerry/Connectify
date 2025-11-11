@@ -1,7 +1,6 @@
 import './index.css';
 import { OrderType } from '../../../../../types/types';
 import { orderTypeDisplayName } from '../../../../../types/constants';
-import { useState } from 'react';
 
 /**
  * Interface representing the props for the OrderButton component.
@@ -22,24 +21,14 @@ interface OrderButtonProps {
  * @param orderType - The label for the button and the value passed to setQuestionOrder function.
  * @param setQuestionOrder - Callback function to set the order of questions based on the input message.
  */
-const OrderButton = ({ orderType, setQuestionOrder }: OrderButtonProps) => {
-  const [isActive, setIsActive] = useState(false);
-
-  const handleClick = () => {
-    setQuestionOrder(orderType);
-    setIsActive(true);
-    // Reset active state after animation
-    setTimeout(() => setIsActive(false), 200);
-  };
-
-  return (
-    <button
-      className={`order-btn ${isActive ? 'active' : ''}`}
-      onClick={handleClick}
-    >
-      {orderTypeDisplayName[orderType]}
-    </button>
-  );
-};
+const OrderButton = ({ orderType, setQuestionOrder }: OrderButtonProps) => (
+  <button
+    className='btn'
+    onClick={() => {
+      setQuestionOrder(orderType);
+    }}>
+    {orderTypeDisplayName[orderType]}
+  </button>
+);
 
 export default OrderButton;

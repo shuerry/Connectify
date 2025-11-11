@@ -1,181 +1,47 @@
-/* Modern Connect Four Page Styles */
 .connect-four-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--gradient-1-start) 0%, var(--gradient-1-end) 100%);
-  padding: var(--space-6);
+  background: linear-gradient(135deg, #bec710 0%, #b50909 100%);
+  padding: 20px;
 }
 
-.game-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.lobby-section {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-.game-section {
-  animation: slideInScale 0.8s ease-out;
-}
-
-.game-icon {
-  font-size: 2rem;
-  margin-right: var(--space-3);
-  display: inline-block;
-  animation: bounce 2s infinite;
-}
-
-/* Loading States */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 50vh;
-  text-align: center;
-}
-
-.loading-container p {
-  font-size: var(--text-lg);
-  color: white;
-  margin-top: var(--space-4);
-  font-weight: 500;
-}
-
-/* Error States */
-.error-container {
-  max-width: 500px;
-  margin: 100px auto;
-  padding: var(--space-12);
-  background: white;
-  border-radius: var(--radius-lg);
-  text-align: center;
-  box-shadow: var(--shadow-xl);
-  border: 1px solid var(--error-200);
-}
-
-.error-icon {
-  color: var(--error-500);
-  margin-bottom: var(--space-6);
-}
-
-.error-title {
-  font-size: var(--text-2xl);
-  font-weight: 700;
-  color: var(--error-600);
-  margin-bottom: var(--space-4);
-}
-
-.error-message {
-  color: var(--gray-600);
-  margin-bottom: var(--space-8);
-  line-height: 1.6;
-}
-
-.error-actions {
-  display: flex;
-  justify-content: center;
-}
-
-/* Page Header for Lobby */
-.lobby-section .page-header {
-  text-align: center;
-  margin-bottom: var(--space-12);
-}
-
-.lobby-section .page-title {
-  font-size: var(--text-4xl);
-  font-weight: 900;
-  color: white;
-  margin-bottom: var(--space-4);
-  text-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.8),
-    0 4px 12px rgba(0, 0, 0, 0.6),
-    0 8px 24px rgba(0, 0, 0, 0.4),
-    0 0 32px rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  letter-spacing: -0.025em;
-  background: rgba(0, 0, 0, 0.2);
-  padding: var(--space-4) var(--space-6);
-  border-radius: var(--radius-lg);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.lobby-section .page-subtitle {
-  font-size: var(--text-xl);
-  color: white;
-  font-weight: 600;
-  text-shadow: 
-    0 2px 6px rgba(0, 0, 0, 0.7),
-    0 4px 12px rgba(0, 0, 0, 0.5),
-    0 8px 20px rgba(0, 0, 0, 0.3);
+.connect-four-error {
   max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.5;
-  background: rgba(0, 0, 0, 0.15);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin: 100px auto;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
-/* Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.connect-four-error h2 {
+  color: #e74c3c;
+  margin-bottom: 16px;
 }
 
-@keyframes slideInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+.connect-four-error p {
+  color: #7f8c8d;
+  margin-bottom: 24px;
 }
 
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
+.connect-four-error button {
+  padding: 12px 24px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
 }
 
-/* Responsive Design */
+.connect-four-error button:hover {
+  background: #2980b9;
+}
+
 @media (max-width: 768px) {
   .connect-four-page {
-    padding: var(--space-4);
-  }
-  
-  .lobby-section .page-title {
-    font-size: var(--text-3xl);
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-  
-  .lobby-section .page-subtitle {
-    font-size: var(--text-lg);
-  }
-  
-  .error-container {
-    margin: var(--space-8) auto;
-    padding: var(--space-8);
+    padding: 10px;
   }
 }
 
