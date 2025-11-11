@@ -16,6 +16,7 @@ import {
   ChatIdRequest,
   GetChatByParticipantsRequest,
   PopulatedDatabaseChat,
+  Message,
 } from '../types/types';
 import { saveMessage } from '../services/message.service';
 import { getRelations } from '../services/user.service';
@@ -38,12 +39,51 @@ const chatController = (socket: FakeSOSocket) => {
    */
   const createChatRoute = async (req: CreateChatRequest, res: Response): Promise<void> => {
     const { participants, messages } = req.body;
-    const formattedMessages = messages.map(m => ({ ...m, type: 'direct' as 'direct' | 'global' }));
+    // Format messages - add 'direct' type if not present (friend requests already have type)
+    const formattedMessages = messages.map(m => {
+      // If message already has a type (like friendRequest), use it; otherwise default to 'direct'
+      if ('type' in m && m.type) {
+        return m as Message;
+      }
+      return { ...m, type: 'direct' as const };
+    });
 
     try {
-      // Validate that for 2-person chats, participants must be friends
       const participantUsernames = Object.keys(participants);
+      
+      // For 2-person chats, check if a chat already exists between these participants
       if (participantUsernames.length === 2) {
+        const existingChats = await getChatsByParticipants(participantUsernames);
+        
+        // Filter to only 2-person chats with exactly these participants
+        const matchingChats = existingChats.filter(chat => {
+          const chatParticipants = Object.keys(chat.participants);
+          return (
+            chatParticipants.length === 2 &&
+            chatParticipants.includes(participantUsernames[0]) &&
+            chatParticipants.includes(participantUsernames[1])
+          );
+        });
+
+        // If a chat already exists, return it instead of creating a new one
+        if (matchingChats.length > 0) {
+          const existingChat = matchingChats[0];
+          const populatedChat = await populateDocument(existingChat._id.toString(), 'chat');
+          
+          if ('error' in populatedChat) {
+            throw new Error(populatedChat.error);
+          }
+          
+          res.json(populatedChat);
+          return;
+        }
+      }
+
+      // Validate that for 2-person chats, participants must be friends
+      // UNLESS the chat contains only friend request messages (which are created automatically)
+      const hasOnlyFriendRequests = formattedMessages.every(m => m.type === 'friendRequest');
+      
+      if (participantUsernames.length === 2 && !hasOnlyFriendRequests) {
         const [user1, user2] = participantUsernames;
         
         // Check if user1 has user2 as a friend
@@ -104,6 +144,36 @@ const chatController = (socket: FakeSOSocket) => {
     const { msg, msgFrom, msgDateTime } = req.body;
 
     try {
+      // Get the chat to check participants
+      const chat = await getChat(chatId);
+      if ('error' in chat) {
+        throw new Error(chat.error);
+      }
+
+      // For 2-person chats, check if participants are friends before allowing regular messages
+      const participantUsernames = Object.keys(chat.participants);
+      if (participantUsernames.length === 2) {
+        const [user1, user2] = participantUsernames;
+        
+        // Check if user1 has user2 as a friend
+        const user1Relations = await getRelations(user1);
+        if ('error' in user1Relations) {
+          throw new Error(user1Relations.error);
+        }
+        
+        // Check if user2 has user1 as a friend (bidirectional check)
+        const user2Relations = await getRelations(user2);
+        if ('error' in user2Relations) {
+          throw new Error(user2Relations.error);
+        }
+        
+        // If they're not friends, prevent sending regular messages
+        if (!user1Relations.friends.includes(user2) || !user2Relations.friends.includes(user1)) {
+          res.status(403).send('You can only send messages to users who are your friends');
+          return;
+        }
+      }
+
       // Create a new message in the DB
       const newMessage = await saveMessage({ msg, msgFrom, msgDateTime, type: 'direct' });
 

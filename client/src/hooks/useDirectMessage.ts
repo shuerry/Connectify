@@ -34,19 +34,70 @@ const useDirectMessage = () => {
 
   const handleSendMessage = async () => {
     if (newMessage.trim() && selectedChat?._id) {
+      // Check if users are friends before sending message
+      const participants = Object.keys(selectedChat.participants);
+      if (participants.length === 2) {
+        const otherParticipant = participants.find(p => p !== user.username);
+        if (otherParticipant) {
+          try {
+            const relations = await getRelations(user.username);
+            if (!relations.friends.includes(otherParticipant)) {
+              setError('You can only send messages to users who are your friends');
+              return;
+            }
+          } catch (err) {
+            setError('Error checking friend status');
+            return;
+          }
+        }
+      }
+
       const message: Omit<Message, 'type'> = {
         msg: newMessage,
         msgFrom: user.username,
         msgDateTime: new Date(),
       };
 
-      const chat = await sendMessage(message, selectedChat._id);
-
-      setSelectedChat(chat);
-      setError(null);
-      setNewMessage('');
+      try {
+        const chat = await sendMessage(message, selectedChat._id);
+        setSelectedChat(chat);
+        setError(null);
+        setNewMessage('');
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Error sending message';
+        if (errorMessage.includes('must be friends') || errorMessage.includes('only send messages')) {
+          setError('You can only send messages to users who are your friends');
+        } else {
+          setError(errorMessage);
+        }
+      }
     } else {
       setError('Message cannot be empty');
+    }
+  };
+
+  const refreshChat = async () => {
+    if (selectedChat?._id) {
+      try {
+        const chat = await getChatById(selectedChat._id);
+        setSelectedChat(chat);
+        
+        // Also refresh direct messages
+        const participants = Object.keys(chat.participants);
+        if (participants.length === 2) {
+          const otherParticipant = participants.find(p => p !== user.username);
+          if (otherParticipant) {
+            try {
+              const directMsgs = await getDirectMessages(user.username, otherParticipant);
+              setDirectMessages(directMsgs);
+            } catch (err) {
+              console.error('Error fetching direct messages:', err);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error refreshing chat:', err);
+      }
     }
   };
 
@@ -102,6 +153,35 @@ const useDirectMessage = () => {
       return;
     }
 
+    // Check if a chat already exists between these two users
+    const existingChat = chats.find(chat => {
+      const participants = Object.keys(chat.participants);
+      return (
+        participants.length === 2 &&
+        participants.includes(user.username) &&
+        participants.includes(chatToCreate)
+      );
+    });
+
+    if (existingChat) {
+      // Use existing chat instead of creating a new one
+      setSelectedChat(existingChat);
+      handleJoinChat(existingChat._id);
+      setShowCreatePanel(false);
+      setError(null);
+
+      // Fetch direct messages (friend requests, game invitations, etc.) between participants
+      try {
+        const directMsgs = await getDirectMessages(user.username, chatToCreate);
+        setDirectMessages(directMsgs);
+      } catch (err) {
+        console.error('Error fetching direct messages:', err);
+        setDirectMessages([]);
+      }
+      return;
+    }
+
+    // No existing chat found, create a new one
     try {
       const chat = await createChat({ [user.username]: true, [chatToCreate]: true });
       setSelectedChat(chat);
@@ -177,8 +257,10 @@ const useDirectMessage = () => {
         if (
           otherParticipant &&
           ((msg.msgFrom === user.username && msg.msgTo === otherParticipant) ||
-           (msg.msgFrom === otherParticipant && msg.msgTo === user.username))
+           (msg.msgFrom === otherParticipant && msg.msgTo === user.username) ||
+           (msg.type === 'friendRequest' && participants.includes(msg.msgFrom) && participants.includes(msg.msgTo || '')))
         ) {
+          // Update direct messages
           setDirectMessages(prev => {
             const existingIndex = prev.findIndex(m => String(m._id) === String(msg._id));
             if (existingIndex >= 0) {
@@ -191,6 +273,21 @@ const useDirectMessage = () => {
               );
             }
           });
+
+          // Also update the chat if the message is in the chat's messages
+          if (selectedChat.messages.some(m => String(m._id) === String(msg._id))) {
+            setSelectedChat(prev => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                messages: prev.messages.map(m => 
+                  String(m._id) === String(msg._id) 
+                    ? { ...m, ...msg, user: m.user } // Preserve user field
+                    : m
+                ),
+              };
+            });
+          }
         }
       }
     };
@@ -208,9 +305,19 @@ const useDirectMessage = () => {
   }, [user.username, socket, selectedChat]);
 
   // Merge chat messages with direct messages (friend requests, game invitations, etc.)
-  const allMessages = selectedChat
+  // Convert MessageInChat to DatabaseMessage format for consistency
+  const allMessages: DatabaseMessage[] = selectedChat
     ? [
-        ...selectedChat.messages,
+        ...selectedChat.messages.map(msg => ({
+          _id: msg._id,
+          msg: msg.msg,
+          msgFrom: msg.msgFrom,
+          msgDateTime: msg.msgDateTime,
+          type: msg.type,
+          msgTo: msg.msgTo,
+          friendRequestStatus: msg.friendRequestStatus,
+          gameInvitation: msg.gameInvitation,
+        })),
         ...directMessages.filter(
           dm =>
             !selectedChat.messages.some(
@@ -236,6 +343,7 @@ const useDirectMessage = () => {
     handleChatSelect,
     handleUserSelect,
     handleCreateChat,
+    refreshChat,
     error,
   };
 };

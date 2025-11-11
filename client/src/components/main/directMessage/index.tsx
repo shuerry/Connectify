@@ -25,6 +25,7 @@ const DirectMessage = () => {
     handleUserSelect,
     handleCreateChat,
     chatToCreate,
+    refreshChat,
     error,
   } = useDirectMessage();
 
@@ -70,6 +71,7 @@ const DirectMessage = () => {
                   <MessageCard
                     key={String(message._id)}
                     message={message}
+                    onMessageUpdate={refreshChat}
                   />
                 ))}
               </div>
