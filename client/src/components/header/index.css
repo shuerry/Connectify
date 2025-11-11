@@ -40,3 +40,34 @@
 .view-profile-button:active {
   background-color: #003f7f;
 }
+
+.notifications-button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.notifications-button:hover {
+  background-color: #0056b3;
+}
+
+.notifications-button:active {
+  background-color: #003f7f;
+}
+
+.notifications-button svg {
+  color: inherit;
+  display: block;
+}
+
+.notifications-count {
+  white-space: nowrap;
+}

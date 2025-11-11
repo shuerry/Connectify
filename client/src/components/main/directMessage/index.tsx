@@ -2,7 +2,7 @@ import './index.css';
 import useDirectMessage from '../../../hooks/useDirectMessage';
 import UsersListPage from '../usersListPage';
 import MessageCard from '../messageCard';
-import NotifComponent from '../notifComponent';
+import NotifComponent from '../notifyButton';
 
 /**
  * DirectMessage component renders a page for direct messaging between users.

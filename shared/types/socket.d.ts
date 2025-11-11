@@ -199,4 +199,6 @@ export interface ServerToClientEvents {
   playerDisconnected: (payload: PlayerDisconnectedPayload) => void;
   // Send game invitation to specific users
   gameInvitation: (payload: GameInvitationPayload) => void;
+  // Send notification update (for user-specific room)
+  // TODO: add an event for notifications
 }
