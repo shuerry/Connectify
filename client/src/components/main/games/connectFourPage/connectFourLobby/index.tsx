@@ -84,27 +84,46 @@ const ConnectFourLobby = ({
 
   return (
     <div className='connect-four-lobby'>
-      <div className='lobby-header'>
-        <h1>Connect Four Lobby</h1>
-        <p>Join a game or create your own room!</p>
-      </div>
-
-      <div className='lobby-actions'>
-        <button className='btn-create-room' onClick={onCreateRoom}>
-          Create New Room
-        </button>
-
-        <div className='join-by-code'>
-          <input
-            type='text'
-            placeholder='Enter Room Code'
-            value={roomCodeInput}
-            onChange={e => setRoomCodeInput(e.target.value.toUpperCase())}
-            maxLength={6}
-          />
-          <button onClick={handleJoinByCode} disabled={!roomCodeInput.trim()}>
-            Join by Code
+      <div className='lobby-actions-header'>
+        <div className='main-actions-row'>
+          <button className='btn btn-primary btn-lg create-room-btn' onClick={onCreateRoom}>
+            <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
+              <path d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'/>
+            </svg>
+            Create New Room
           </button>
+
+          <div className='or-separator'>
+            <span>OR</span>
+          </div>
+
+          <div className='join-by-code-section'>
+            <div className='code-input-group'>
+              <input
+                type='text'
+                className='form-input code-input'
+                placeholder='Room Code (6 chars)'
+                value={roomCodeInput}
+                onChange={e => setRoomCodeInput(e.target.value.toUpperCase())}
+                maxLength={6}
+              />
+              <button 
+                className='btn btn-secondary join-code-btn' 
+                onClick={handleJoinByCode} 
+                disabled={!roomCodeInput.trim()}
+              >
+                <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+                  <path d='M13 3l3.293 3.293-7 7 1.414 1.414 7-7L21 10V3z'/>
+                  <path d='M19 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6'/>
+                </svg>
+                Join
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div className='code-hint'>
+          Have a private room code? Enter it here to join directly
         </div>
       </div>
 

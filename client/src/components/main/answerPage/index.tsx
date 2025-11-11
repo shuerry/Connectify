@@ -74,10 +74,13 @@ const AnswerPage = () => {
         />
       ))}
       <button
-        className='bluebtn ansButton'
+        className='btn btn-primary btn-lg ansButton'
         onClick={() => {
           handleNewAnswer();
         }}>
+        <svg width='18' height='18' viewBox='0 0 24 24' fill='currentColor' style={{ marginRight: '8px' }}>
+          <path d='M12 2l3.09 6.26L22 9l-5 4.87 1.18 6.88L12 17.77l-6.18 2.98L7 14.87 2 10l6.91-1.74L12 2z'/>
+        </svg>
         Answer Question
       </button>
     </>
