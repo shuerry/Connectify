@@ -305,10 +305,10 @@ const questionController = (socket: FakeSOSocket) => {
   /**
    * Handles following a question. The request must contain the question ID (qid) and the username.
    * If the request is invalid or an error occurs, the appropriate HTTP response status and message are returned.
-   * 
+   *
    * @param req The FollowRequest object containing the question ID and the username.
    * @param res The HTTP response object used to send back the result of the operation.
-   * 
+   *
    * @returns A Promise that resolves to void.
    */
   const followQuestion = async (req: FollowRequest, res: Response): Promise<void> => {

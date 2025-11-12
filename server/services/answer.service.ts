@@ -6,7 +6,7 @@ import {
   PopulatedDatabaseAnswer,
   PopulatedDatabaseQuestion,
   QuestionResponse,
-  AnswerNotificationPayload
+  AnswerNotificationPayload,
 } from '../types/types';
 import AnswerModel from '../models/answers.model';
 import QuestionModel from '../models/questions.model';
@@ -93,7 +93,7 @@ export const addAnswerToQuestion = async (
 
         if (!followers || followers.length === 0) return;
 
-        // ----- DB NOTIFICATIONS (for all followers except the author) -----
+        // ----- DB NOTIFICATIONS -----
         const truncate = (s: string, n = 180) =>
           s.length <= n ? s : s.slice(0, n).trimEnd() + '…';
 
@@ -113,16 +113,13 @@ export const addAnswerToQuestion = async (
           try {
             await NotificationModel.insertMany(notifDocs, { ordered: false });
           } catch (insertErr) {
-            // Keep email path resilient even if some inserts fail
-            console.warn('InsertMany notifications failed (answer):', insertErr);
+            // console.warn('InsertMany notifications failed (answer):', insertErr);
           }
         }
 
-        // ----- EMAIL NOTIFICATIONS (existing logic, unchanged) -----
+        // ----- EMAIL NOTIFICATIONS -----
         const toEmail = followers
-          .filter(
-            (u: any) => u && u.email && u.emailVerified && u.username !== ans.ansBy,
-          )
+          .filter((u: any) => u && u.email && u.emailVerified && u.username !== ans.ansBy)
           .map((u: any) => u.email);
 
         if (toEmail.length === 0) return;
@@ -137,7 +134,7 @@ export const addAnswerToQuestion = async (
 
         await notifier.sendAnswerNotification(payload);
       } catch (notifyErr) {
-        console.warn('Answer notification failed:', notifyErr);
+        // console.warn('Answer notification failed:', notifyErr);
       }
     })();
 

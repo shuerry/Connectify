@@ -14,7 +14,7 @@ export interface MessageInChat extends DatabaseMessage {
 
 /**
  * Represents a Chat with participants and messages (unpopulated).
- * - `participants`: Array of usernames representing the chat participants.
+ * - `participants`: Map of usernames representing the chat participants and their notification preferences.
  * - `messages`: Array of `Message` objects.
  */
 export interface Chat {

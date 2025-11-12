@@ -22,7 +22,7 @@ import QuestionVersionModel from '../models/questionVersions.model';
 import TagModel from '../models/tags.model';
 import CommentModel from '../models/comments.model';
 import { parseKeyword, parseTags } from '../utils/parse.util';
-import { getRelations, getUsersWhoBlocked } from './user.service';
+import { getRelations, getUsersWhoBlocked, getUserByUsername } from './user.service';
 import UserModel from '../models/users.model';
 import { checkTagInQuestion } from './tag.service';
 import {
@@ -31,7 +31,6 @@ import {
   sortQuestionsByNewest,
   sortQuestionsByUnanswered,
 } from '../utils/sort.util';
-import { getUserByUsername } from './user.service';
 
 /**
  * Checks if keywords exist in a question's title or text.
@@ -438,7 +437,7 @@ export const getCommunityQuestions = async (communityId: string): Promise<Databa
  */
 export const addFollowerToQuestion = async (
   qid: string,
-  username: string
+  username: string,
 ): Promise<FollowResponse> => {
   try {
     const followerUser = await getUserByUsername(username);
@@ -451,12 +450,14 @@ export const addFollowerToQuestion = async (
     const question = await QuestionModel.findById(qid);
     const alreadyFollowed = question?.followers.includes(followerId);
 
-    console.log('Already followed:', alreadyFollowed);
+    //console.log('Already followed:', alreadyFollowed);
 
     const result: DatabaseQuestion | null = await QuestionModel.findOneAndUpdate(
       { _id: qid },
-      alreadyFollowed ? { $pull: { followers: followerId } } : { $addToSet: { followers: followerId } },
-      { new: true }
+      alreadyFollowed
+        ? { $pull: { followers: followerId } }
+        : { $addToSet: { followers: followerId } },
+      { new: true },
     ).populate('followers', 'username email emailVerified');
 
     if (!result) {
