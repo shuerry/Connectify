@@ -106,7 +106,7 @@ const ProfileSettings: React.FC = () => {
               <strong>Email:</strong>
             </p>
 
-            <div className="bio-section">
+            <div className='bio-section'>
               {!editEmailMode && (
                 <>
                   {/* Display logic:
@@ -117,31 +117,30 @@ const ProfileSettings: React.FC = () => {
                   {userData.emailVerified ? (
                     <p>{userData.email}</p>
                   ) : userData.emailVerification?.pendingEmail ? (
-                    <p className="unverified-email">
+                    <p className='unverified-email'>
                       {userData.emailVerification.pendingEmail} <em>(pending verification)</em>
                     </p>
                   ) : (
-                    <p className="unverified-email">
+                    <p className='unverified-email'>
                       {userData.email || 'No email yet'} <em>(unverified)</em>
                     </p>
                   )}
 
                   {!userData.emailVerified && (
-                    <p className="warning-message">
+                    <p className='warning-message'>
                       Notifications will not be sent until the email is verified.
                     </p>
                   )}
 
                   {canEditProfile && (
                     <button
-                      className="button button-primary"
+                      className='button button-primary'
                       onClick={() => {
                         setEditEmailMode(true);
                         setNewEmail(
-                          userData.emailVerification?.pendingEmail || userData.email || ''
+                          userData.emailVerification?.pendingEmail || userData.email || '',
                         );
-                      }}
-                    >
+                      }}>
                       Edit
                     </button>
                   )}
@@ -149,19 +148,19 @@ const ProfileSettings: React.FC = () => {
               )}
 
               {editEmailMode && canEditProfile && (
-                <div className="bio-edit">
+                <div className='bio-edit'>
                   <input
-                    className="input-text"
-                    type="text"
+                    className='input-text'
+                    type='text'
                     value={newEmail}
                     onChange={e => setNewEmail(e.target.value)}
                   />
 
-                  <button className="button button-primary" onClick={handleUpdateEmail}>
+                  <button className='button button-primary' onClick={handleUpdateEmail}>
                     Save
                   </button>
 
-                  <button className="button button-danger" onClick={() => setEditEmailMode(false)}>
+                  <button className='button button-danger' onClick={() => setEditEmailMode(false)}>
                     Cancel
                   </button>
                 </div>

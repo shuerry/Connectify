@@ -231,23 +231,20 @@ export const markMessagesAsRead = async (
   try {
     const ChatModel = (await import('../models/chat.model')).default;
     const chat = await ChatModel.findById(chatId);
-    
+
     if (!chat) {
       return { error: 'Chat not found' };
     }
 
     // Get all messages in the chat
     const messageIds = chat.messages;
-    
+
     // Find messages that are from other participants (not from the reader)
     // and haven't been read by the reader yet
     const messagesToMark = await MessageModel.find({
       _id: { $in: messageIds },
       msgFrom: { $ne: readerUsername },
-      $or: [
-        { readBy: { $exists: false } },
-        { readBy: { $nin: [readerUsername] } },
-      ],
+      $or: [{ readBy: { $exists: false } }, { readBy: { $nin: [readerUsername] } }],
     });
 
     // Mark each message as read by adding the reader's username to readBy array

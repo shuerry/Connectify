@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import useUserContext from './useUserContext';
-import { DatabaseMessage, Message, MessageUpdatePayload, TypingIndicatorPayload } from '../types/types';
+import {
+  DatabaseMessage,
+  Message,
+  MessageUpdatePayload,
+  TypingIndicatorPayload,
+} from '../types/types';
 import { addMessage, getMessages } from '../services/messageService';
 
 /**
@@ -134,7 +139,14 @@ const useMessagingPage = () => {
     };
   }, [socket, user.username]);
 
-  return { messages, newMessage, setNewMessage: handleTyping, handleSendMessage, error, typingUsers };
+  return {
+    messages,
+    newMessage,
+    setNewMessage: handleTyping,
+    handleSendMessage,
+    error,
+    typingUsers,
+  };
 };
 
 export default useMessagingPage;

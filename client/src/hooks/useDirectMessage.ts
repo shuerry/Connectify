@@ -10,7 +10,13 @@ import {
   TypingIndicatorPayload,
 } from '../types/types';
 import useUserContext from './useUserContext';
-import { createChat, getChatById, getChatsByUser, sendMessage, markMessagesAsRead } from '../services/chatService';
+import {
+  createChat,
+  getChatById,
+  getChatsByUser,
+  sendMessage,
+  markMessagesAsRead,
+} from '../services/chatService';
 import { getDirectMessages } from '../services/messageService';
 import { getRelations } from '../services/userService';
 
@@ -80,7 +86,10 @@ const useDirectMessage = () => {
         setNewMessage('');
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'Error sending message';
-        if (errorMessage.includes('must be friends') || errorMessage.includes('only send messages')) {
+        if (
+          errorMessage.includes('must be friends') ||
+          errorMessage.includes('only send messages')
+        ) {
           setError('You can only send messages to users who are your friends');
         } else {
           setError(errorMessage);
@@ -96,7 +105,7 @@ const useDirectMessage = () => {
       try {
         const chat = await getChatById(selectedChat._id);
         setSelectedChat(chat);
-        
+
         // Also refresh direct messages
         const participants = Object.keys(chat.participants);
         if (participants.length === 2) {
@@ -106,12 +115,12 @@ const useDirectMessage = () => {
               const directMsgs = await getDirectMessages(user.username, otherParticipant);
               setDirectMessages(directMsgs);
             } catch (err) {
-              console.error('Error fetching direct messages:', err);
+              throw new Error('Error fetching direct messages');
             }
           }
         }
       } catch (err) {
-        console.error('Error refreshing chat:', err);
+        throw new Error('Error refreshing chat');
       }
     }
   };
@@ -134,7 +143,7 @@ const useDirectMessage = () => {
     try {
       await markMessagesAsRead(chatID, user.username);
     } catch (err) {
-      console.error('Error marking messages as read:', err);
+      throw new Error('Error marking messages as read');
     }
 
     // Fetch direct messages (friend requests, game invitations, etc.) between participants
@@ -146,8 +155,8 @@ const useDirectMessage = () => {
           const directMsgs = await getDirectMessages(user.username, otherParticipant);
           setDirectMessages(directMsgs);
         } catch (err) {
-          console.error('Error fetching direct messages:', err);
           setDirectMessages([]);
+          throw new Error('Error fetching direct messages');
         }
       }
     } else {
@@ -200,8 +209,8 @@ const useDirectMessage = () => {
         const directMsgs = await getDirectMessages(user.username, chatToCreate);
         setDirectMessages(directMsgs);
       } catch (err) {
-        console.error('Error fetching direct messages:', err);
         setDirectMessages([]);
+        throw new Error('Error fetching direct messages');
       }
       return;
     }
@@ -220,8 +229,8 @@ const useDirectMessage = () => {
         const directMsgs = await getDirectMessages(user.username, chatToCreate);
         setDirectMessages(directMsgs);
       } catch (err) {
-        console.error('Error fetching direct messages:', err);
         setDirectMessages([]);
+        throw new Error('Error fetching direct messages');
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Error creating chat';
@@ -258,14 +267,14 @@ const useDirectMessage = () => {
             }
             return prevSelectedChat;
           });
-          
+
           // If user is currently viewing this chat, automatically mark messages as read
           if (selectedChatIdRef.current && String(chat._id) === String(selectedChatIdRef.current)) {
             markMessagesAsRead(chat._id, user.username).catch(err => {
-              console.error('Error marking messages as read:', err);
+              throw new Error(err);
             });
           }
-          
+
           // Also update the chats list to reflect the new message
           if (user.username in chat.participants) {
             setChats(prevChats => {
@@ -289,7 +298,7 @@ const useDirectMessage = () => {
             }
             return prevSelectedChat;
           });
-          
+
           // Also update the chats list to reflect the read receipt
           if (user.username in chat.participants) {
             setChats(prevChats => {
@@ -321,28 +330,30 @@ const useDirectMessage = () => {
 
     const handleMessageUpdate = (messageUpdate: MessageUpdatePayload) => {
       const { msg } = messageUpdate;
-      
+
       // Use functional updates to access current state
       setSelectedChat(prevSelectedChat => {
         // If this is a direct message (friend request, game invitation, etc.) for the current chat
         if (prevSelectedChat) {
           const participants = Object.keys(prevSelectedChat.participants);
           const otherParticipant = participants.find(p => p !== user.username);
-          
+
           if (
             otherParticipant &&
             ((msg.msgFrom === user.username && msg.msgTo === otherParticipant) ||
-             (msg.msgFrom === otherParticipant && msg.msgTo === user.username) ||
-             (msg.type === 'friendRequest' && participants.includes(msg.msgFrom) && participants.includes(msg.msgTo || '')))
+              (msg.msgFrom === otherParticipant && msg.msgTo === user.username) ||
+              (msg.type === 'friendRequest' &&
+                participants.includes(msg.msgFrom) &&
+                participants.includes(msg.msgTo || '')))
           ) {
             // Also update the chat if the message is in the chat's messages
             if (prevSelectedChat.messages.some(m => String(m._id) === String(msg._id))) {
               return {
                 ...prevSelectedChat,
-                messages: prevSelectedChat.messages.map(m => 
-                  String(m._id) === String(msg._id) 
+                messages: prevSelectedChat.messages.map(m =>
+                  String(m._id) === String(msg._id)
                     ? { ...m, ...msg, user: m.user } // Preserve user field
-                    : m
+                    : m,
                 ),
               };
             }
@@ -359,8 +370,8 @@ const useDirectMessage = () => {
           return prev.map((m, idx) => (idx === existingIndex ? msg : m));
         } else {
           // Add new message
-          return [...prev, msg].sort((a, b) => 
-            new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime()
+          return [...prev, msg].sort(
+            (a, b) => new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime(),
           );
         }
       });
@@ -427,15 +438,9 @@ const useDirectMessage = () => {
           readBy: msg.readBy || [],
         })),
         ...directMessages.filter(
-          dm =>
-            !selectedChat.messages.some(
-              cm => String(cm._id) === String(dm._id)
-            )
+          dm => !selectedChat.messages.some(cm => String(cm._id) === String(dm._id)),
         ),
-      ].sort(
-        (a, b) =>
-          new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime()
-      )
+      ].sort((a, b) => new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime())
     : [];
 
   /**
@@ -477,11 +482,14 @@ const useDirectMessage = () => {
         clearTimeout(typingTimeoutRef.current);
       }
       if (isTypingRef.current && selectedChatIdRef.current) {
-        socket.emit('typingStop', { chatID: String(selectedChatIdRef.current), username: user.username });
+        socket.emit('typingStop', {
+          chatID: String(selectedChatIdRef.current),
+          username: user.username,
+        });
       }
       setTypingUsers(new Set());
     };
-  }, [socket, user.username, selectedChatIdRef.current]);
+  }, [socket, user.username]);
 
   return {
     selectedChat,

@@ -31,10 +31,11 @@ const MessageCard = ({
 
   // Check if this message is from the current user and has been read by the other participant
   const isSentByCurrentUser = message.msgFrom === currentUser.username;
-  const isRead = isLatestSentMessage && 
-    isSentByCurrentUser && 
-    otherParticipant && 
-    message.readBy && 
+  const isRead =
+    isLatestSentMessage &&
+    isSentByCurrentUser &&
+    otherParticipant &&
+    message.readBy &&
     message.readBy.includes(otherParticipant);
 
   const handleFriendRequestResponse = async (status: 'accepted' | 'declined') => {
@@ -157,9 +158,7 @@ const MessageCard = ({
           </div>
         )}
         {isLatestSentMessage && isSentByCurrentUser && (
-          <div className='read-receipt'>
-            {isRead ? 'Read' : 'Delivered'}
-          </div>
+          <div className='read-receipt'>{isRead ? 'Read' : 'Delivered'}</div>
         )}
       </div>
     </div>

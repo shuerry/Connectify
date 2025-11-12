@@ -58,7 +58,7 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
         {/* Public Route */}
         <Route path='/' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path='/verify-email' element={<VerifyEmail />} />
         {/* Protected Routes */}
         {
           <Route
@@ -87,7 +87,10 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
             <Route path='/communities/:communityID' element={<CommunityPage />} />
             <Route path='/friends' element={<FriendsListPage />} />
             <Route path='/blocked' element={<BlockedListPage />} />
-            <Route path="/notifications" element={<NotificationsPage username={user?.username || ''} />} />
+            <Route
+              path='/notifications'
+              element={<NotificationsPage username={user?.username || ''} />}
+            />
           </Route>
         }
       </Routes>

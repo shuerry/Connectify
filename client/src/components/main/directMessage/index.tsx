@@ -42,11 +42,12 @@ const DirectMessage = () => {
 
   // Get typing indicator text
   const typingUsersArray = Array.from(typingUsers);
-  const typingText = typingUsersArray.length > 0 
-    ? typingUsersArray.length === 1
-      ? `${typingUsersArray[0]} is typing...`
-      : `${typingUsersArray.length} people are typing...`
-    : null;
+  const typingText =
+    typingUsersArray.length > 0
+      ? typingUsersArray.length === 1
+        ? `${typingUsersArray[0]} is typing...`
+        : `${typingUsersArray.length} people are typing...`
+      : null;
 
   return (
     <>
@@ -68,7 +69,7 @@ const DirectMessage = () => {
         )}
       </div>
       <div className='direct-message-container'>
-      <div className='chats-list'>
+        <div className='chats-list'>
           {chats.map(chat => (
             <ChatsListCard key={String(chat._id)} chat={chat} handleChatSelect={handleChatSelect} />
           ))}
@@ -81,24 +82,28 @@ const DirectMessage = () => {
                 <NotifComponent chat={selectedChat} />
               </div>
               <div className='chat-messages'>
-                {messages.map((message) => (
+                {messages.map(message => (
                   <MessageCard
                     key={String(message._id)}
                     message={message}
                     onMessageUpdate={refreshChat}
                     isLatestSentMessage={
-                      latestSentMessage ? String(message._id) === String(latestSentMessage._id) : false
+                      latestSentMessage
+                        ? String(message._id) === String(latestSentMessage._id)
+                        : false
                     }
                     otherParticipant={otherParticipant}
                   />
                 ))}
                 {typingText && (
-                  <div className='typing-indicator' style={{ 
-                    padding: '8px 16px', 
-                    fontStyle: 'italic', 
-                    color: '#666',
-                    fontSize: '0.9em'
-                  }}>
+                  <div
+                    className='typing-indicator'
+                    style={{
+                      padding: '8px 16px',
+                      fontStyle: 'italic',
+                      color: '#666',
+                      fontSize: '0.9em',
+                    }}>
                     {typingText}
                   </div>
                 )}

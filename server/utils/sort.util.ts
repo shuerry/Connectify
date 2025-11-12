@@ -133,7 +133,9 @@ export const sortQuestionsByTrending = (
 
     // Decay factors: stronger boost for very recent comments, moderate boost for newer posts
     const hoursSinceLatestComment =
-      mostRecentCommentAt > 0 ? (now - mostRecentCommentAt) / HOURS_IN_MS : Number.POSITIVE_INFINITY;
+      mostRecentCommentAt > 0
+        ? (now - mostRecentCommentAt) / HOURS_IN_MS
+        : Number.POSITIVE_INFINITY;
     const hoursSincePost = (now - askTime) / HOURS_IN_MS;
 
     const recentCommentBoost =

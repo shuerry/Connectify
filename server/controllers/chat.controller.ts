@@ -50,11 +50,11 @@ const chatController = (socket: FakeSOSocket) => {
 
     try {
       const participantUsernames = Object.keys(participants);
-      
+
       // For 2-person chats, check if a chat already exists between these participants
       if (participantUsernames.length === 2) {
         const existingChats = await getChatsByParticipants(participantUsernames);
-        
+
         // Filter to only 2-person chats with exactly these participants
         const matchingChats = existingChats.filter(chat => {
           const chatParticipants = Object.keys(chat.participants);
@@ -69,11 +69,11 @@ const chatController = (socket: FakeSOSocket) => {
         if (matchingChats.length > 0) {
           const existingChat = matchingChats[0];
           const populatedChat = await populateDocument(existingChat._id.toString(), 'chat');
-          
+
           if ('error' in populatedChat) {
             throw new Error(populatedChat.error);
           }
-          
+
           res.json(populatedChat);
           return;
         }
@@ -82,27 +82,27 @@ const chatController = (socket: FakeSOSocket) => {
       // Validate that for 2-person chats, participants must be friends
       // UNLESS the chat contains only friend request messages (which are created automatically)
       const hasOnlyFriendRequests = formattedMessages.every(m => m.type === 'friendRequest');
-      
+
       if (participantUsernames.length === 2 && !hasOnlyFriendRequests) {
         const [user1, user2] = participantUsernames;
-        
+
         // Check if user1 has user2 as a friend
         const user1Relations = await getRelations(user1);
         if ('error' in user1Relations) {
           throw new Error(user1Relations.error);
         }
-        
+
         if (!user1Relations.friends.includes(user2)) {
           res.status(403).send('Users must be friends to create a direct message chat');
           return;
         }
-        
+
         // Check if user2 has user1 as a friend (bidirectional check)
         const user2Relations = await getRelations(user2);
         if ('error' in user2Relations) {
           throw new Error(user2Relations.error);
         }
-        
+
         if (!user2Relations.friends.includes(user1)) {
           res.status(403).send('Users must be friends to create a direct message chat');
           return;
@@ -154,19 +154,19 @@ const chatController = (socket: FakeSOSocket) => {
       const participantUsernames = Object.keys(chat.participants);
       if (participantUsernames.length === 2) {
         const [user1, user2] = participantUsernames;
-        
+
         // Check if user1 has user2 as a friend
         const user1Relations = await getRelations(user1);
         if ('error' in user1Relations) {
           throw new Error(user1Relations.error);
         }
-        
+
         // Check if user2 has user1 as a friend (bidirectional check)
         const user2Relations = await getRelations(user2);
         if ('error' in user2Relations) {
           throw new Error(user2Relations.error);
         }
-        
+
         // If they're not friends, prevent sending regular messages
         if (!user1Relations.friends.includes(user2) || !user2Relations.friends.includes(user1)) {
           res.status(403).send('You can only send messages to users who are your friends');
@@ -384,9 +384,10 @@ const chatController = (socket: FakeSOSocket) => {
       if (!('error' in chat)) {
         const populatedChat = await populateDocument(chat._id.toString(), 'chat');
         if (!('error' in populatedChat)) {
-          socket
-            .to(chatId)
-            .emit('chatUpdate', { chat: populatedChat as PopulatedDatabaseChat, type: 'readReceipt' });
+          socket.to(chatId).emit('chatUpdate', {
+            chat: populatedChat as PopulatedDatabaseChat,
+            type: 'readReceipt',
+          });
         }
       }
 
