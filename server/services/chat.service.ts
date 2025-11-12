@@ -73,11 +73,11 @@ export const addMessageToChat = async (
     const groupName = undefined;
 
     // ---- PARTICIPANTS ----
-    const participantsMap = updatedChat.participants as unknown as Map<string, boolean>;
+    const participants = updatedChat.participants as Record<string, boolean>;
 
     const toEmail: string[] = [];
 
-    for (const [username, isEnabled] of participantsMap.entries()) {
+    for (const [username, isEnabled] of Object.entries(participants)) {
       if (!isEnabled) continue;
       if (username === senderUsername) continue;
 
@@ -96,9 +96,9 @@ export const addMessageToChat = async (
 
       // ---- EMAIL NOTIFICATIONS ----
       if (!recipientUser || !recipientUser.email || !recipientUser.emailVerified) {
-        console.warn(
-          `Skipping email notify for "${username}" (no user or no email) in chat: ${chatId}`,
-        );
+        // console.warn(
+        //   `Skipping email notify for "${username}" (no user or no email) in chat: ${chatId}`,
+        // );
         continue;
       }
 
@@ -116,10 +116,7 @@ export const addMessageToChat = async (
           isMention: false,
         });
       } catch (notifyErr) {
-        console.error(
-          `Failed to send chat notification to chat: ${chatId}:`,
-          notifyErr,
-        );
+        //console.error(`Failed to send chat notification to chat: ${chatId}:`, notifyErr);
       }
     }
 
@@ -214,10 +211,7 @@ export const addParticipantToChat = async (
  * @param username - The username of the participant whose preference is to be toggled.
  * @returns {Promise<ChatResponse>} - The updated chat or an error message.
  */
-export const toggleNotify = async (
-  chatId: string,
-  username: string,
-): Promise<ChatResponse> => {
+export const toggleNotify = async (chatId: string, username: string): Promise<ChatResponse> => {
   try {
     const chat = await ChatModel.findById(chatId);
     if (!chat) {

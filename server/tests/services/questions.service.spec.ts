@@ -634,6 +634,7 @@ describe('Question model', () => {
       downVotes: [],
       comments: [],
       community: null,
+      followers: [],
     };
 
     const mockUpdatedQuestion: PopulatedDatabaseQuestion = {

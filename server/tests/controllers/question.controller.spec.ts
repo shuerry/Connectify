@@ -1013,6 +1013,7 @@ describe('Test questionController', () => {
       downVotes: [],
       comments: [],
       community: null,
+      followers: [],
     };
 
     test('should successfully update question with valid data', async () => {
