@@ -106,6 +106,7 @@ describe('populateDocument', () => {
   it('should fetch and populate a chat document', async () => {
     const mockChat = {
       _id: 'chatId',
+      participants: new Map([['user1', true]]),
       messages: [
         {
           _id: 'messageId',
@@ -117,6 +118,7 @@ describe('populateDocument', () => {
       ],
       toObject: jest.fn().mockReturnValue({
         _id: 'chatId',
+        participants: new Map([['user1', true]]),
         messages: [
           {
             _id: 'messageId',

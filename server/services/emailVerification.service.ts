@@ -1,5 +1,5 @@
 import UserModel from '../models/users.model';
-import NotificationService from '../services/notification.service';
+import { NotificationService } from '../services/notification.service';
 import { generateVerificationToken, hashToken } from '../utils/crypto.util';
 
 const notifier = new NotificationService();
@@ -26,7 +26,7 @@ export async function startEmailVerification(username: string, newEmail: string)
         emailVerification: { pendingEmail: newEmail, tokenHash, expiresAt },
       },
     },
-    { new: true, projection: { username: 1, email: 1 } }
+    { new: true, projection: { username: 1, email: 1 } },
   );
 
   if (!updated) {
@@ -39,8 +39,8 @@ export async function startEmailVerification(username: string, newEmail: string)
   await notifier.sendEmailVerification({
     toEmail: newEmail,
     username,
-    token,        // sent only via email; never stored plaintext
-    verifyUrl,    // used to build the nice button
+    token, // sent only via email; never stored plaintext
+    verifyUrl, // used to build the nice button
     expiresAt,
   });
 
@@ -70,7 +70,7 @@ export async function confirmEmailVerification(token: string) {
   // Commit the new email & mark verified; clear the verification object
   user.email = newEmail;
   user.emailVerified = true;
-  user.emailVerification = undefined as any;
+  user.emailVerification = undefined;
 
   await user.save();
   return { ok: true as const, email: newEmail };

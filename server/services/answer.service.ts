@@ -6,13 +6,13 @@ import {
   PopulatedDatabaseAnswer,
   PopulatedDatabaseQuestion,
   QuestionResponse,
-  AnswerNotificationPayload
+  AnswerNotificationPayload,
 } from '../types/types';
 import AnswerModel from '../models/answers.model';
 import QuestionModel from '../models/questions.model';
-import NotificationService from './notification.service';
+import { NotificationService } from './notification.service';
 import UserModel from '../models/users.model';
-import e from 'express';
+import NotificationModel from '../models/notification.model';
 
 const notifier = new NotificationService();
 
@@ -78,6 +78,7 @@ export const addAnswerToQuestion = async (
     // Send notifications to followers here
     (async () => {
       try {
+        // populate follower ids so we can pull user docs
         const q = await QuestionModel.populate(result, {
           path: 'followers',
           select: 'email username',
@@ -92,30 +93,50 @@ export const addAnswerToQuestion = async (
 
         if (!followers || followers.length === 0) return;
 
-        // Build the email list, excluding the answer author and missing emails
+        // ----- DB NOTIFICATIONS -----
+        const truncate = (s: string, n = 180) =>
+          s.length <= n ? s : s.slice(0, n).trimEnd() + '…';
+
+        const notifDocs = followers
+          .filter((u: any) => u && u.username && u.username !== ans.ansBy)
+          .map((u: any) => ({
+            recipient: u.username,
+            kind: 'answer' as const,
+            title: `New answer on: ${result.title}`,
+            preview: truncate(ans.text),
+            link: `/question/${result._id.toString()}#answer-${ans._id?.toString?.() ?? ''}`,
+            actorUsername: ans.ansBy,
+            meta: { questionId: result._id.toString(), answerId: ans._id?.toString?.() },
+          }));
+
+        if (notifDocs.length > 0) {
+          try {
+            await NotificationModel.insertMany(notifDocs, { ordered: false });
+          } catch (insertErr) {
+            // console.warn('InsertMany notifications failed (answer):', insertErr);
+          }
+        }
+
+        // ----- EMAIL NOTIFICATIONS -----
         const toEmail = followers
           .filter((u: any) => u && u.email && u.emailVerified && u.username !== ans.ansBy)
           .map((u: any) => u.email);
 
         if (toEmail.length === 0) return;
 
-        const truncate = (s: string, n = 180) =>
-          s.length <= n ? s : s.slice(0, n).trimEnd() + '…';
-
         const payload: AnswerNotificationPayload = {
           toEmail,
           authorName: ans.ansBy,
-          questionTitle: (q as any).title,
+          questionTitle: (q as any).title ?? result.title,
           answerPreview: truncate(ans.text),
           questionId: result._id.toString(),
         };
 
         await notifier.sendAnswerNotification(payload);
       } catch (notifyErr) {
-        console.warn('Answer notification failed:', notifyErr);
+        // console.warn('Answer notification failed:', notifyErr);
       }
     })();
-
 
     return result;
   } catch (error) {

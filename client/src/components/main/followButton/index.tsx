@@ -9,7 +9,7 @@ import useFollowStatus from '../../../hooks/useFollowStatus';
  *
  * question - The question object containing follow information.
  */
-interface FollowComponentProps {
+interface FollowButtonProps {
   question: PopulatedDatabaseQuestion;
 }
 
@@ -18,7 +18,7 @@ interface FollowComponentProps {
  *
  * @param question - The question object containing voting information.
  */
-const FollowComponent = ({ question }: FollowComponentProps) => {
+const FollowButton = ({ question }: FollowButtonProps) => {
   const { user } = useUserContext();
   const { followed, setFollowed } = useFollowStatus({ question });
 
@@ -55,4 +55,4 @@ const FollowComponent = ({ question }: FollowComponentProps) => {
   );
 };
 
-export default FollowComponent;
+export default FollowButton;

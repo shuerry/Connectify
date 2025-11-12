@@ -3,8 +3,9 @@ import ChatModel from '../models/chat.model';
 import UserModel from '../models/users.model';
 import { Chat, ChatResponse, DatabaseChat, MessageResponse, DatabaseUser } from '../types/types';
 import { saveMessage } from './message.service';
-import NotificationService from './notification.service';
+import { NotificationService } from './notification.service';
 import MessageModel from '../models/messages.model';
+import NotificationModel from '../models/notification.model';
 
 /**
  * Saves a new chat, storing any messages provided as part of the argument.
@@ -68,28 +69,41 @@ export const addMessageToChat = async (
       .replace(/\s+/g, ' ')
       .slice(0, 140);
 
-    // Will be helpful later when we have group chats
+    // for future group chats
     const groupName = undefined;
 
-    // Send notification to participants who have notifications enabled
-    const participantsMap = updatedChat.participants as unknown as Map<string, boolean>;
+    // ---- PARTICIPANTS ----
+    const participants = updatedChat.participants as Record<string, boolean>;
 
     const toEmail: string[] = [];
 
-    for (const [username, isEnabled] of participantsMap.entries()) {
+    for (const [username, isEnabled] of Object.entries(participants)) {
       if (!isEnabled) continue;
       if (username === senderUsername) continue;
 
-    const recipientUser = await UserModel.findOne({ username }).lean();
-    if (!recipientUser || !recipientUser.email) {
-      console.warn(
-      `Skipping notify for "${username}" (no user or no email) in chat: ${chatId}`,
-    );
-    continue;
-  }
+      const recipientUser = await UserModel.findOne({ username }).lean();
 
-  toEmail.push(recipientUser.email);
-}
+      // --- CREATE DB NOTIFICATION ---
+      await NotificationModel.create({
+        recipient: username,
+        kind: 'chat',
+        title: `New message from ${senderUsername}`,
+        preview: messagePreview,
+        link: `/chat/${chatId}`,
+        actorUsername: senderUsername,
+        meta: { chatId, isMention: false },
+      });
+
+      // ---- EMAIL NOTIFICATIONS ----
+      if (!recipientUser || !recipientUser.email || !recipientUser.emailVerified) {
+        // console.warn(
+        //   `Skipping email notify for "${username}" (no user or no email) in chat: ${chatId}`,
+        // );
+        continue;
+      }
+
+      toEmail.push(recipientUser.email);
+    }
 
     if (toEmail.length > 0) {
       try {
@@ -102,13 +116,9 @@ export const addMessageToChat = async (
           isMention: false,
         });
       } catch (notifyErr) {
-        console.error(
-          `Failed to send chat notification to chat: ${chatId}:`,
-          notifyErr,
-        );
+        //console.error(`Failed to send chat notification to chat: ${chatId}:`, notifyErr);
       }
     }
-
 
     return updatedChat;
   } catch (error) {
@@ -201,10 +211,7 @@ export const addParticipantToChat = async (
  * @param username - The username of the participant whose preference is to be toggled.
  * @returns {Promise<ChatResponse>} - The updated chat or an error message.
  */
-export const toggleNotify = async (
-  chatId: string,
-  username: string,
-): Promise<ChatResponse> => {
+export const toggleNotify = async (chatId: string, username: string): Promise<ChatResponse> => {
   try {
     const chat = await ChatModel.findById(chatId);
     if (!chat) {
