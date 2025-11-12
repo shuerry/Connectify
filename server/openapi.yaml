@@ -1234,6 +1234,7 @@ components:
         - unanswered
         - active
         - mostViewed
+        - trending
       default: 'newest'
 
     VoteResponse:

@@ -30,6 +30,7 @@ import {
   sortQuestionsByMostViews,
   sortQuestionsByNewest,
   sortQuestionsByUnanswered,
+  sortQuestionsByTrending,
 } from '../utils/sort.util';
 
 /**
@@ -71,6 +72,9 @@ export const getQuestionsByOrder = async (
 
     let ordered: PopulatedDatabaseQuestion[];
     switch (order) {
+      case 'trending':
+        ordered = sortQuestionsByTrending(qlist);
+        break;
       case 'active':
         ordered = sortQuestionsByActive(qlist);
         break;
