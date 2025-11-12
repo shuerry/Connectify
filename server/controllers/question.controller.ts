@@ -11,6 +11,8 @@ import {
   PopulatedDatabaseQuestion,
   CommunityQuestionsRequest,
   FollowRequest,
+  GetQuestionVersionsRequest,
+  RollbackQuestionRequest,
 } from '../types/types';
 import {
   addFollowerToQuestion,
@@ -22,6 +24,8 @@ import {
   getQuestionsByOrder,
   saveQuestion,
   updateQuestion,
+  getQuestionVersions,
+  rollbackQuestion,
 } from '../services/question.service';
 import { processTags } from '../services/tag.service';
 import { populateDocument } from '../utils/database.util';
@@ -323,6 +327,108 @@ const questionController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Retrieves the version history for a question.
+   * Only the question author can view version history.
+   * If there is an error, the HTTP response's status is updated.
+   *
+   * @param req The GetQuestionVersionsRequest object containing the question ID and username.
+   * @param res The HTTP response object used to send back the version history.
+   *
+   * @returns A Promise that resolves to void.
+   */
+  const getQuestionVersionsRoute = async (
+    req: GetQuestionVersionsRequest,
+    res: Response,
+  ): Promise<void> => {
+    const { qid } = req.params;
+    const { username } = req.query;
+
+    // Validate question ID format
+    if (!ObjectId.isValid(qid)) {
+      res.status(400).send('Invalid question ID format');
+      return;
+    }
+
+    try {
+      const result = await getQuestionVersions(qid, username);
+
+      if ('error' in result) {
+        if (result.error === 'Question not found') {
+          res.status(404).send(result.error);
+        } else if (result.error.includes('Unauthorized')) {
+          res.status(403).send(result.error);
+        } else {
+          res.status(400).send(result.error);
+        }
+        return;
+      }
+
+      res.json(result);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        res.status(500).send(`Error when fetching question versions: ${err.message}`);
+      } else {
+        res.status(500).send(`Error when fetching question versions`);
+      }
+    }
+  };
+
+  /**
+   * Rolls back a question to a previous version.
+   * Only the question author can rollback.
+   * If there is an error, the HTTP response's status is updated.
+   *
+   * @param req The RollbackQuestionRequest object containing the question ID, version ID, and username.
+   * @param res The HTTP response object used to send back the rolled back question.
+   *
+   * @returns A Promise that resolves to void.
+   */
+  const rollbackQuestionRoute = async (
+    req: RollbackQuestionRequest,
+    res: Response,
+  ): Promise<void> => {
+    const { qid, versionId } = req.params;
+    const { username } = req.body;
+
+    // Validate question ID format
+    if (!ObjectId.isValid(qid)) {
+      res.status(400).send('Invalid question ID format');
+      return;
+    }
+
+    // Validate version ID format
+    if (!ObjectId.isValid(versionId)) {
+      res.status(400).send('Invalid version ID format');
+      return;
+    }
+
+    try {
+      const result = await rollbackQuestion(qid, versionId, username);
+
+      if ('error' in result) {
+        if (result.error === 'Question not found' || result.error === 'Version not found') {
+          res.status(404).send(result.error);
+        } else if (result.error.includes('Unauthorized')) {
+          res.status(403).send(result.error);
+        } else {
+          res.status(400).send(result.error);
+        }
+        return;
+      }
+
+      // Emit the updated question to all connected clients
+      socket.emit('questionUpdate', result);
+      res.json(result);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        res.status(500).send(`Error when rolling back question: ${err.message}`);
+      } else {
+        res.status(500).send(`Error when rolling back question`);
+      }
+    }
+  };
+
   // add appropriate HTTP verbs and their endpoints to the router
   router.get('/getQuestion', getQuestionsByFilter);
   router.get('/getQuestionById/:qid', getQuestionById);
@@ -332,6 +438,8 @@ const questionController = (socket: FakeSOSocket) => {
   router.post('/downvoteQuestion', downvoteQuestion);
   router.get('/getCommunityQuestions/:communityId', getCommunityQuestionsRoute);
   router.post('/followQuestion', followQuestion);
+  router.get('/getQuestionVersions/:qid', getQuestionVersionsRoute);
+  router.post('/rollbackQuestion/:qid/:versionId', rollbackQuestionRoute);
 
   return router;
 };

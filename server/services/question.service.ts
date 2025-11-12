@@ -9,12 +9,16 @@ import {
   OrderType,
   PopulatedDatabaseAnswer,
   PopulatedDatabaseQuestion,
+  PopulatedDatabaseQuestionVersion,
   Question,
   QuestionResponse,
+  QuestionVersionsResponse,
+  RollbackQuestionResponse,
   VoteResponse,
 } from '../types/types';
 import AnswerModel from '../models/answers.model';
 import QuestionModel from '../models/questions.model';
+import QuestionVersionModel from '../models/questionVersions.model';
 import TagModel from '../models/tags.model';
 import CommentModel from '../models/comments.model';
 import { parseKeyword, parseTags } from '../utils/parse.util';
@@ -361,6 +365,23 @@ export const updateQuestion = async (
       return { error: 'Maximum 5 tags allowed' };
     }
 
+    // Save the current version before updating
+    // Get the current version number (count existing versions + 1)
+    const existingVersionsCount = await QuestionVersionModel.countDocuments({
+      questionId: new ObjectId(qid),
+    });
+
+    // Create a version snapshot of the current question state
+    await QuestionVersionModel.create({
+      questionId: new ObjectId(qid),
+      title: existingQuestion.title,
+      text: existingQuestion.text,
+      tags: existingQuestion.tags,
+      versionNumber: existingVersionsCount + 1,
+      createdBy: username,
+      createdAt: new Date(),
+    });
+
     // Update the question
     const updatedQuestion = await QuestionModel.findByIdAndUpdate(
       qid,
@@ -450,5 +471,128 @@ export const addFollowerToQuestion = async (
     return {
       error: 'Error when following question',
     };
+  }
+};
+
+/**
+ * Gets the version history for a question.
+ * Only the question author can view version history.
+ *
+ * @param qid - The ID of the question
+ * @param username - The username of the user requesting the history
+ * @returns {Promise<QuestionVersionsResponse>} - The list of versions or an error message
+ */
+export const getQuestionVersions = async (
+  qid: string,
+  username: string,
+): Promise<QuestionVersionsResponse> => {
+  try {
+    // Check if the question exists and if the user is authorized
+    const question = await QuestionModel.findById(qid);
+
+    if (!question) {
+      return { error: 'Question not found' };
+    }
+
+    // Check if the user is the question author
+    if (question.askedBy !== username) {
+      return { error: 'Unauthorized: Only the question author can view version history' };
+    }
+
+    // Get all versions for this question, ordered by version number (oldest first)
+    const versions = await QuestionVersionModel.find({ questionId: new ObjectId(qid) })
+      .sort({ versionNumber: 1 })
+      .populate<{ tags: DatabaseTag[] }>([{ path: 'tags', model: TagModel }]);
+
+    return versions;
+  } catch (error) {
+    return { error: 'Error when fetching question versions' };
+  }
+};
+
+/**
+ * Rolls back a question to a previous version.
+ * Only the question author can rollback.
+ *
+ * @param qid - The ID of the question
+ * @param versionId - The ID of the version to rollback to
+ * @param username - The username of the user attempting the rollback
+ * @returns {Promise<RollbackQuestionResponse>} - The updated question or an error message
+ */
+export const rollbackQuestion = async (
+  qid: string,
+  versionId: string,
+  username: string,
+): Promise<RollbackQuestionResponse> => {
+  try {
+    // Check if the question exists and if the user is authorized
+    const question = await QuestionModel.findById(qid);
+
+    if (!question) {
+      return { error: 'Question not found' };
+    }
+
+    // Check if the user is the author of the question
+    if (question.askedBy !== username) {
+      return { error: 'Unauthorized: You can only rollback your own questions' };
+    }
+
+    // Get the version to rollback to
+    const version = await QuestionVersionModel.findById(versionId).populate<{
+      tags: DatabaseTag[];
+    }>([{ path: 'tags', model: TagModel }]);
+
+    if (!version) {
+      return { error: 'Version not found' };
+    }
+
+    // Verify the version belongs to this question
+    if (version.questionId.toString() !== qid) {
+      return { error: 'Version does not belong to this question' };
+    }
+
+    // Save current state as a new version before rollback
+    const existingVersionsCount = await QuestionVersionModel.countDocuments({
+      questionId: new ObjectId(qid),
+    });
+
+    await QuestionVersionModel.create({
+      questionId: new ObjectId(qid),
+      title: question.title,
+      text: question.text,
+      tags: question.tags,
+      versionNumber: existingVersionsCount + 1,
+      createdBy: username,
+      createdAt: new Date(),
+    });
+
+    // Rollback the question to the selected version
+    const rolledBackQuestion = await QuestionModel.findByIdAndUpdate(
+      qid,
+      {
+        title: version.title,
+        text: version.text,
+        tags: version.tags.map(tag => (typeof tag === 'object' && tag._id ? tag._id : tag)),
+      },
+      { new: true },
+    ).populate<{
+      tags: DatabaseTag[];
+      answers: PopulatedDatabaseAnswer[];
+      comments: DatabaseComment[];
+      community: DatabaseCommunity;
+    }>([
+      { path: 'tags', model: TagModel },
+      { path: 'answers', model: AnswerModel, populate: { path: 'comments', model: CommentModel } },
+      { path: 'comments', model: CommentModel },
+      { path: 'followers', model: UserModel, select: 'username email' },
+    ]);
+
+    if (!rolledBackQuestion) {
+      return { error: 'Failed to rollback question' };
+    }
+
+    return rolledBackQuestion;
+  } catch (error) {
+    return { error: 'Error when rolling back question' };
   }
 };
