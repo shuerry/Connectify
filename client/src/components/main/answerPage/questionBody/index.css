@@ -25,6 +25,13 @@
   margin-bottom: 8px;
 }
 
+.question-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .edit-question-btn {
   background-color: #3498db;
   color: white;
@@ -35,7 +42,6 @@
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.3s;
-  margin-top: 8px;
 }
 
 .edit-question-btn:hover {

@@ -5,6 +5,7 @@ import './index.css';
 import { PopulatedDatabaseQuestion } from '../../../../types/types';
 import useUserContext from '../../../../hooks/useUserContext';
 import EditQuestionForm from '../editQuestionForm';
+import QuestionVersionHistory from '../questionVersionHistory';
 
 /**
  * Interface representing the props for the QuestionBody component.
@@ -88,12 +89,18 @@ const QuestionBody = ({
           <div className='answer_question_meta'>asked {meta}</div>
         </div>
         {canEdit && (
-          <button
-            className='edit-question-btn'
-            onClick={handleEditClick}
-            title='Edit your question'>
-            Edit
-          </button>
+          <div className='question-actions'>
+            <button
+              className='edit-question-btn'
+              onClick={handleEditClick}
+              title='Edit your question'>
+              Edit
+            </button>
+            <QuestionVersionHistory
+              question={question}
+              onVersionRollback={handleEditSuccess}
+            />
+          </div>
         )}
       </div>
     </div>
