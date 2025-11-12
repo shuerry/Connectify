@@ -10,6 +10,8 @@ const ProfileSettings: React.FC = () => {
     loading,
     editBioMode,
     newBio,
+    editEmailMode,
+    newEmail,
     newPassword,
     confirmNewPassword,
     successMessage,
@@ -21,11 +23,14 @@ const ProfileSettings: React.FC = () => {
     togglePasswordVisibility,
     setEditBioMode,
     setNewBio,
+    setEditEmailMode,
+    setNewEmail,
     setNewPassword,
     setConfirmNewPassword,
     setShowConfirmation,
     handleResetPassword,
     handleUpdateBiography,
+    handleUpdateEmail,
     handleDeleteUser,
     handleViewCollectionsPage,
   } = useProfileSettings();
@@ -90,6 +95,73 @@ const ProfileSettings: React.FC = () => {
                     Save
                   </button>
                   <button className='button button-danger' onClick={() => setEditBioMode(false)}>
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* ---- Email Section ---- */}
+            <p>
+              <strong>Email:</strong>
+            </p>
+
+            <div className="bio-section">
+              {!editEmailMode && (
+                <>
+                  {/* Display logic:
+          - If verified → show email normally
+          - If unverified and pendingEmail exists → show pending in gray
+          - If unverified and no pendingEmail → show email normally but warn
+      */}
+                  {userData.emailVerified ? (
+                    <p>{userData.email}</p>
+                  ) : userData.emailVerification?.pendingEmail ? (
+                    <p className="unverified-email">
+                      {userData.emailVerification.pendingEmail} <em>(pending verification)</em>
+                    </p>
+                  ) : (
+                    <p className="unverified-email">
+                      {userData.email || 'No email yet'} <em>(unverified)</em>
+                    </p>
+                  )}
+
+                  {!userData.emailVerified && (
+                    <p className="warning-message">
+                      Notifications will not be sent until the email is verified.
+                    </p>
+                  )}
+
+                  {canEditProfile && (
+                    <button
+                      className="button button-primary"
+                      onClick={() => {
+                        setEditEmailMode(true);
+                        setNewEmail(
+                          userData.emailVerification?.pendingEmail || userData.email || ''
+                        );
+                      }}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </>
+              )}
+
+              {editEmailMode && canEditProfile && (
+                <div className="bio-edit">
+                  <input
+                    className="input-text"
+                    type="text"
+                    value={newEmail}
+                    onChange={e => setNewEmail(e.target.value)}
+                  />
+
+                  <button className="button button-primary" onClick={handleUpdateEmail}>
+                    Save
+                  </button>
+
+                  <button className="button button-danger" onClick={() => setEditEmailMode(false)}>
                     Cancel
                   </button>
                 </div>

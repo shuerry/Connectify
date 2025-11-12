@@ -116,6 +116,30 @@ export interface CollectionUpdatePayload {
 }
 
 /**
+ * Payload for a player disconnect event during a game.
+ * - `disconnectedPlayer`: The player ID who disconnected.
+ * - `message`: A message about the disconnection.
+ */
+export interface PlayerDisconnectedPayload {
+  disconnectedPlayer: string;
+  message: string;
+}
+
+/**
+ * Payload for a game invitation event.
+ * - `gameID`: The ID of the game being invited to.
+ * - `roomName`: The name of the game room.
+ * - `inviterUsername`: The username of the player sending the invitation.
+ * - `roomCode`: The room code for joining the game.
+ */
+export interface GameInvitationPayload {
+  gameID: GameInstanceID;
+  roomName: string;
+  inviterUsername: string;
+  roomCode?: string;
+}
+
+/**
  * Interface representing the events the client can emit to the server.
  * - `makeMove`: Client can emit a move in the game.
  * - `joinGame`: Client can join a game.
@@ -137,6 +161,8 @@ export interface ClientToServerEvents {
     playerID: string;
     isSpectator?: boolean;
   }) => void;
+  // Join user-specific room for notifications
+  joinUserRoom: (username: string) => void;
 }
 
 /**
@@ -169,4 +195,10 @@ export interface ServerToClientEvents {
   collectionUpdate: (community: CollectionUpdatePayload) => void;
   // Broadcast updated list of public Connect Four rooms
   connectFourRoomsUpdate: (rooms: GameInstance<GameState>[]) => void;
+  // Notify clients when a player disconnects during a game
+  playerDisconnected: (payload: PlayerDisconnectedPayload) => void;
+  // Send game invitation to specific users
+  gameInvitation: (payload: GameInvitationPayload) => void;
+  // Send notification update (for user-specific room)
+  // TODO: add an event for notifications
 }

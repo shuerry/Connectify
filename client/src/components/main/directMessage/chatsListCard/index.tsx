@@ -1,6 +1,7 @@
 import './index.css';
 import { ObjectId } from 'mongodb';
 import { PopulatedDatabaseChat } from '../../../../types/types';
+import useUserContext from '../../../../hooks/useUserContext';
 
 /**
  * ChatsListCard component displays information about a chat and allows the user to select it.
@@ -14,12 +15,19 @@ const ChatsListCard = ({
 }: {
   chat: PopulatedDatabaseChat;
   handleChatSelect: (chatID: ObjectId | undefined) => void;
-}) => (
-  <div onClick={() => handleChatSelect(chat._id)} className='chats-list-card'>
-    <p>
-      <strong>Chat with:</strong> {chat.participants.join(', ')}
-    </p>
-  </div>
-);
+}) => {
+  const { user } = useUserContext();
+  const otherParticipant = chat
+    ? Object.keys(chat.participants).find(username => username !== user.username)
+    : null;
+
+  return (
+    <div onClick={() => handleChatSelect(chat._id)} className='chats-list-card'>
+      <p>
+        <strong>Chat with:</strong> {otherParticipant}
+      </p>
+    </div>
+  );
+};
 
 export default ChatsListCard;

@@ -29,7 +29,7 @@ describe('Chat Controller', () => {
   describe('POST /chat/createChat', () => {
     it('should create a new chat successfully', async () => {
       const validChatPayload = {
-        participants: ['user1', 'user2'],
+        participants: { ['user1']: false, ['user2']: false },
         messages: [{ msg: 'Hello!', msgFrom: 'user1', msgDateTime: new Date('2025-01-01') }],
       };
 
@@ -44,7 +44,7 @@ describe('Chat Controller', () => {
 
       const chatResponse: DatabaseChat = {
         _id: new mongoose.Types.ObjectId(),
-        participants: ['user1', 'user2'],
+        participants: { ['user1']: false, ['user2']: false },
         messages: [new mongoose.Types.ObjectId()],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -52,7 +52,7 @@ describe('Chat Controller', () => {
 
       const populatedChatResponse: PopulatedDatabaseChat = {
         _id: new mongoose.Types.ObjectId(),
-        participants: ['user1', 'user2'],
+        participants: { ['user1']: false, ['user2']: false },
         messages: [
           {
             _id: chatResponse.messages[0],
@@ -79,7 +79,7 @@ describe('Chat Controller', () => {
 
       expect(response.body).toMatchObject({
         _id: populatedChatResponse._id.toString(),
-        participants: populatedChatResponse.participants.map(participant => participant.toString()),
+        participants: populatedChatResponse.participants,
         messages: populatedChatResponse.messages.map(message => ({
           ...message,
           _id: message._id.toString(),
@@ -100,7 +100,7 @@ describe('Chat Controller', () => {
 
     it('should return 400 if participants array is invalid', async () => {
       const invalidPayload = {
-        participants: [],
+        participants: {},
         messages: [],
       };
 
@@ -108,7 +108,7 @@ describe('Chat Controller', () => {
       const openApiError = JSON.parse(response.text);
 
       expect(response.status).toBe(400);
-      expect(openApiError.errors[0].message).toBe('must NOT have fewer than 1 items');
+      expect(openApiError.errors[0].message).toBe('must NOT have fewer than 1 properties');
     });
 
     it('should return 500 on service error', async () => {
@@ -117,7 +117,7 @@ describe('Chat Controller', () => {
       const response = await supertest(app)
         .post('/api/chat/createChat')
         .send({
-          participants: ['user1'],
+          participants: { ['user1']: false },
           messages: [],
         });
 
@@ -127,13 +127,13 @@ describe('Chat Controller', () => {
 
     it('should return 500 on populateChat error', async () => {
       const validChatPayload = {
-        participants: ['user1', 'user2'],
+        participants: { ['user1']: false, ['user2']: false },
         messages: [{ msg: 'Hello!', msgFrom: 'user1', msgDateTime: new Date('2025-01-01') }],
       };
 
       const chatResponse: DatabaseChat = {
         _id: new mongoose.Types.ObjectId(),
-        participants: ['user1', 'user2'],
+        participants: { ['user1']: false, ['user2']: false },
         messages: [new mongoose.Types.ObjectId()],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -176,7 +176,7 @@ describe('Chat Controller', () => {
 
       const chatResponse: DatabaseChat = {
         _id: chatId,
-        participants: ['user1', 'user2'],
+        participants: { ['user1']: false, ['user2']: false },
         messages: [messageResponse._id],
         createdAt: new Date('2025-01-01'),
         updatedAt: new Date('2025-01-01'),
@@ -184,7 +184,7 @@ describe('Chat Controller', () => {
 
       const populatedChatResponse: PopulatedDatabaseChat = {
         _id: chatId,
-        participants: ['user1', 'user2'],
+        participants: { ['user1']: false, ['user2']: false },
         messages: [messageResponse],
         createdAt: new Date('2025-01-01'),
         updatedAt: new Date('2025-01-01'),
@@ -201,7 +201,7 @@ describe('Chat Controller', () => {
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         _id: populatedChatResponse._id.toString(),
-        participants: populatedChatResponse.participants.map(participant => participant.toString()),
+        participants: populatedChatResponse.participants,
         messages: populatedChatResponse.messages.map(message => ({
           ...message,
           _id: message._id.toString(),
@@ -323,7 +323,7 @@ describe('Chat Controller', () => {
       const chatId = new mongoose.Types.ObjectId().toString();
       const foundChat = {
         _id: new mongoose.Types.ObjectId(),
-        participants: ['testUser'], // Array of ObjectIds
+        participants: { ['testUser']: false }, // Map of ObjectIds
         messages: [], // Array of ObjectIds
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -366,7 +366,7 @@ describe('Chat Controller', () => {
       // 2) Mock a fully enriched chat
       const mockFoundChat: DatabaseChat = {
         _id: new mongoose.Types.ObjectId(),
-        participants: ['user1'],
+        participants: { ['user1']: false },
         messages: [new mongoose.Types.ObjectId()],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -374,7 +374,7 @@ describe('Chat Controller', () => {
 
       const mockPopulatedChat: PopulatedDatabaseChat = {
         _id: new mongoose.Types.ObjectId(),
-        participants: ['user1'],
+        participants: { ['user1']: false },
         messages: [
           {
             _id: new mongoose.Types.ObjectId(),
@@ -407,7 +407,7 @@ describe('Chat Controller', () => {
       // Convert ObjectIds and Dates for comparison
       expect(response.body).toMatchObject({
         _id: mockPopulatedChat._id.toString(),
-        participants: mockPopulatedChat.participants.map(p => p.toString()),
+        participants: mockPopulatedChat.participants,
         messages: mockPopulatedChat.messages.map(m => ({
           _id: m._id.toString(),
           msg: m.msg,
@@ -441,7 +441,7 @@ describe('Chat Controller', () => {
 
       const updatedChat: DatabaseChat = {
         _id: new mongoose.Types.ObjectId(),
-        participants: ['user1', 'user2'],
+        participants: { ['user1']: false, ['user2']: false },
         messages: [],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -449,7 +449,7 @@ describe('Chat Controller', () => {
 
       const populatedUpdatedChat: PopulatedDatabaseChat = {
         _id: updatedChat._id,
-        participants: ['user1', 'user2'],
+        participants: { ['user1']: false, ['user2']: false },
         messages: [],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -466,7 +466,7 @@ describe('Chat Controller', () => {
 
       expect(response.body).toMatchObject({
         _id: populatedUpdatedChat._id.toString(),
-        participants: populatedUpdatedChat.participants.map(id => id.toString()),
+        participants: { ['user1']: false, ['user2']: false },
         messages: [],
         createdAt: populatedUpdatedChat.createdAt.toISOString(),
         updatedAt: populatedUpdatedChat.updatedAt.toISOString(),
@@ -490,7 +490,7 @@ describe('Chat Controller', () => {
 
       const updatedChat: DatabaseChat = {
         _id: new mongoose.Types.ObjectId(),
-        participants: ['user1', 'user2'],
+        participants: { ['user1']: false, ['user2']: false },
         messages: [],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -529,7 +529,7 @@ describe('Chat Controller', () => {
       const chats: DatabaseChat[] = [
         {
           _id: new mongoose.Types.ObjectId(),
-          participants: ['user1', 'user2'],
+          participants: { ['user1']: false, ['user2']: false },
           messages: [],
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -539,7 +539,7 @@ describe('Chat Controller', () => {
       const populatedChats: PopulatedDatabaseChat[] = [
         {
           _id: chats[0]._id,
-          participants: ['user1', 'user2'],
+          participants: { ['user1']: false, ['user2']: false },
           messages: [],
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -557,7 +557,7 @@ describe('Chat Controller', () => {
       expect(response.body).toMatchObject([
         {
           _id: populatedChats[0]._id.toString(),
-          participants: ['user1', 'user2'],
+          participants: { ['user1']: false, ['user2']: false },
           messages: [],
           createdAt: populatedChats[0].createdAt.toISOString(),
           updatedAt: populatedChats[0].updatedAt.toISOString(),
@@ -570,7 +570,7 @@ describe('Chat Controller', () => {
       const chats: DatabaseChat[] = [
         {
           _id: new mongoose.Types.ObjectId(),
-          participants: ['user1', 'user2'],
+          participants: { ['user1']: false, ['user2']: false },
           messages: [],
           createdAt: new Date(),
           updatedAt: new Date(),

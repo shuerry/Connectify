@@ -10,8 +10,10 @@ import {
   FakeSOSocket,
   PopulatedDatabaseQuestion,
   CommunityQuestionsRequest,
+  FollowRequest,
 } from '../types/types';
 import {
+  addFollowerToQuestion,
   addVoteToQuestion,
   fetchAndIncrementQuestionViewsById,
   filterQuestionsByAskedBy,
@@ -296,6 +298,31 @@ const questionController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Handles following a question. The request must contain the question ID (qid) and the username.
+   * If the request is invalid or an error occurs, the appropriate HTTP response status and message are returned.
+   *
+   * @param req The FollowRequest object containing the question ID and the username.
+   * @param res The HTTP response object used to send back the result of the operation.
+   *
+   * @returns A Promise that resolves to void.
+   */
+  const followQuestion = async (req: FollowRequest, res: Response): Promise<void> => {
+    const { qid, username } = req.body;
+
+    try {
+      const result = await addFollowerToQuestion(qid, username);
+
+      if (result && 'error' in result) {
+        throw new Error(result.error);
+      }
+
+      res.json(result);
+    } catch (err: unknown) {
+      res.status(500).send(`Error when following question: ${(err as Error).message}`);
+    }
+  };
+
   // add appropriate HTTP verbs and their endpoints to the router
   router.get('/getQuestion', getQuestionsByFilter);
   router.get('/getQuestionById/:qid', getQuestionById);
@@ -304,6 +331,7 @@ const questionController = (socket: FakeSOSocket) => {
   router.post('/upvoteQuestion', upvoteQuestion);
   router.post('/downvoteQuestion', downvoteQuestion);
   router.get('/getCommunityQuestions/:communityId', getCommunityQuestionsRoute);
+  router.post('/followQuestion', followQuestion);
 
   return router;
 };

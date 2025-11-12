@@ -5,6 +5,7 @@ import {
   deleteUser,
   resetPassword,
   updateBiography,
+  updateEmail,
 } from '../services/userService';
 import { SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
@@ -24,6 +25,8 @@ const useProfileSettings = () => {
   const [loading, setLoading] = useState(false);
   const [editBioMode, setEditBioMode] = useState(false);
   const [newBio, setNewBio] = useState('');
+  const [editEmailMode, setEditEmailMode] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -119,6 +122,43 @@ const useProfileSettings = () => {
   };
 
   /**
+   * Handler for updating the email
+   */
+  const handleUpdateEmail = async () => {
+  if (!username) return;
+  try {
+    // now returns { msg } instead of a user
+    await updateEmail(username, newEmail);
+
+    setUserData(u =>
+      u
+        ? {
+            ...u,
+            emailVerified: false,
+            emailVerification: {
+              ...(u.emailVerification ?? {}),
+              pendingEmail: newEmail,
+            },
+          }
+        : u
+    );
+
+    // close edit mode; DO NOT set userData from the response
+    setEditEmailMode(false);
+
+    // show the right message for verification flows
+    setSuccessMessage('Verification email sent');
+    setErrorMessage(null);
+
+    // optional: reflect pending state locally
+    setUserData(u => (u ? { ...u, emailVerified: false } : u));
+  } catch (error) {
+    setErrorMessage('Failed to update email.');
+    setSuccessMessage(null);
+  }
+};
+
+  /**
    * Handler for deleting the user (triggers confirmation modal)
    */
   const handleDeleteUser = () => {
@@ -155,6 +195,10 @@ const useProfileSettings = () => {
     setEditBioMode,
     newBio,
     setNewBio,
+    newEmail,
+    setNewEmail,
+    editEmailMode,
+    setEditEmailMode,
     successMessage,
     errorMessage,
     showConfirmation,
@@ -166,6 +210,7 @@ const useProfileSettings = () => {
     togglePasswordVisibility,
     handleResetPassword,
     handleUpdateBiography,
+    handleUpdateEmail,
     handleDeleteUser,
     handleViewCollectionsPage,
   };

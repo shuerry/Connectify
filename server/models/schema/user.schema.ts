@@ -29,6 +29,10 @@ const userSchema: Schema = new Schema(
       type: String,
       default: '',
     },
+    email: {
+      type: String,
+      required: false,
+    },
     friends: [
       {
         type: String,
@@ -47,6 +51,12 @@ const userSchema: Schema = new Schema(
         default: [],
       },
     ],
+    emailVerified: { type: Boolean, default: false },
+    emailVerification: {
+      pendingEmail: { type: String },
+      tokenHash: { type: String, index: true }, // index speeds up lookup by token
+      expiresAt: { type: Date, index: true },
+    },
   },
   { collection: 'User' },
 );

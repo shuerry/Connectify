@@ -93,6 +93,9 @@ const populateChat = async (chatID: string): Promise<PopulatedDatabaseChat | nul
         msgFrom: messageDoc.msgFrom,
         msgDateTime: messageDoc.msgDateTime,
         type: messageDoc.type,
+        msgTo: messageDoc.msgTo,
+        friendRequestStatus: messageDoc.friendRequestStatus,
+        gameInvitation: messageDoc.gameInvitation,
         user: userDoc
           ? {
               _id: userDoc._id!,
@@ -104,10 +107,14 @@ const populateChat = async (chatID: string): Promise<PopulatedDatabaseChat | nul
   );
 
   // Filters out null values
-  const enrichedMessages = messagesWithUser.filter(Boolean);
+  const enrichedMessages = messagesWithUser.filter(Boolean) as MessageInChat[];
+
   const transformedChat: PopulatedDatabaseChat = {
-    ...chatDoc.toObject(),
-    messages: enrichedMessages as MessageInChat[],
+    _id: chatDoc._id as unknown as ObjectId,
+    participants: chatDoc.participants,
+    messages: enrichedMessages,
+    createdAt: chatDoc.createdAt,
+    updatedAt: chatDoc.updatedAt,
   };
 
   return transformedChat;

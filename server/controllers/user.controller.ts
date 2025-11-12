@@ -6,6 +6,7 @@ import {
   UserByUsernameRequest,
   FakeSOSocket,
   UpdateBiographyRequest,
+  UpdateEmailRequest,
 } from '../types/types';
 import {
   deleteUserByUsername,
@@ -20,6 +21,10 @@ import {
   unblockUser,
   getRelations,
 } from '../services/user.service';
+import {
+  confirmEmailVerification,
+  startEmailVerification,
+} from '../services/emailVerification.service';
 
 const userController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
@@ -199,6 +204,41 @@ const userController = (socket: FakeSOSocket) => {
   };
 
   /**
+   * Updates a user's email.
+   * @param req The request containing the username and new email in the body.
+   * @param res The response, either confirming the update or returning an error.
+   * @returns A promise resolving to void.
+   */
+  const updateEmail = async (req: UpdateEmailRequest, res: Response): Promise<void> => {
+    try {
+      const { username, email } = req.body;
+      const r = await startEmailVerification(username, email);
+      if ('error' in r) throw new Error(r.error);
+      res.status(200).json({ msg: 'Verification email sent. Please check your inbox.' });
+    } catch (error) {
+      res.status(500).send(`Error when updating user email: ${error}`);
+    }
+  };
+
+  const verifyEmail = async (req: express.Request, res: Response): Promise<void> => {
+    try {
+      const token = (req.query.token || req.body.token) as string | undefined;
+      if (!token) {
+        res.status(400).json({ error: 'Missing token' });
+        return;
+      }
+      const result = await confirmEmailVerification(token);
+      if ('error' in result) {
+        res.status(400).json(result);
+        return;
+      }
+      res.status(200).json({ msg: 'Email verified successfully', email: result.email });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to verify email' });
+    }
+  };
+
+  /**
    * Adds a friend to the given user.
    */
   const addFriendRoute = async (req: express.Request, res: Response): Promise<void> => {
@@ -302,11 +342,15 @@ const userController = (socket: FakeSOSocket) => {
   router.get('/getUsers', getUsers);
   router.delete('/deleteUser/:username', deleteUser);
   router.patch('/updateBiography', updateBiography);
+  router.patch('/updateEmail', updateEmail);
   router.post('/addFriend', addFriendRoute);
   router.post('/removeFriend', removeFriendRoute);
   router.post('/blockUser', blockUserRoute);
   router.post('/unblockUser', unblockUserRoute);
   router.get('/relations/:username', getRelationsRoute);
+  router.patch('/updateEmail', updateEmail);
+  router.post('/verifyEmail', verifyEmail);
+  router.get('/verifyEmail', verifyEmail);
   return router;
 };
 

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import api from './config';
 import { DatabaseMessage, Message } from '../types/types';
 
@@ -93,6 +94,92 @@ const respondToFriendRequest = async (
 };
 
 /**
+ * Sends a game invitation through chat.
+ *
+ * @param fromUsername - The username of the user sending the invitation
+ * @param toUsername - The username of the user receiving the invitation
+ * @param gameID - The ID of the game
+ * @param roomName - The name of the room
+ * @param gameType - The type of game
+ * @param roomCode - Optional room code for private rooms
+ * @throws an error if the request fails or the response status is not 200.
+ */
+const sendGameInvitation = async (
+  fromUsername: string,
+  toUsername: string,
+  gameID: string,
+  roomName: string,
+  gameType: 'Connect Four',
+  roomCode?: string,
+): Promise<DatabaseMessage> => {
+  try {
+    console.log('API call to:', `${MESSAGE_API_URL}/sendGameInvitation`);
+    console.log('Request payload:', {
+      fromUsername,
+      toUsername,
+      gameID,
+      roomName,
+      gameType,
+      roomCode,
+    });
+
+    const res = await api.post(`${MESSAGE_API_URL}/sendGameInvitation`, {
+      fromUsername,
+      toUsername,
+      gameID,
+      roomName,
+      gameType,
+      roomCode,
+    });
+
+    console.log('Response status:', res.status);
+    console.log('Response data:', res.data);
+
+    if (res.status !== 200) {
+      throw new Error(`Server returned status ${res.status}: ${res.statusText}`);
+    }
+    return res.data;
+  } catch (error: unknown) {
+    console.error('sendGameInvitation API error:', error);
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response: { status: number; data: unknown } };
+      console.error('Error response:', axiosError.response.status, axiosError.response.data);
+      throw new Error(`Server error: ${axiosError.response.status} - ${axiosError.response.data}`);
+    } else if (error && typeof error === 'object' && 'request' in error) {
+      const networkError = error as { request: unknown };
+      console.error('Network error:', networkError.request);
+      throw new Error('Network error: Could not connect to server');
+    } else {
+      throw new Error(`Request error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+};
+
+/**
+ * Responds to a game invitation (accept or decline).
+ *
+ * @param messageId - The message ID of the game invitation
+ * @param status - The response status ('accepted' or 'declined')
+ * @param responderUsername - The username of the user responding
+ * @throws an error if the request fails or the response status is not 200.
+ */
+const respondToGameInvitation = async (
+  messageId: string,
+  status: 'accepted' | 'declined',
+  responderUsername: string,
+): Promise<DatabaseMessage> => {
+  const res = await api.post(`${MESSAGE_API_URL}/respondToGameInvitation`, {
+    messageId,
+    status,
+    responderUsername,
+  });
+  if (res.status !== 200) {
+    throw new Error('Error when responding to game invitation');
+  }
+  return res.data;
+};
+
+/**
  * Function to fetch all messages in ascending order of their date and time.
  * @param user The user to fetch their chat for
  * @throws Error if there is an issue fetching the list of chats.
@@ -105,4 +192,12 @@ const getMessages = async (): Promise<DatabaseMessage[]> => {
   return res.data;
 };
 
-export { addMessage, getMessages, addDirectMessage, getDirectMessages, respondToFriendRequest };
+export {
+  addMessage,
+  getMessages,
+  addDirectMessage,
+  getDirectMessages,
+  respondToFriendRequest,
+  sendGameInvitation,
+  respondToGameInvitation,
+};

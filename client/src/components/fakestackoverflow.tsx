@@ -26,6 +26,8 @@ import NewCollectionPage from './main/collections/newCollectionPage';
 import ConnectFourPage from './main/games/connectFourPage';
 import FriendsListPage from './main/friendsList';
 import BlockedListPage from './main/blockedList';
+import VerifyEmail from './main/verifyEmailPage/verifyEmail';
+import NotificationsPage from './main/notificationsPage';
 
 const ProtectedRoute = ({
   user,
@@ -56,6 +58,7 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
         {/* Public Route */}
         <Route path='/' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         {/* Protected Routes */}
         {
           <Route
@@ -84,6 +87,7 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
             <Route path='/communities/:communityID' element={<CommunityPage />} />
             <Route path='/friends' element={<FriendsListPage />} />
             <Route path='/blocked' element={<BlockedListPage />} />
+            <Route path="/notifications" element={<NotificationsPage username={user?.username || ''} />} />
           </Route>
         }
       </Routes>

@@ -1,0 +1,174 @@
+.room-share-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #333;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.btn-close:hover {
+  background-color: #e5e5e5;
+  color: #333;
+}
+
+.modal-content {
+  padding: 24px;
+}
+
+.room-info {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f0f8ff;
+  border-radius: 8px;
+  border-left: 4px solid #007acc;
+}
+
+.room-info p {
+  margin: 0 0 8px 0;
+}
+
+.room-info strong {
+  color: #007acc;
+}
+
+.help-text {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 8px 0 0 0;
+}
+
+.error-message {
+  background: #ffebee;
+  color: #c62828;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  border-left: 4px solid #f44336;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.no-friends {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.friends-list h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.friends-grid {
+  display: grid;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.friend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.friend-item:hover {
+  background: #f8f9fa;
+}
+
+.friend-item input[type="checkbox"] {
+  margin: 0;
+}
+
+.friend-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 20px 24px;
+  border-top: 1px solid #e5e5e5;
+  background: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+}
+
+.btn-cancel,
+.btn-share {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel {
+  background: #e5e5e5;
+  color: #666;
+}
+
+.btn-cancel:hover {
+  background: #d0d0d0;
+  color: #333;
+}
+
+.btn-share {
+  background: #007acc;
+  color: white;
+}
+
+.btn-share:hover:not(:disabled) {
+  background: #005a99;
+}
+
+.btn-share:disabled {
+  background: #ccc;
+  color: #999;
+  cursor: not-allowed;
+}

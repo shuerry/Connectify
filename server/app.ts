@@ -25,6 +25,7 @@ import gameController from './controllers/game.controller';
 import collectionController from './controllers/collection.controller';
 import communityController from './controllers/community.controller';
 import reportController from './controllers/report.controller';
+import notificationController from './controllers/notification.controller';
 
 const MONGO_URL = `${process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017'}/fake_so`;
 const PORT = parseInt(process.env.PORT || '8000');
@@ -33,7 +34,7 @@ const app = express();
 const server = http.createServer(app);
 // allow requests from the local dev client or the production client only
 // Build allowed client origins from env (comma-separated) with sensible defaults
-const ALLOWED_CLIENT_ORIGINS: string[] = (
+const allowedClientOrigins: string[] = (
   process.env.CLIENT_URLS
     ? process.env.CLIENT_URLS.split(',')
         .map(o => o.trim())
@@ -46,7 +47,7 @@ const ALLOWED_CLIENT_ORIGINS: string[] = (
 const socket: FakeSOSocket = new Server(server, {
   path: '/socket.io',
   cors: {
-    origin: ALLOWED_CLIENT_ORIGINS,
+    origin: allowedClientOrigins,
     credentials: true,
   },
 });
@@ -85,7 +86,7 @@ app.use(express.json());
 // Minimal CORS for REST API (avoids adding a dependency). Uses same allowed origins as Socket.IO
 app.use((req: Request, res: Response, next: NextFunction) => {
   const requestOrigin = req.headers.origin;
-  const isAllowed = requestOrigin && ALLOWED_CLIENT_ORIGINS.includes(requestOrigin);
+  const isAllowed = requestOrigin && allowedClientOrigins.includes(requestOrigin);
   if (isAllowed) {
     res.header('Access-Control-Allow-Origin', requestOrigin);
     res.header('Vary', 'Origin');
@@ -144,6 +145,7 @@ app.use('/api/games', gameController(socket));
 app.use('/api/collection', collectionController(socket));
 app.use('/api/community', communityController(socket));
 app.use('/api/report', reportController());
+app.use('/api/notification', notificationController(socket));
 
 const openApiDocument = yaml.parse(fs.readFileSync('./openapi.yaml', 'utf8'));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));

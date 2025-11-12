@@ -3,18 +3,17 @@ import { Schema } from 'mongoose';
 /**
  * Mongoose schema for the Chat collection.
  *
- * - `participants`: an array of ObjectIds referencing the User collection.
+ * - `participants`: a map of ObjectIds referencing the User collection and their notification preference.
  * - `messages`: an array of ObjectIds referencing the Message collection.
  * - Timestamps store `createdAt` & `updatedAt`.
  */
 const chatSchema = new Schema(
   {
-    participants: [
-      {
-        type: String,
-        required: true,
-      },
-    ],
+    participants: {
+      type: Map,
+      of: Boolean,
+      required: true,
+    },
     messages: [
       {
         type: Schema.Types.ObjectId,

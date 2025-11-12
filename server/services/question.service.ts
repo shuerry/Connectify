@@ -5,6 +5,7 @@ import {
   DatabaseCommunity,
   DatabaseQuestion,
   DatabaseTag,
+  FollowResponse,
   OrderType,
   PopulatedDatabaseAnswer,
   PopulatedDatabaseQuestion,
@@ -17,7 +18,7 @@ import QuestionModel from '../models/questions.model';
 import TagModel from '../models/tags.model';
 import CommentModel from '../models/comments.model';
 import { parseKeyword, parseTags } from '../utils/parse.util';
-import { getRelations, getUsersWhoBlocked } from './user.service';
+import { getRelations, getUsersWhoBlocked, getUserByUsername } from './user.service';
 import UserModel from '../models/users.model';
 import { checkTagInQuestion } from './tag.service';
 import {
@@ -61,6 +62,7 @@ export const getQuestionsByOrder = async (
       { path: 'tags', model: TagModel },
       { path: 'answers', model: AnswerModel, populate: { path: 'comments', model: CommentModel } },
       { path: 'comments', model: CommentModel },
+      { path: 'followers', model: UserModel, select: 'username email' },
     ]);
 
     let ordered: PopulatedDatabaseQuestion[];
@@ -171,6 +173,7 @@ export const fetchAndIncrementQuestionViewsById = async (
       { path: 'tags', model: TagModel },
       { path: 'answers', model: AnswerModel, populate: { path: 'comments', model: CommentModel } },
       { path: 'comments', model: CommentModel },
+      { path: 'followers', model: UserModel, select: 'username email' },
     ]);
 
     if (!q) {
@@ -375,6 +378,7 @@ export const updateQuestion = async (
       { path: 'tags', model: TagModel },
       { path: 'answers', model: AnswerModel, populate: { path: 'comments', model: CommentModel } },
       { path: 'comments', model: CommentModel },
+      { path: 'followers', model: UserModel, select: 'username email' },
     ]);
 
     if (!updatedQuestion) {
@@ -400,5 +404,52 @@ export const getCommunityQuestions = async (communityId: string): Promise<Databa
     return questions;
   } catch (error) {
     return [];
+  }
+};
+
+/**
+ * Adds a follower to a question.
+ *
+ * @param qid - The ID of the question to follow
+ * @param username - The username of the user who wants to follow the question
+ * @returns {Promise<FollowResponse>} - The success message or error message
+ */
+export const addFollowerToQuestion = async (
+  qid: string,
+  username: string,
+): Promise<FollowResponse> => {
+  try {
+    const followerUser = await getUserByUsername(username);
+    if (!followerUser || (followerUser as any).error) {
+      return { error: 'User not found' };
+    }
+
+    const followerId = (followerUser as any)._id;
+
+    const question = await QuestionModel.findById(qid);
+    const alreadyFollowed = question?.followers.includes(followerId);
+
+    //console.log('Already followed:', alreadyFollowed);
+
+    const result: DatabaseQuestion | null = await QuestionModel.findOneAndUpdate(
+      { _id: qid },
+      alreadyFollowed
+        ? { $pull: { followers: followerId } }
+        : { $addToSet: { followers: followerId } },
+      { new: true },
+    ).populate('followers', 'username email emailVerified');
+
+    if (!result) {
+      return { error: 'Error adding follower!' };
+    }
+
+    return {
+      msg: alreadyFollowed ? 'Question unfollowed successfully' : 'Question followed successfully',
+      followers: result.followers || [],
+    };
+  } catch (err) {
+    return {
+      error: 'Error when following question',
+    };
   }
 };

@@ -47,6 +47,28 @@
   font-family: monospace;
 }
 
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-share {
+  padding: 10px 16px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+  font-size: 14px;
+}
+
+.btn-share:hover {
+  background: #2980b9;
+}
+
 .btn-leave {
   padding: 10px 20px;
   background: #e74c3c;
@@ -269,49 +291,109 @@
   border-radius: 6px;
 }
 
-.spectators-list {
+.spectators-section {
   margin-top: 20px;
   padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #9b59b6;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 2px solid #9b59b6;
+  box-shadow: 0 4px 12px rgba(155, 89, 182, 0.1);
 }
 
-.spectators-list h4 {
-  margin: 0 0 12px 0;
+.spectators-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.spectators-section h4 {
+  margin: 0;
   color: #9b59b6;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.no-spectators {
+  margin: 0;
+  color: #7f8c8d;
+  font-style: italic;
+  font-size: 14px;
 }
 
 .spectator-names {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .spectator-badge {
-  display: inline-block;
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
   background: white;
   border: 2px solid #9b59b6;
-  border-radius: 6px;
+  border-radius: 20px;
   color: #9b59b6;
   font-weight: 600;
   font-size: 14px;
+  box-shadow: 0 2px 6px rgba(155, 89, 182, 0.15);
+  transition: all 0.3s ease;
 }
+
+.spectator-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(155, 89, 182, 0.25);
+}
+
+.you-indicator {
+  color: #27ae60;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 
 .spectator-notice {
   margin-top: 20px;
-  padding: 16px;
-  background: #f3e5f5;
-  border: 2px solid #9b59b6;
-  border-radius: 8px;
-  text-align: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+  border: 3px solid #9b59b6;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(155, 89, 182, 0.2);
 }
 
-.spectator-notice span {
+.spectator-status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.spectator-icon {
+  font-size: 32px;
+  animation: watcherBlink 2s ease-in-out infinite;
+}
+
+@keyframes watcherBlink {
+  0%, 90%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.spectator-status strong {
   color: #6a1b9a;
-  font-weight: 600;
-  font-size: 16px;
+  font-size: 18px;
+  margin: 0 0 4px 0;
+  display: block;
+}
+
+.spectator-status p {
+  color: #8e24aa;
+  margin: 0;
+  font-size: 14px;
 }
 
 .game-info {

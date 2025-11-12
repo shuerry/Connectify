@@ -321,6 +321,7 @@ describe('Question model', () => {
         downVotes: [],
         comments: [],
         community: null,
+        followers: [],
       };
 
       jest
@@ -354,6 +355,7 @@ describe('Question model', () => {
         downVotes: [],
         comments: [],
         community: null,
+        followers: [],
       };
 
       jest
@@ -574,6 +576,7 @@ describe('Question model', () => {
       downVotes: [],
       comments: [],
       community: new mongoose.Types.ObjectId('65e9b58910afe6e94fc6e6f1'),
+      followers: [],
     };
     test('getCommunityQuestions should return questions for a given community', async () => {
       jest
@@ -631,6 +634,7 @@ describe('Question model', () => {
       downVotes: [],
       comments: [],
       community: null,
+      followers: [],
     };
 
     const mockUpdatedQuestion: PopulatedDatabaseQuestion = {

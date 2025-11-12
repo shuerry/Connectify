@@ -123,14 +123,28 @@ const updateBiography = async (
   return res.data;
 };
 
-export {
-  getUsers,
-  getUserByUsername,
-  loginUser,
-  createUser,
-  deleteUser,
-  resetPassword,
-  updateBiography,
+/** * Updates the user's email.
+ * @param username The unique username of the user
+ * @param newEmail The new email to set for this user
+ * @returns A promise resolving to the updated user
+ * @throws Error if the request fails
+ */
+const updateEmail = async (username: string, newEmail: string): Promise<{ msg: string }> => {
+  const res = await api.patch(`${USER_API_URL}/updateEmail`, { username, email: newEmail });
+  if (res.status !== 200) {
+    throw new Error('Error when updating email');
+  }
+  return res.data as { msg: string };
+};
+
+export const verifyEmail = async (token: string) => {
+  const res = await api.get(`${USER_API_URL}/verifyEmail`, { params: { token } });
+  const data = await res.data;
+  // expected success shape: { msg: string, email?: string }
+  if (res.status !== 200) {
+    throw new Error(data?.error || 'Verification failed');
+  }
+  return data;
 };
 
 /**
@@ -200,4 +214,15 @@ export const getRelations = async (
     throw new Error('Error when fetching relations');
   }
   return res.data;
+};
+
+export {
+  getUsers,
+  getUserByUsername,
+  loginUser,
+  createUser,
+  deleteUser,
+  resetPassword,
+  updateBiography,
+  updateEmail,
 };

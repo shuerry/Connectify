@@ -81,27 +81,67 @@
 
 .lobby-filters {
   display: flex;
-  gap: 10px;
+  gap: 30px;
   margin-bottom: 20px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
 }
 
-.lobby-filters button {
-  padding: 10px 20px;
+.filter-section {
+  flex: 1;
+}
+
+.filter-section h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-buttons button {
+  padding: 8px 16px;
   background: white;
   border: 2px solid #ddd;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
-.lobby-filters button.active {
+.filter-buttons button.active {
   background: #02121e;
   color: white;
   border-color: #030e16;
 }
 
-.lobby-filters button:hover {
+.filter-buttons button:hover {
   border-color: #00192a;
+  background: #f5f5f5;
+}
+
+.filter-buttons button.active:hover {
+  background: #030e16;
+}
+
+.rooms-header {
+  margin-bottom: 15px;
+}
+
+.rooms-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .rooms-list {
@@ -180,6 +220,11 @@
 .spectators-allowed {
   background: #f3e5f5;
   color: #6a1b9a;
+}
+
+.privacy-indicator {
+  background: #fff3e0;
+  color: #ef6c00;
 }
 
 .room-players p {
@@ -264,6 +309,20 @@
 @media (max-width: 768px) {
   .lobby-actions {
     flex-direction: column;
+  }
+
+  .lobby-filters {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .filter-buttons {
+    justify-content: center;
+  }
+
+  .filter-buttons button {
+    flex: 1;
+    min-width: 80px;
   }
 
   .room-card {

@@ -371,6 +371,170 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
+  /message/addDirectMessage:
+    post:
+      tags:
+        - Messages
+      summary: Add a new direct message or friend request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messageToAdd:
+                  $ref: '#/components/schemas/DatabaseMessage'
+              required:
+                - messageToAdd
+      responses:
+        '200':
+          description: Direct message successfully added.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseMessage'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /message/getDirectMessages:
+    get:
+      tags:
+        - Messages
+      summary: Fetch direct messages between two users.
+      parameters:
+        - in: query
+          name: user1
+          schema:
+            type: string
+          required: true
+          description: Username of the first user.
+        - in: query
+          name: user2
+          schema:
+            type: string
+          required: true
+          description: Username of the second user.
+      responses:
+        '200':
+          description: Successfully retrieved direct messages.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DatabaseMessage'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /message/respondToFriendRequest:
+    post:
+      tags:
+        - Messages
+      summary: Handle friend request response (accept/decline).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messageId:
+                  type: string
+                  format: object-id
+                status:
+                  type: string
+                  enum: [accepted, declined]
+                responderUsername:
+                  type: string
+              required:
+                - messageId
+                - status
+                - responderUsername
+      responses:
+        '200':
+          description: Friend request response processed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseMessage'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /message/sendGameInvitation:
+    post:
+      tags:
+        - Messages
+      summary: Send a game invitation through chat.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fromUsername:
+                  type: string
+                toUsername:
+                  type: string
+                gameID:
+                  type: string
+                roomName:
+                  type: string
+                gameType:
+                  type: string
+                roomCode:
+                  type: string
+              required:
+                - fromUsername
+                - toUsername
+                - gameID
+                - roomName
+                - gameType
+      responses:
+        '200':
+          description: Game invitation sent successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseMessage'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /message/respondToGameInvitation:
+    post:
+      tags:
+        - Messages
+      summary: Handle game invitation response (accept/decline).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messageId:
+                  type: string
+                  format: object-id
+                status:
+                  type: string
+                  enum: [accepted, declined]
+                responderUsername:
+                  type: string
+              required:
+                - messageId
+                - status
+                - responderUsername
+      responses:
+        '200':
+          description: Game invitation response processed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseMessage'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
   # --------------------
   # CHAT CONTROLLER
   # --------------------
@@ -590,6 +754,7 @@ paths:
           schema:
             $ref: '#/components/schemas/GameType'
           required: false
+          allowReserved: true
           description: Filter games by type (e.g., Nim).
         - in: query
           name: status
@@ -1311,10 +1476,13 @@ components:
         - messages
       properties:
         participants:
-          type: array
-          minItems: 1
-          items:
-            type: string
+          type: object
+          description: Map of usernames to their notification preferences.
+          minProperties: 1
+          additionalProperties: false
+          patternProperties:
+            "^.+$":
+              type: boolean
         messages:
           type: array
           items:
