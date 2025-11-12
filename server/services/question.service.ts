@@ -9,7 +9,6 @@ import {
   OrderType,
   PopulatedDatabaseAnswer,
   PopulatedDatabaseQuestion,
-  PopulatedDatabaseQuestionVersion,
   Question,
   QuestionResponse,
   QuestionVersionsResponse,
@@ -445,11 +444,11 @@ export const addFollowerToQuestion = async (
 ): Promise<FollowResponse> => {
   try {
     const followerUser = await getUserByUsername(username);
-    if (!followerUser || (followerUser as any).error) {
+    if (!followerUser || 'error' in followerUser) {
       return { error: 'User not found' };
     }
 
-    const followerId = (followerUser as any)._id;
+    const followerId = followerUser._id;
 
     const question = await QuestionModel.findById(qid);
     const alreadyFollowed = question?.followers.includes(followerId);

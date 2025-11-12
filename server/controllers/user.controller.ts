@@ -25,6 +25,7 @@ import {
   confirmEmailVerification,
   startEmailVerification,
 } from '../services/emailVerification.service';
+import { requestPasswordReset, confirmPasswordReset } from '../services/passwordReset.service';
 
 const userController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
@@ -334,6 +335,38 @@ const userController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Initiates password reset by sending an email with a reset token.
+   */
+  const forgotPassword = async (req: express.Request, res: Response): Promise<void> => {
+    try {
+      const { usernameOrEmail } = req.body as { usernameOrEmail: string };
+      await requestPasswordReset(usernameOrEmail);
+      res
+        .status(200)
+        .json({ message: 'If an account exists, a password reset email has been sent.' });
+    } catch (error) {
+      res.status(500).send(`Error when requesting password reset: ${error}`);
+    }
+  };
+
+  /**
+   * Confirms password reset using a token and sets the new password.
+   */
+  const resetPasswordWithToken = async (req: express.Request, res: Response): Promise<void> => {
+    try {
+      const { token, newPassword } = req.body as { token: string; newPassword: string };
+      const result = await confirmPasswordReset(token, newPassword);
+      if ('error' in result) {
+        res.status(400).json({ error: result.error });
+        return;
+      }
+      res.status(200).json({ message: 'Password reset successful.' });
+    } catch (error) {
+      res.status(500).send(`Error when resetting password: ${error}`);
+    }
+  };
+
   // Define routes for the user-related operations.
   router.post('/signup', createUser);
   router.post('/login', userLogin);
@@ -351,6 +384,8 @@ const userController = (socket: FakeSOSocket) => {
   router.patch('/updateEmail', updateEmail);
   router.post('/verifyEmail', verifyEmail);
   router.get('/verifyEmail', verifyEmail);
+  router.post('/forgotPassword', forgotPassword);
+  router.post('/resetPasswordWithToken', resetPasswordWithToken);
   return router;
 };
 

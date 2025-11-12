@@ -97,9 +97,9 @@ const Login = () => {
               <span className='checkbox-custom'></span>
               Remember me
             </label>
-            <button type='button' className='forgot-link'>
+            <Link to='/forgot-password' className='forgot-link'>
               Forgot password?
-            </button>
+            </Link>
           </div>
 
           {err && (

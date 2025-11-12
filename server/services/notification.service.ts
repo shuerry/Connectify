@@ -1,6 +1,7 @@
+/* eslint-disable no-console */
 import nodemailer from 'nodemailer';
 import { ChatNotificationPayload, AnswerNotificationPayload } from '../types/types';
-import type { EmailVerificationPayload } from '../types/types';
+import type { EmailVerificationPayload, PasswordResetPayload } from '../types/types';
 import NotificationModel from '../models/notification.model';
 
 type Maybe<T> = T | undefined;
@@ -255,6 +256,40 @@ export class NotificationService {
       `\n\nIf you didn’t request this, ignore this email.`;
 
     return this._sendMail(Array.isArray(toEmail) ? toEmail : [toEmail], subject, html, text);
+  }
+
+  /**
+   * Sends a password reset email.
+   */
+  async sendPasswordReset(payload: PasswordResetPayload) {
+    const { toEmail, username, resetUrl, expiresAt } = payload;
+    const niceExpiry = expiresAt ? new Date(expiresAt).toLocaleString() : undefined;
+
+    const subject = 'Reset your password';
+    const intro = `Hi ${this._escape(username)},`;
+    const body = `
+      <p style="margin:0 0 8px 0;">We received a request to reset your password. Click the button below to set a new password.</p>
+      ${niceExpiry ? `<p style="margin:8px 0;">This link expires on <strong>${this._escape(niceExpiry)}</strong>.</p>` : ''}
+      <p style="margin:8px 0 0 0;">If you didn't request this, you can safely ignore this email.</p>
+    `;
+
+    const html = this._layout({
+      title: subject,
+      intro,
+      body,
+      ctaLabel: 'Reset password',
+      ctaHref: resetUrl,
+      footerNote: `Sent by ${this._siteUrl} • Need help? Reply to ${this._fromEmail}`,
+    });
+
+    const text =
+      `Reset your password` +
+      `, ${username}` +
+      `\n\nClick the link: ${resetUrl}` +
+      (niceExpiry ? `\nThis link expires on ${niceExpiry}.` : '') +
+      `\n\nIf you didn't request this, ignore this email.`;
+
+    return this._sendMail([toEmail], subject, html, text);
   }
 }
 

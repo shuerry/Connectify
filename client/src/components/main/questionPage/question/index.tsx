@@ -1,8 +1,12 @@
 import './index.css';
 import { getMetaData } from '../../../../tool';
 import { PopulatedDatabaseQuestion } from '../../../../types/types';
-import SaveToCollectionModal from '../../collections/saveToCollectionModal';
+import SaveDropdown from '../../collections/saveDropdown';
+import ReportDropdown from '../../collections/reportDropdown';
 import useQuestionView from '../../../../hooks/useQuestionView';
+import useVoteStatus from '../../../../hooks/useVoteStatus';
+import { upvoteQuestion, downvoteQuestion } from '../../../../services/questionService';
+import useUserContext from '../../../../hooks/useUserContext';
 
 /**
  * Interface representing the props for the Question component.
@@ -21,6 +25,8 @@ interface QuestionProps {
  * @param q - The question object containing question details.
  */
 const QuestionView = ({ question }: QuestionProps) => {
+  const { user } = useUserContext();
+  const { count, voted } = useVoteStatus({ question });
   const {
     clickTag,
     handleAnswer,
@@ -35,150 +41,169 @@ const QuestionView = ({ question }: QuestionProps) => {
     setReportOpen,
     isHidden,
     canReport,
+    saveDropdownOpen,
+    closeSaveDropdown,
+    reportDropdownOpen,
+    closeReportDropdown,
   } = useQuestionView();
+
+  /**
+   * Function to handle upvoting or downvoting a question.
+   */
+  const handleVote = async (type: 'upvote' | 'downvote') => {
+    try {
+      if (question._id && user.username) {
+        if (type === 'upvote') {
+          await upvoteQuestion(question._id, user.username);
+        } else if (type === 'downvote') {
+          await downvoteQuestion(question._id, user.username);
+        }
+      }
+    } catch (error) {
+      console.error(`Error during ${type}:`, error);
+    }
+  };
 
   if (isHidden(String(question._id))) {
     return null;
   }
 
   return (
-    <div className='question-card'>
-      <div 
+    <>
+    <div className='reddit-question-card'>
+      {/* Voting sidebar */}
+      <div className='vote-sidebar'>
+        <button 
+          className={`vote-btn vote-up ${voted === 1 ? 'vote-up-active' : ''}`} 
+          onClick={e => {
+            e.stopPropagation();
+            handleVote('upvote');
+          }}
+          aria-label='Upvote'>
+          <svg width='18' height='18' viewBox='0 0 24 24' fill='currentColor'>
+            <path d='M12 4l8 8h-6v8h-4v-8H4z' />
+          </svg>
+        </button>
+        <div className='vote-score'>
+          {count}
+        </div>
+        <button 
+          className={`vote-btn vote-down ${voted === -1 ? 'vote-down-active' : ''}`} 
+          onClick={e => {
+            e.stopPropagation();
+            handleVote('downvote');
+          }}
+          aria-label='Downvote'>
+          <svg width='18' height='18' viewBox='0 0 24 24' fill='currentColor'>
+            <path d='M12 20l-8-8h6V4h4v8h6z' />
+          </svg>
+        </button>
+      </div>
+
+      {/* Main content */}
+      <div
         className='question-content'
         onClick={() => {
           if (question._id) {
             handleAnswer(question._id);
           }
-        }}
-      >
-        <div className='question-stats'>
-          <div className='stat-item'>
-            <div className='stat-number'>{question.answers.length || 0}</div>
-            <div className='stat-label'>answers</div>
-          </div>
-          <div className='stat-item'>
-            <div className='stat-number'>{question.views.length}</div>
-            <div className='stat-label'>views</div>
+        }}>
+        {/* Question header with metadata */}
+        <div className='question-header'>
+          <div className='question-meta-inline'>
+            <span className='author-link'>r/stackoverflow</span>
+            <span className='meta-separator'>•</span>
+            <span className='post-time'>{getMetaData(new Date(question.askDateTime))}</span>
+            <span className='meta-separator'>•</span>
+            <span className='author-name'>u/{question.askedBy}</span>
           </div>
         </div>
-        
-        <div className='question-main'>
-          <h3 className='question-title'>{question.title}</h3>
-          
-          <div className='question-tags'>
-            {question.tags.map(tag => (
-              <button
-                key={String(tag._id)}
-                className='tag-button'
-                onClick={e => {
-                  e.stopPropagation();
-                  clickTag(tag.name);
-                }}>
-                {tag.name}
-              </button>
-            ))}
+
+        {/* Question title */}
+        <h3 className='reddit-question-title'>{question.title}</h3>
+
+        {/* Tags */}
+        <div className='question-tags-reddit'>
+          {question.tags.map(tag => (
+            <button
+              key={String(tag._id)}
+              className='reddit-tag'
+              onClick={e => {
+                e.stopPropagation();
+                clickTag(tag.name);
+              }}>
+              {tag.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Action bar */}
+        <div className='reddit-actions'>
+          <button
+            className='reddit-action-btn'
+            onClick={e => {
+              e.stopPropagation();
+              if (question._id) {
+                handleAnswer(question._id);
+              }
+            }}>
+            <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+              <path d='M21,6H3A1,1 0 0,0 2,7V17A1,1 0 0,0 3,18H8.5L12,21.5L15.5,18H21A1,1 0 0,0 22,17V7A1,1 0 0,0 21,6Z' />
+            </svg>
+            {question.answers.length || 0} Comments
+          </button>
+
+          <div className='save-dropdown-container'>
+            <button
+              className='reddit-action-btn'
+              onClick={e => {
+                e.stopPropagation();
+                handleSaveClick(question);
+              }}>
+              <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+                <path d='M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z' />
+              </svg>
+              Save
+            </button>
+            {saveDropdownOpen === question._id.toString() && (
+              <SaveDropdown question={question} onClose={closeSaveDropdown} />
+            )}
           </div>
-          
-          <div className='question-meta'>
-            <div className='asked-by'>
-              <span>asked by</span>
-              <span className='author-name'>{question.askedBy}</span>
-            </div>
-            <div className='asked-time'>{getMetaData(new Date(question.askDateTime))}</div>
+
+          <div className='views-count'>
+            <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+              <path d='M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z' />
+            </svg>
+            {question.views.length} views
           </div>
+
+          {canReport(question) && (
+            <button
+              className='reddit-action-btn report-btn'
+              onClick={e => {
+                e.stopPropagation();
+                openReportModal(question);
+              }}>
+              <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+                <path d='M14.4 6L14 4H5v17h2v-7h5.6l .4 2h7V6z' />
+              </svg>
+              Report
+            </button>
+          )}
         </div>
       </div>
-      
-      <div className='question-actions'>
-        <button
-          onClick={e => {
-            e.stopPropagation();
-            handleSaveClick(question);
-          }}
-          className='btn btn-secondary btn-sm'>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
-          </svg>
-          Save to Collection
-        </button>
 
-        <button
-          onClick={e => {
-            e.stopPropagation();
-            openReportModal(question);
-          }}
-          className='btn btn-outline btn-sm'>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/>
-          </svg>
-          Report
-        </button>
-      </div>
-
-      <button
-        onClick={e => {
-          e.stopPropagation();
-          handleSaveClick(question);
-        }}
-        className='collections-btn'>
-        Edit My Collections
-      </button>
-      {canReport(question) && (
-        <button
-          onClick={e => {
-            e.stopPropagation();
-            openReportModal(question);
-          }}
-          className='collections-btn'
-          style={{ marginLeft: '8px' }}>
-          Report
-        </button>
-      )}
-      {isModalOpen && selectedQuestion && (
-        <SaveToCollectionModal question={selectedQuestion} onClose={closeModal} />
-      )}
-
-      {isReportOpen && reportTarget && (
-        <div className='modal-backdrop' onClick={e => e.stopPropagation()}>
-          <div className='modal-container' onClick={e => e.stopPropagation()}>
-            <div className='modal-header'>
-              <h2 className='modal-title'>Report Post</h2>
-              <button className='modal-close' onClick={() => setReportOpen(false)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-              </button>
-            </div>
-            <div className='modal-body'>
-              <textarea
-                placeholder='Please describe the reason for reporting this post...'
-                className='form-textarea'
-                rows={5}
-                onClick={e => e.stopPropagation()}
-                onChange={() => {}}
-                id='report-reason-input'
-              />
-            </div>
-            <div className='modal-footer'>
-              <button className='btn btn-secondary' onClick={() => setReportOpen(false)}>
-                Cancel
-              </button>
-              <button
-                className='btn btn-danger'
-                onClick={e => {
-                  e.stopPropagation();
-                  const val = (
-                    document.getElementById('report-reason-input') as HTMLTextAreaElement
-                  ).value.trim();
-                  if (val) submitReport(val);
-                }}>
-                Submit Report
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+    {canReport(question) && reportDropdownOpen === question._id.toString() && reportTarget && (
+      <div className='report-dropdown-overlay'>
+        <ReportDropdown 
+          question={reportTarget} 
+          onClose={closeReportDropdown}
+          onSubmit={submitReport}
+        />
+      </div>
+    )}
+    </>
   );
 };
 

@@ -309,20 +309,57 @@
 /* Auth Submit Button */
 .auth-submit {
   width: 100%;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  transition: all var(--transition-fast);
+  font-weight: 700;
+  transition: all 0.2s ease;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: white !important;
+  border: 2px solid #2563eb !important;
+  border-radius: 10px;
+  font-size: 17px;
+  cursor: pointer;
+  opacity: 1 !important;
+  visibility: visible !important;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+  text-transform: none;
+  letter-spacing: 0.5px;
 }
 
 .auth-submit:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+  border-color: #1d4ed8 !important;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
 }
 
 .auth-submit:active {
-  transform: translateY(0);
+  transform: translateY(-1px);
+}
+
+.auth-submit:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+}
+
+/* Ensure button base styles are always visible */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Auth Footer */

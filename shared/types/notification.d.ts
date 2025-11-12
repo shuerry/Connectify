@@ -33,3 +33,10 @@ export interface EmailVerificationPayload {
     verifyUrl: string;
     expiresAt: Date;
 }
+
+export interface PasswordResetPayload {
+    toEmail: string;
+    username: string;
+    resetUrl: string;
+    expiresAt: Date;
+}

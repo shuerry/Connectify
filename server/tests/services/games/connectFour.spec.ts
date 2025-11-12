@@ -313,13 +313,6 @@ describe('ConnectFourGame tests', () => {
         : connectFourGame.state.player2!;
     };
 
-    // Helper function to get other player (not current turn)
-    const getOtherPlayer = () => {
-      return connectFourGame.state.currentTurn === connectFourGame.state.player1Color
-        ? connectFourGame.state.player2!
-        : connectFourGame.state.player1!;
-    };
-
     it('applies valid move in empty column', () => {
       // Determine which player has the current turn
       const currentPlayerID =
@@ -579,7 +572,6 @@ describe('ConnectFourGame tests', () => {
       // The final piece should be YELLOW to maintain the alternating pattern
       // This will ensure no 4-in-a-row is created
       const currentPlayer = getCurrentPlayer();
-      const expectedColor = connectFourGame.state.currentTurn;
 
       // Only proceed if the current player will place YELLOW (to maintain pattern)
       // If not, switch players by making a dummy move and undoing it, or modify test

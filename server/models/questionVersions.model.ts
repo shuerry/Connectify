@@ -12,10 +12,7 @@ import { DatabaseQuestionVersion } from '../types/types';
  *
  * @type {Model<DatabaseQuestionVersion>}
  */
-const QuestionVersionModel: Model<DatabaseQuestionVersion> = mongoose.model<DatabaseQuestionVersion>(
-  'QuestionVersion',
-  questionVersionSchema,
-);
+const QuestionVersionModel: Model<DatabaseQuestionVersion> =
+  mongoose.model<DatabaseQuestionVersion>('QuestionVersion', questionVersionSchema);
 
 export default QuestionVersionModel;
-

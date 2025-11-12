@@ -24,6 +24,8 @@ const useQuestionView = () => {
   const [isReportOpen, setReportOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState<PopulatedDatabaseQuestion | null>(null);
   const [hiddenQuestionIds, setHiddenQuestionIds] = useState<Set<string>>(new Set());
+  const [saveDropdownOpen, setSaveDropdownOpen] = useState<string | null>(null);
+  const [reportDropdownOpen, setReportDropdownOpen] = useState<string | null>(null);
 
   /**
    * Function to navigate to the home page with the specified tag as a search parameter.
@@ -47,11 +49,13 @@ const useQuestionView = () => {
   };
 
   const handleSaveClick = (question: PopulatedDatabaseQuestion) => {
+    const questionId = question._id.toString();
+    setSaveDropdownOpen(saveDropdownOpen === questionId ? null : questionId);
     setSelectedQuestion(question);
-    setModalOpen(true);
   };
 
   const canReport = (question: PopulatedDatabaseQuestion): boolean => {
+    if (!user || !user.username || !question) return false;
     return user.username !== question.askedBy;
   };
 
@@ -61,8 +65,9 @@ const useQuestionView = () => {
   };
 
   const openReportModal = (question: PopulatedDatabaseQuestion) => {
+    const questionId = question._id.toString();
+    setReportDropdownOpen(reportDropdownOpen === questionId ? null : questionId);
     setReportTarget(question);
-    setReportOpen(true);
   };
 
   const submitReport = async (reason: string) => {
@@ -76,6 +81,14 @@ const useQuestionView = () => {
   const isHidden = (qid: string | undefined): boolean => {
     if (!qid) return false;
     return hiddenQuestionIds.has(String(qid));
+  };
+
+  const closeSaveDropdown = () => {
+    setSaveDropdownOpen(null);
+  };
+
+  const closeReportDropdown = () => {
+    setReportDropdownOpen(null);
   };
 
   return {
@@ -92,6 +105,10 @@ const useQuestionView = () => {
     setReportOpen,
     isHidden,
     canReport,
+    saveDropdownOpen,
+    closeSaveDropdown,
+    reportDropdownOpen,
+    closeReportDropdown,
   };
 };
 

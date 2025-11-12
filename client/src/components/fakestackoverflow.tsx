@@ -2,6 +2,8 @@ import { JSX, useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './layout';
 import Login from './auth/login';
+import ForgotPassword from './auth/forgotPassword';
+import ResetPassword from './auth/resetPassword';
 import { FakeSOSocket, SafeDatabaseUser } from '../types/types';
 import LoginContext from '../contexts/LoginContext';
 import UserContext from '../contexts/UserContext';
@@ -88,7 +90,10 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
       <Routes>
         {/* Public Route */}
         <Route path='/' element={<Login />} />
+        <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
+        <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path='/reset-password' element={<ResetPassword />} />
         <Route path='/verify-email' element={<VerifyEmail />} />
         {/* Protected Routes */}
         {

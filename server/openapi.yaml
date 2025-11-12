@@ -1286,7 +1286,6 @@ components:
       type: object
       required:
         - title
-        - text
         - tags
         - askedBy
         - askDateTime
@@ -1296,7 +1295,6 @@ components:
           minLength: 1
         text:
           type: string
-          minLength: 1
         tags:
           type: array
           items:

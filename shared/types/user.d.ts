@@ -33,6 +33,10 @@ export interface User extends UserCredentials {
     tokenHash?: string;
     expiresAt?: Date;
   };
+  passwordReset?: {
+    tokenHash?: string;
+    expiresAt?: Date;
+  };
 }
 
 /**

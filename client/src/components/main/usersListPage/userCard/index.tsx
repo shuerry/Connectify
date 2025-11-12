@@ -103,26 +103,43 @@ const UserCardView = (props: UserProps) => {
         <div>joined {new Date(user.dateJoined).toUTCString()}</div>
       </div>
       {currentUser.username !== user.username && !isBlocked && (
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className='user-actions'>
           {isFriend ? (
-            <button type='button' onClick={onRemoveFriend}>
+            <button className='user-btn user-btn-secondary' onClick={onRemoveFriend}>
+              <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+                <path d='M14,2A8,8 0 0,0 6,10A8,8 0 0,0 14,18A8,8 0 0,0 22,10A8,8 0 0,0 14,2M19,11H9V9H19V11Z' />
+              </svg>
               Remove Friend
             </button>
           ) : friendRequestSent ? (
-            <span style={{ color: 'blue' }}>Friend Request Sent</span>
+            <div className='user-status sent'>
+              <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+                <path d='M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z' />
+              </svg>
+              Friend Request Sent
+            </div>
           ) : (
-            <button type='button' onClick={onSendFriendRequest}>
-              Send Friend Request
+            <button className='user-btn user-btn-primary' onClick={onSendFriendRequest}>
+              <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+                <path d='M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M1,10V12H9V10M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12Z' />
+              </svg>
+              Add Friend
             </button>
           )}
-          <button type='button' onClick={onBlockUser}>
+          <button className='user-btn user-btn-danger' onClick={onBlockUser}>
+            <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+              <path d='M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,14.4 19,16.5 17.35,18.15L5.85,6.65C7.5,5 9.6,4 12,4M12,20A8,8 0 0,1 4,12C4,9.6 5,7.5 6.65,5.85L18.15,17.35C16.5,19 14.4,20 12,20Z' />
+            </svg>
             Block
           </button>
         </div>
       )}
       {currentUser.username !== user.username && isBlocked && (
-        <div style={{ display: 'flex', gap: 8 }}>
-          <span style={{ color: 'red' }}>Blocked</span>
+        <div className='user-status blocked'>
+          <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+            <path d='M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12C20,14.4 19,16.5 17.35,18.15L5.85,6.65C7.5,5 9.6,4 12,4M12,20A8,8 0 0,1 4,12C4,9.6 5,7.5 6.65,5.85L18.15,17.35C16.5,19 14.4,20 12,20Z' />
+          </svg>
+          Blocked
         </div>
       )}
     </div>

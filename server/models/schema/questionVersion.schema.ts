@@ -49,4 +49,3 @@ const questionVersionSchema: Schema = new Schema(
 questionVersionSchema.index({ questionId: 1, versionNumber: 1 }, { unique: true });
 
 export default questionVersionSchema;
-

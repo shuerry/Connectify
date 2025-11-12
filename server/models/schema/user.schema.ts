@@ -57,6 +57,10 @@ const userSchema: Schema = new Schema(
       tokenHash: { type: String, index: true }, // index speeds up lookup by token
       expiresAt: { type: Date, index: true },
     },
+    passwordReset: {
+      tokenHash: { type: String, index: true },
+      expiresAt: { type: Date, index: true },
+    },
   },
   { collection: 'User' },
 );

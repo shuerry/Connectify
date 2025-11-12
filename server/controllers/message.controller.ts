@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import express, { Response, Request } from 'express';
-import { FakeSOSocket, AddMessageRequest, PopulatedDatabaseChat} from '../types/types';
+import { FakeSOSocket, AddMessageRequest, PopulatedDatabaseChat } from '../types/types';
 import {
   saveMessage,
   getMessages,

@@ -2,7 +2,6 @@ import './index.css';
 import { Outlet } from 'react-router-dom';
 import SideBarNav from '../main/sideBarNav';
 import Header from '../header';
-import ThemeToggle from '../common/ThemeToggle';
 
 /**
  * Modern Layout component with improved responsive design and clean structure.
@@ -18,7 +17,6 @@ const Layout = () => (
         </div>
       </main>
     </div>
-    <ThemeToggle />
   </div>
 );
 

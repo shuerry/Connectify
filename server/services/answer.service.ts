@@ -79,11 +79,10 @@ export const addAnswerToQuestion = async (
     (async () => {
       try {
         // populate follower ids so we can pull user docs
-        const q = await QuestionModel.populate(result, {
+        const q = (await QuestionModel.populate(result, {
           path: 'followers',
           select: 'email username',
-        });
-
+        })) as unknown as PopulatedDatabaseQuestion;
         if (!q || !Array.isArray(q.followers) || q.followers.length === 0) return;
 
         // Load follower users to get email + username
@@ -98,8 +97,11 @@ export const addAnswerToQuestion = async (
           s.length <= n ? s : s.slice(0, n).trimEnd() + '…';
 
         const notifDocs = followers
-          .filter((u: any) => u && u.username && u.username !== ans.ansBy)
-          .map((u: any) => ({
+          .filter(
+            (u: { username?: string; email?: string; emailVerified?: boolean }) =>
+              u && u.username && u.username !== ans.ansBy,
+          )
+          .map((u: { username?: string; email?: string; emailVerified?: boolean }) => ({
             recipient: u.username,
             kind: 'answer' as const,
             title: `New answer on: ${result.title}`,
@@ -119,15 +121,18 @@ export const addAnswerToQuestion = async (
 
         // ----- EMAIL NOTIFICATIONS -----
         const toEmail = followers
-          .filter((u: any) => u && u.email && u.emailVerified && u.username !== ans.ansBy)
-          .map((u: any) => u.email);
+          .filter(
+            (u: { email?: string; emailVerified?: boolean; username?: string }) =>
+              u && u.email && u.emailVerified && u.username !== ans.ansBy,
+          )
+          .map((u: { email?: string }) => u.email!);
 
         if (toEmail.length === 0) return;
 
         const payload: AnswerNotificationPayload = {
           toEmail,
           authorName: ans.ansBy,
-          questionTitle: (q as any).title ?? result.title,
+          questionTitle: q.title ?? result.title,
           answerPreview: truncate(ans.text),
           questionId: result._id.toString(),
         };

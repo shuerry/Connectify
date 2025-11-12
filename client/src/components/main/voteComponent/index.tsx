@@ -29,15 +29,17 @@ const VoteComponent = ({ question }: VoteComponentProps) => {
    */
   const handleVote = async (type: string) => {
     try {
-      if (question._id) {
+      if (question._id && user.username) {
+        console.log(`Attempting to ${type} question:`, question._id);
         if (type === 'upvote') {
           await upvoteQuestion(question._id, user.username);
         } else if (type === 'downvote') {
           await downvoteQuestion(question._id, user.username);
         }
+        console.log(`${type} completed successfully`);
       }
     } catch (error) {
-      // Handle error
+      console.error(`Error during ${type}:`, error);
     }
   };
 
@@ -48,7 +50,7 @@ const VoteComponent = ({ question }: VoteComponentProps) => {
         onClick={() => handleVote('upvote')}
         aria-label='Upvote'
         title='Upvote this question'>
-        <svg width='24' height='24' viewBox='0 0 24 24' fill='currentColor'>
+        <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
           <path d='M7 14l5-5 5 5H7z'/>
         </svg>
       </button>
@@ -60,7 +62,7 @@ const VoteComponent = ({ question }: VoteComponentProps) => {
         onClick={() => handleVote('downvote')}
         aria-label='Downvote'
         title='Downvote this question'>
-        <svg width='24' height='24' viewBox='0 0 24 24' fill='currentColor'>
+        <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
           <path d='M7 10l5 5 5-5H7z'/>
         </svg>
       </button>

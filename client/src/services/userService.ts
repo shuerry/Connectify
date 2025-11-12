@@ -216,6 +216,35 @@ export const getRelations = async (
   return res.data;
 };
 
+/**
+ * Requests a password reset by sending an email with a reset link.
+ * @param usernameOrEmail - The username or email address of the account
+ * @returns A promise that resolves to a success message
+ * @throws {Error} If the request to the server is unsuccessful
+ */
+const forgotPassword = async (usernameOrEmail: string): Promise<{ message: string }> => {
+  const res = await api.post(`${USER_API_URL}/forgotPassword`, { usernameOrEmail });
+  if (res.status !== 200) {
+    throw new Error('Error when requesting password reset');
+  }
+  return res.data;
+};
+
+/**
+ * Resets password using a token from the reset email.
+ * @param token - The reset token from the email
+ * @param newPassword - The new password to set
+ * @returns A promise that resolves to a success message
+ * @throws {Error} If the request to the server is unsuccessful
+ */
+const resetPasswordWithToken = async (token: string, newPassword: string): Promise<{ message: string }> => {
+  const res = await api.post(`${USER_API_URL}/resetPasswordWithToken`, { token, newPassword });
+  if (res.status !== 200) {
+    throw new Error('Error when resetting password');
+  }
+  return res.data;
+};
+
 export {
   getUsers,
   getUserByUsername,
@@ -225,4 +254,6 @@ export {
   resetPassword,
   updateBiography,
   updateEmail,
+  forgotPassword,
+  resetPasswordWithToken,
 };

@@ -37,8 +37,33 @@ const useVoteStatus = ({ question }: { question: PopulatedDatabaseQuestion }) =>
     };
 
     // Set the initial count and vote value
-    setCount((question.upVotes || []).length - (question.downVotes || []).length);
-    setVoted(getVoteValue());
+    if (question) {
+      setCount((question.upVotes || []).length - (question.downVotes || []).length);
+      setVoted(getVoteValue());
+    }
+
+    // Listen for vote updates via socket
+    const handleVoteUpdate = (voteData: any) => {
+      if (voteData.qid === String(question?._id)) {
+        const newCount = (voteData.upVotes || []).length - (voteData.downVotes || []).length;
+        setCount(newCount);
+        
+        // Update user's vote status
+        if (user.username && voteData.upVotes?.includes(user.username)) {
+          setVoted(1);
+        } else if (user.username && voteData.downVotes?.includes(user.username)) {
+          setVoted(-1);
+        } else {
+          setVoted(0);
+        }
+      }
+    };
+
+    socket.on('voteUpdate', handleVoteUpdate);
+
+    return () => {
+      socket.off('voteUpdate', handleVoteUpdate);
+    };
   }, [question, user.username, socket]);
 
   return {

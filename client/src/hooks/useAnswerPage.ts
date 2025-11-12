@@ -9,7 +9,7 @@ import {
 } from '../types/types';
 import useUserContext from './useUserContext';
 import addComment from '../services/commentService';
-import { getQuestionById, getQuestionReports } from '../services/questionService';
+import { getQuestionById, getQuestionReports, reportQuestion } from '../services/questionService';
 
 /**
  * Custom hook for managing the answer page's state, navigation, and real-time updates.
@@ -29,6 +29,7 @@ const useAnswerPage = () => {
   const [reports, setReports] = useState<
     Array<{ reporter: string; reason: string; createdAt: string }>
   >([]);
+  const [isReportOpen, setReportOpen] = useState(false);
 
   /**
    * Function to handle navigation to the "New Answer" page.
@@ -44,6 +45,30 @@ const useAnswerPage = () => {
    */
   const handleQuestionUpdate = (updatedQuestion: PopulatedDatabaseQuestion) => {
     setQuestion(updatedQuestion);
+  };
+
+  /**
+   * Function to check if current user can report this question
+   */
+  const canReport = (): boolean => {
+    if (!question || !user || !user.username) return false;
+    return user.username !== question.askedBy;
+  };
+
+  /**
+   * Function to open the report modal
+   */
+  const openReportModal = () => {
+    setReportOpen(true);
+  };
+
+  /**
+   * Function to submit a report
+   */
+  const submitReport = async (reason: string) => {
+    if (!question) return;
+    await reportQuestion(String(question._id), user.username, reason);
+    setReportOpen(false);
   };
 
   useEffect(() => {
@@ -210,6 +235,11 @@ const useAnswerPage = () => {
     handleNewComment,
     handleNewAnswer,
     handleQuestionUpdate,
+    canReport,
+    openReportModal,
+    submitReport,
+    isReportOpen,
+    setReportOpen,
   };
 };
 
