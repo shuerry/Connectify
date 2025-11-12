@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import express, { Response, Request } from 'express';
-import { FakeSOSocket, AddMessageRequest, PopulatedDatabaseChat, Message } from '../types/types';
+import { FakeSOSocket, AddMessageRequest, PopulatedDatabaseChat} from '../types/types';
 import {
   saveMessage,
   getMessages,
@@ -68,16 +68,18 @@ const messageController = (socket: FakeSOSocket) => {
       // If this is a friend request, create or find a chat between the two users
       if (msg.type === 'friendRequest' && msg.msgTo) {
         const participants = { [msg.msgFrom]: true, [msg.msgTo]: true };
-        
+
         // Check if a chat already exists between these users
         let existingChats = await getChatsByParticipants([msg.msgFrom, msg.msgTo]);
-        
+
         // Filter to only 2-person chats with exactly these participants
         existingChats = existingChats.filter(chat => {
           const chatParticipants = Object.keys(chat.participants);
-          return chatParticipants.length === 2 && 
-                 chatParticipants.includes(msg.msgFrom) && 
-                 chatParticipants.includes(msg.msgTo);
+          return (
+            chatParticipants.length === 2 &&
+            chatParticipants.includes(msg.msgFrom) &&
+            chatParticipants.includes(msg.msgTo)
+          );
         });
 
         let chat;
@@ -107,12 +109,15 @@ const messageController = (socket: FakeSOSocket) => {
             participants,
             messages: [],
           });
-          
+
           if ('error' in newChat) {
             console.error('Error creating chat for friend request:', newChat.error);
           } else {
             // Add the friend request message to the chat
-            const updatedChat = await addMessageToChat(newChat._id.toString(), msgFromDb._id.toString());
+            const updatedChat = await addMessageToChat(
+              newChat._id.toString(),
+              msgFromDb._id.toString(),
+            );
             if ('error' in updatedChat) {
               console.error('Error adding friend request to new chat:', updatedChat.error);
               chat = newChat;
@@ -223,6 +228,31 @@ const messageController = (socket: FakeSOSocket) => {
       res.status(500).send(`Error when responding to game invitation: ${(err as Error).message}`);
     }
   };
+
+  // Handle typing indicators for global chat
+  socket.on('connection', conn => {
+    conn.on('typingStart', (data: { chatID?: string; username: string }) => {
+      const { chatID, username } = data;
+      if (!chatID) {
+        // Global chat - broadcast to all clients except the sender
+        conn.broadcast.emit('typingIndicator', {
+          username,
+          isTyping: true,
+        });
+      }
+    });
+
+    conn.on('typingStop', (data: { chatID?: string; username: string }) => {
+      const { chatID, username } = data;
+      if (!chatID) {
+        // Global chat - broadcast to all clients except the sender
+        conn.broadcast.emit('typingIndicator', {
+          username,
+          isTyping: false,
+        });
+      }
+    });
+  });
 
   // Add appropriate HTTP verbs and their endpoints to the router
   router.post('/addMessage', addMessageRoute);

@@ -18,12 +18,25 @@ import { respondToFriendRequest, respondToGameInvitation } from '../../../servic
 const MessageCard = ({
   message,
   onMessageUpdate,
+  isLatestSentMessage = false,
+  otherParticipant = null,
 }: {
   message: DatabaseMessage;
   onMessageUpdate?: () => void;
+  isLatestSentMessage?: boolean;
+  otherParticipant?: string | null;
 }) => {
   const { user: currentUser } = useUserContext();
   const navigate = useNavigate();
+
+  // Check if this message is from the current user and has been read by the other participant
+  const isSentByCurrentUser = message.msgFrom === currentUser.username;
+  const isRead =
+    isLatestSentMessage &&
+    isSentByCurrentUser &&
+    otherParticipant &&
+    message.readBy &&
+    message.readBy.includes(otherParticipant);
 
   const handleFriendRequestResponse = async (status: 'accepted' | 'declined') => {
     try {
@@ -143,6 +156,9 @@ const MessageCard = ({
               <span className='game-invitation-status expired'> Expired</span>
             )}
           </div>
+        )}
+        {isLatestSentMessage && isSentByCurrentUser && (
+          <div className='read-receipt'>{isRead ? 'Read' : 'Delivered'}</div>
         )}
       </div>
     </div>

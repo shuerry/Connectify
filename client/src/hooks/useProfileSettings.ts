@@ -125,38 +125,38 @@ const useProfileSettings = () => {
    * Handler for updating the email
    */
   const handleUpdateEmail = async () => {
-  if (!username) return;
-  try {
-    // now returns { msg } instead of a user
-    await updateEmail(username, newEmail);
+    if (!username) return;
+    try {
+      // now returns { msg } instead of a user
+      await updateEmail(username, newEmail);
 
-    setUserData(u =>
-      u
-        ? {
-            ...u,
-            emailVerified: false,
-            emailVerification: {
-              ...(u.emailVerification ?? {}),
-              pendingEmail: newEmail,
-            },
-          }
-        : u
-    );
+      setUserData(u =>
+        u
+          ? {
+              ...u,
+              emailVerified: false,
+              emailVerification: {
+                ...(u.emailVerification ?? {}),
+                pendingEmail: newEmail,
+              },
+            }
+          : u,
+      );
 
-    // close edit mode; DO NOT set userData from the response
-    setEditEmailMode(false);
+      // close edit mode; DO NOT set userData from the response
+      setEditEmailMode(false);
 
-    // show the right message for verification flows
-    setSuccessMessage('Verification email sent');
-    setErrorMessage(null);
+      // show the right message for verification flows
+      setSuccessMessage('Verification email sent');
+      setErrorMessage(null);
 
-    // optional: reflect pending state locally
-    setUserData(u => (u ? { ...u, emailVerified: false } : u));
-  } catch (error) {
-    setErrorMessage('Failed to update email.');
-    setSuccessMessage(null);
-  }
-};
+      // optional: reflect pending state locally
+      setUserData(u => (u ? { ...u, emailVerified: false } : u));
+    } catch (error) {
+      setErrorMessage('Failed to update email.');
+      setSuccessMessage(null);
+    }
+  };
 
   /**
    * Handler for deleting the user (triggers confirmation modal)

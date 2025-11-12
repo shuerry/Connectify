@@ -37,12 +37,10 @@ describe('Connect Four Controller Tests', () => {
         addGameSpy.mockResolvedValueOnce('testGameID');
         getGameSpy.mockReturnValueOnce(mockGame);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/create')
-          .send({
-            playerID: 'player1',
-            roomSettings,
-          });
+        const response = await supertest(app).post('/api/games/connectfour/create').send({
+          playerID: 'player1',
+          roomSettings,
+        });
 
         expect(response.status).toEqual(200);
         expect(response.body.gameID).toEqual('testGameID');
@@ -61,12 +59,10 @@ describe('Connect Four Controller Tests', () => {
         addGameSpy.mockResolvedValueOnce('testGameID');
         getGameSpy.mockReturnValueOnce(mockGame);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/create')
-          .send({
-            playerID: 'player1',
-            roomSettings,
-          });
+        const response = await supertest(app).post('/api/games/connectfour/create').send({
+          playerID: 'player1',
+          roomSettings,
+        });
 
         expect(response.status).toEqual(200);
         expect(response.body.gameID).toEqual('testGameID');
@@ -85,12 +81,10 @@ describe('Connect Four Controller Tests', () => {
         addGameSpy.mockResolvedValueOnce('testGameID');
         getGameSpy.mockReturnValueOnce(mockGame);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/create')
-          .send({
-            playerID: 'player1',
-            roomSettings,
-          });
+        const response = await supertest(app).post('/api/games/connectfour/create').send({
+          playerID: 'player1',
+          roomSettings,
+        });
 
         expect(response.status).toEqual(200);
         expect(response.body.gameID).toEqual('testGameID');
@@ -101,9 +95,7 @@ describe('Connect Four Controller Tests', () => {
 
     describe('400 Invalid Request', () => {
       it('should return 500 for undefined request body', async () => {
-        const response = await supertest(app)
-          .post('/api/games/connectfour/create')
-          .send(undefined);
+        const response = await supertest(app).post('/api/games/connectfour/create').send(undefined);
 
         expect(response.status).toEqual(500);
       });
@@ -131,11 +123,9 @@ describe('Connect Four Controller Tests', () => {
       });
 
       it('should return 400 for missing roomSettings', async () => {
-        const response = await supertest(app)
-          .post('/api/games/connectfour/create')
-          .send({
-            playerID: 'player1',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/create').send({
+          playerID: 'player1',
+        });
 
         expect(response.status).toBe(500);
         expect(response.text).toContain('Room settings are required');
@@ -238,16 +228,19 @@ describe('Connect Four Controller Tests', () => {
         joinGameSpy.mockResolvedValueOnce(gameState);
         getGameSpy.mockReturnValueOnce(undefined);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join')
-          .send({
-            gameID: '65e9b716ff0e892116b2de01',
-            playerID: 'player2',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join').send({
+          gameID: '65e9b716ff0e892116b2de01',
+          playerID: 'player2',
+        });
 
         expect(response.status).toEqual(200);
         expect(response.body).toEqual(gameState);
-        expect(joinGameSpy).toHaveBeenCalledWith('65e9b716ff0e892116b2de01', 'player2', undefined, undefined);
+        expect(joinGameSpy).toHaveBeenCalledWith(
+          '65e9b716ff0e892116b2de01',
+          'player2',
+          undefined,
+          undefined,
+        );
       });
 
       it('should join as spectator successfully', async () => {
@@ -279,17 +272,20 @@ describe('Connect Four Controller Tests', () => {
         joinGameSpy.mockResolvedValueOnce(gameState);
         getGameSpy.mockReturnValueOnce(undefined);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join')
-          .send({
-            gameID: '65e9b716ff0e892116b2de01',
-            playerID: 'spectator1',
-            asSpectator: true,
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join').send({
+          gameID: '65e9b716ff0e892116b2de01',
+          playerID: 'spectator1',
+          asSpectator: true,
+        });
 
         expect(response.status).toEqual(200);
         expect(response.body).toEqual(gameState);
-        expect(joinGameSpy).toHaveBeenCalledWith('65e9b716ff0e892116b2de01', 'spectator1', undefined, true);
+        expect(joinGameSpy).toHaveBeenCalledWith(
+          '65e9b716ff0e892116b2de01',
+          'spectator1',
+          undefined,
+          true,
+        );
       });
 
       it('should join private room with correct room code', async () => {
@@ -322,46 +318,43 @@ describe('Connect Four Controller Tests', () => {
         joinGameSpy.mockResolvedValueOnce(gameState);
         getGameSpy.mockReturnValueOnce(undefined);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join')
-          .send({
-            gameID: '65e9b716ff0e892116b2de01',
-            playerID: 'player2',
-            roomCode: 'ABC123',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join').send({
+          gameID: '65e9b716ff0e892116b2de01',
+          playerID: 'player2',
+          roomCode: 'ABC123',
+        });
 
         expect(response.status).toEqual(200);
         expect(response.body).toEqual(gameState);
-        expect(joinGameSpy).toHaveBeenCalledWith('65e9b716ff0e892116b2de01', 'player2', 'ABC123', undefined);
+        expect(joinGameSpy).toHaveBeenCalledWith(
+          '65e9b716ff0e892116b2de01',
+          'player2',
+          'ABC123',
+          undefined,
+        );
       });
     });
 
     describe('400 Invalid Request', () => {
       it('should return 400 for undefined request body', async () => {
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join')
-          .send(undefined);
+        const response = await supertest(app).post('/api/games/connectfour/join').send(undefined);
 
         expect(response.status).toEqual(500);
       });
 
       it('should return 400 for missing gameID', async () => {
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join')
-          .send({
-            playerID: 'player1',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join').send({
+          playerID: 'player1',
+        });
 
         expect(response.status).toBe(500);
         expect(response.text).toContain('Game requested does not exist');
       });
 
       it('should return 400 for missing playerID', async () => {
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join')
-          .send({
-            gameID: 'testGameID',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join').send({
+          gameID: 'testGameID',
+        });
 
         expect(response.status).toBe(500);
         expect(response.text).toContain('Game requested does not exist');
@@ -380,12 +373,10 @@ describe('Connect Four Controller Tests', () => {
 
         getGameSpy.mockReturnValueOnce(mockGame);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join')
-          .send({
-            gameID: '65e9b716ff0e892116b2de01',
-            playerID: 'player1',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join').send({
+          gameID: '65e9b716ff0e892116b2de01',
+          playerID: 'player1',
+        });
 
         expect(response.status).toEqual(500);
         expect(response.text).toContain('Game requested does not exist');
@@ -395,12 +386,10 @@ describe('Connect Four Controller Tests', () => {
         joinGameSpy.mockResolvedValueOnce({ error: 'test error' });
         getGameSpy.mockReturnValueOnce(undefined);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join')
-          .send({
-            gameID: '65e9b716ff0e892116b2de01',
-            playerID: 'player1',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join').send({
+          gameID: '65e9b716ff0e892116b2de01',
+          playerID: 'player1',
+        });
 
         expect(response.status).toEqual(500);
         expect(response.text).toContain('Error when joining Connect Four room: test error');
@@ -410,12 +399,10 @@ describe('Connect Four Controller Tests', () => {
         joinGameSpy.mockRejectedValueOnce(new Error('test error'));
         getGameSpy.mockReturnValueOnce(undefined);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join')
-          .send({
-            gameID: '65e9b716ff0e892116b2de01',
-            playerID: 'player1',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join').send({
+          gameID: '65e9b716ff0e892116b2de01',
+          playerID: 'player1',
+        });
 
         expect(response.status).toEqual(500);
         expect(response.text).toContain('Error when joining Connect Four room: test error');
@@ -476,12 +463,10 @@ describe('Connect Four Controller Tests', () => {
         getActiveGameInstancesSpy.mockReturnValueOnce([mockGame]);
         joinGameSpy.mockResolvedValueOnce(gameState);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join-by-code')
-          .send({
-            roomCode: 'ABC123',
-            playerID: 'player1',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join-by-code').send({
+          roomCode: 'ABC123',
+          playerID: 'player1',
+        });
 
         expect(response.status).toEqual(200);
         expect(response.body).toEqual(gameState);
@@ -532,13 +517,11 @@ describe('Connect Four Controller Tests', () => {
         getActiveGameInstancesSpy.mockReturnValueOnce([mockGame]);
         joinGameSpy.mockResolvedValueOnce(gameState);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join-by-code')
-          .send({
-            roomCode: 'ABC123',
-            playerID: 'spectator1',
-            asSpectator: true,
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join-by-code').send({
+          roomCode: 'ABC123',
+          playerID: 'spectator1',
+          asSpectator: true,
+        });
 
         expect(response.status).toEqual(200);
         expect(response.body).toEqual(gameState);
@@ -548,22 +531,18 @@ describe('Connect Four Controller Tests', () => {
 
     describe('400 Bad Request', () => {
       it('should return 400 for missing roomCode', async () => {
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join-by-code')
-          .send({
-            playerID: 'player1',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join-by-code').send({
+          playerID: 'player1',
+        });
 
         expect(response.status).toEqual(400);
         expect(response.text).toContain('roomCode and playerID are required');
       });
 
       it('should return 400 for missing playerID', async () => {
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join-by-code')
-          .send({
-            roomCode: 'ABC123',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join-by-code').send({
+          roomCode: 'ABC123',
+        });
 
         expect(response.status).toEqual(400);
         expect(response.text).toContain('roomCode and playerID are required');
@@ -574,12 +553,10 @@ describe('Connect Four Controller Tests', () => {
       it('should return 404 for non-existent room code', async () => {
         getActiveGameInstancesSpy.mockReturnValueOnce([]);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join-by-code')
-          .send({
-            roomCode: 'NONEXISTENT',
-            playerID: 'player1',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join-by-code').send({
+          roomCode: 'NONEXISTENT',
+          playerID: 'player1',
+        });
 
         expect(response.status).toEqual(404);
         expect(response.text).toContain('Room not found');
@@ -598,12 +575,10 @@ describe('Connect Four Controller Tests', () => {
 
         getActiveGameInstancesSpy.mockReturnValueOnce([mockGame]);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join-by-code')
-          .send({
-            roomCode: 'ABC123',
-            playerID: 'player1',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join-by-code').send({
+          roomCode: 'ABC123',
+          playerID: 'player1',
+        });
 
         expect(response.status).toEqual(404);
         expect(response.text).toContain('Room not found');
@@ -628,12 +603,10 @@ describe('Connect Four Controller Tests', () => {
 
         getActiveGameInstancesSpy.mockReturnValueOnce([mockGame]);
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join-by-code')
-          .send({
-            roomCode: 'ABC123',
-            playerID: 'player1',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join-by-code').send({
+          roomCode: 'ABC123',
+          playerID: 'player1',
+        });
 
         expect(response.status).toEqual(500);
         expect(response.text).toContain('You are already in this game');
@@ -657,12 +630,10 @@ describe('Connect Four Controller Tests', () => {
         getActiveGameInstancesSpy.mockReturnValueOnce([mockGame]);
         joinGameSpy.mockResolvedValueOnce({ error: 'test error' });
 
-        const response = await supertest(app)
-          .post('/api/games/connectfour/join-by-code')
-          .send({
-            roomCode: 'ABC123',
-            playerID: 'player1',
-          });
+        const response = await supertest(app).post('/api/games/connectfour/join-by-code').send({
+          roomCode: 'ABC123',
+          playerID: 'player1',
+        });
 
         expect(response.status).toEqual(500);
         expect(response.text).toContain('Error when joining by code: test error');
@@ -736,7 +707,9 @@ describe('Connect Four Controller Tests', () => {
         gameType: 'Connect Four',
       });
 
-      saveGameStateSpy = jest.spyOn(mockConnectFourGame, 'saveGameState').mockResolvedValue(undefined);
+      saveGameStateSpy = jest
+        .spyOn(mockConnectFourGame, 'saveGameState')
+        .mockResolvedValue(undefined);
       removeGameSpy = jest.spyOn(mockGameManager, 'removeGame');
     });
 

@@ -96,6 +96,7 @@ const populateChat = async (chatID: string): Promise<PopulatedDatabaseChat | nul
         msgTo: messageDoc.msgTo,
         friendRequestStatus: messageDoc.friendRequestStatus,
         gameInvitation: messageDoc.gameInvitation,
+        readBy: messageDoc.readBy || [],
         user: userDoc
           ? {
               _id: userDoc._id!,

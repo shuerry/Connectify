@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   ChatUpdatePayload,
   DatabaseMessage,
@@ -7,9 +7,16 @@ import {
   MessageUpdatePayload,
   PopulatedDatabaseChat,
   SafeDatabaseUser,
+  TypingIndicatorPayload,
 } from '../types/types';
 import useUserContext from './useUserContext';
-import { createChat, getChatById, getChatsByUser, sendMessage } from '../services/chatService';
+import {
+  createChat,
+  getChatById,
+  getChatsByUser,
+  sendMessage,
+  markMessagesAsRead,
+} from '../services/chatService';
 import { getDirectMessages } from '../services/messageService';
 import { getRelations } from '../services/userService';
 
@@ -27,6 +34,10 @@ const useDirectMessage = () => {
   const [directMessages, setDirectMessages] = useState<DatabaseMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const selectedChatIdRef = useRef<ObjectId | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef<boolean>(false);
 
   const handleJoinChat = (chatID: ObjectId) => {
     socket.emit('joinChat', String(chatID));
@@ -34,6 +45,16 @@ const useDirectMessage = () => {
 
   const handleSendMessage = async () => {
     if (newMessage.trim() && selectedChat?._id) {
+      // Stop typing indicator when sending message
+      if (isTypingRef.current && selectedChat._id) {
+        socket.emit('typingStop', { chatID: String(selectedChat._id), username: user.username });
+        isTypingRef.current = false;
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+
       // Check if users are friends before sending message
       const participants = Object.keys(selectedChat.participants);
       if (participants.length === 2) {
@@ -65,7 +86,10 @@ const useDirectMessage = () => {
         setNewMessage('');
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'Error sending message';
-        if (errorMessage.includes('must be friends') || errorMessage.includes('only send messages')) {
+        if (
+          errorMessage.includes('must be friends') ||
+          errorMessage.includes('only send messages')
+        ) {
           setError('You can only send messages to users who are your friends');
         } else {
           setError(errorMessage);
@@ -81,7 +105,7 @@ const useDirectMessage = () => {
       try {
         const chat = await getChatById(selectedChat._id);
         setSelectedChat(chat);
-        
+
         // Also refresh direct messages
         const participants = Object.keys(chat.participants);
         if (participants.length === 2) {
@@ -91,12 +115,12 @@ const useDirectMessage = () => {
               const directMsgs = await getDirectMessages(user.username, otherParticipant);
               setDirectMessages(directMsgs);
             } catch (err) {
-              console.error('Error fetching direct messages:', err);
+              throw new Error('Error fetching direct messages');
             }
           }
         }
       } catch (err) {
-        console.error('Error refreshing chat:', err);
+        throw new Error('Error refreshing chat');
       }
     }
   };
@@ -105,13 +129,22 @@ const useDirectMessage = () => {
     if (!chatID) {
       setError('Invalid chat ID');
       setSelectedChat(null);
+      selectedChatIdRef.current = null;
       setDirectMessages([]);
       return;
     }
 
     const chat = await getChatById(chatID);
     setSelectedChat(chat);
+    selectedChatIdRef.current = chatID;
     handleJoinChat(chatID);
+
+    // Mark messages as read when viewing the chat
+    try {
+      await markMessagesAsRead(chatID, user.username);
+    } catch (err) {
+      throw new Error('Error marking messages as read');
+    }
 
     // Fetch direct messages (friend requests, game invitations, etc.) between participants
     const participants = Object.keys(chat.participants);
@@ -122,8 +155,8 @@ const useDirectMessage = () => {
           const directMsgs = await getDirectMessages(user.username, otherParticipant);
           setDirectMessages(directMsgs);
         } catch (err) {
-          console.error('Error fetching direct messages:', err);
           setDirectMessages([]);
+          throw new Error('Error fetching direct messages');
         }
       }
     } else {
@@ -166,6 +199,7 @@ const useDirectMessage = () => {
     if (existingChat) {
       // Use existing chat instead of creating a new one
       setSelectedChat(existingChat);
+      selectedChatIdRef.current = existingChat._id;
       handleJoinChat(existingChat._id);
       setShowCreatePanel(false);
       setError(null);
@@ -175,8 +209,8 @@ const useDirectMessage = () => {
         const directMsgs = await getDirectMessages(user.username, chatToCreate);
         setDirectMessages(directMsgs);
       } catch (err) {
-        console.error('Error fetching direct messages:', err);
         setDirectMessages([]);
+        throw new Error('Error fetching direct messages');
       }
       return;
     }
@@ -185,6 +219,7 @@ const useDirectMessage = () => {
     try {
       const chat = await createChat({ [user.username]: true, [chatToCreate]: true });
       setSelectedChat(chat);
+      selectedChatIdRef.current = chat._id;
       handleJoinChat(chat._id);
       setShowCreatePanel(false);
       setError(null);
@@ -194,8 +229,8 @@ const useDirectMessage = () => {
         const directMsgs = await getDirectMessages(user.username, chatToCreate);
         setDirectMessages(directMsgs);
       } catch (err) {
-        console.error('Error fetching direct messages:', err);
         setDirectMessages([]);
+        throw new Error('Error fetching direct messages');
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Error creating chat';
@@ -224,16 +259,63 @@ const useDirectMessage = () => {
           return;
         }
         case 'newMessage': {
-          if (selectedChat?._id && chat._id === selectedChat._id) {
-            setSelectedChat(chat);
+          // Use functional updates to access current state
+          setSelectedChat(prevSelectedChat => {
+            // Update the selected chat if it matches
+            if (prevSelectedChat?._id && String(chat._id) === String(prevSelectedChat._id)) {
+              return chat;
+            }
+            return prevSelectedChat;
+          });
+
+          // If user is currently viewing this chat, automatically mark messages as read
+          if (selectedChatIdRef.current && String(chat._id) === String(selectedChatIdRef.current)) {
+            markMessagesAsRead(chat._id, user.username).catch(err => {
+              throw new Error(err);
+            });
+          }
+
+          // Also update the chats list to reflect the new message
+          if (user.username in chat.participants) {
+            setChats(prevChats => {
+              const existingIndex = prevChats.findIndex(c => String(c._id) === String(chat._id));
+              if (existingIndex >= 0) {
+                // Update existing chat in the list
+                return prevChats.map(c => (String(c._id) === String(chat._id) ? chat : c));
+              }
+              // If not in list but user is a participant, add it
+              return [chat, ...prevChats];
+            });
+          }
+          return;
+        }
+        case 'readReceipt': {
+          // Use functional updates to access current state
+          setSelectedChat(prevSelectedChat => {
+            // Update the selected chat if it matches
+            if (prevSelectedChat?._id && String(chat._id) === String(prevSelectedChat._id)) {
+              return chat;
+            }
+            return prevSelectedChat;
+          });
+
+          // Also update the chats list to reflect the read receipt
+          if (user.username in chat.participants) {
+            setChats(prevChats => {
+              const existingIndex = prevChats.findIndex(c => String(c._id) === String(chat._id));
+              if (existingIndex >= 0) {
+                return prevChats.map(c => (String(c._id) === String(chat._id) ? chat : c));
+              }
+              return prevChats;
+            });
           }
           return;
         }
         case 'newParticipant': {
           if (user.username in chat.participants) {
             setChats(prevChats => {
-              if (prevChats.some(c => chat._id === c._id)) {
-                return prevChats.map(c => (c._id === chat._id ? chat : c));
+              if (prevChats.some(c => String(c._id) === String(chat._id))) {
+                return prevChats.map(c => (String(c._id) === String(chat._id) ? chat : c));
               }
               return [chat, ...prevChats];
             });
@@ -248,61 +330,97 @@ const useDirectMessage = () => {
 
     const handleMessageUpdate = (messageUpdate: MessageUpdatePayload) => {
       const { msg } = messageUpdate;
-      
-      // If this is a direct message (friend request, game invitation, etc.) for the current chat
-      if (selectedChat) {
-        const participants = Object.keys(selectedChat.participants);
-        const otherParticipant = participants.find(p => p !== user.username);
-        
-        if (
-          otherParticipant &&
-          ((msg.msgFrom === user.username && msg.msgTo === otherParticipant) ||
-           (msg.msgFrom === otherParticipant && msg.msgTo === user.username) ||
-           (msg.type === 'friendRequest' && participants.includes(msg.msgFrom) && participants.includes(msg.msgTo || '')))
-        ) {
-          // Update direct messages
-          setDirectMessages(prev => {
-            const existingIndex = prev.findIndex(m => String(m._id) === String(msg._id));
-            if (existingIndex >= 0) {
-              // Update existing message
-              return prev.map((m, idx) => (idx === existingIndex ? msg : m));
-            } else {
-              // Add new message
-              return [...prev, msg].sort((a, b) => 
-                new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime()
-              );
-            }
-          });
 
-          // Also update the chat if the message is in the chat's messages
-          if (selectedChat.messages.some(m => String(m._id) === String(msg._id))) {
-            setSelectedChat(prev => {
-              if (!prev) return prev;
+      // Use functional updates to access current state
+      setSelectedChat(prevSelectedChat => {
+        // If this is a direct message (friend request, game invitation, etc.) for the current chat
+        if (prevSelectedChat) {
+          const participants = Object.keys(prevSelectedChat.participants);
+          const otherParticipant = participants.find(p => p !== user.username);
+
+          if (
+            otherParticipant &&
+            ((msg.msgFrom === user.username && msg.msgTo === otherParticipant) ||
+              (msg.msgFrom === otherParticipant && msg.msgTo === user.username) ||
+              (msg.type === 'friendRequest' &&
+                participants.includes(msg.msgFrom) &&
+                participants.includes(msg.msgTo || '')))
+          ) {
+            // Also update the chat if the message is in the chat's messages
+            if (prevSelectedChat.messages.some(m => String(m._id) === String(msg._id))) {
               return {
-                ...prev,
-                messages: prev.messages.map(m => 
-                  String(m._id) === String(msg._id) 
+                ...prevSelectedChat,
+                messages: prevSelectedChat.messages.map(m =>
+                  String(m._id) === String(msg._id)
                     ? { ...m, ...msg, user: m.user } // Preserve user field
-                    : m
+                    : m,
                 ),
               };
-            });
+            }
           }
         }
+        return prevSelectedChat;
+      });
+
+      // Update direct messages
+      setDirectMessages(prev => {
+        const existingIndex = prev.findIndex(m => String(m._id) === String(msg._id));
+        if (existingIndex >= 0) {
+          // Update existing message
+          return prev.map((m, idx) => (idx === existingIndex ? msg : m));
+        } else {
+          // Add new message
+          return [...prev, msg].sort(
+            (a, b) => new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime(),
+          );
+        }
+      });
+    };
+
+    const handleTypingIndicator = (payload: TypingIndicatorPayload) => {
+      // Only process typing indicators for the current chat
+      if (!selectedChatIdRef.current || payload.chatID !== String(selectedChatIdRef.current)) {
+        return;
       }
+
+      // Only show typing indicators for other users
+      if (payload.username === user.username) {
+        return;
+      }
+
+      setTypingUsers(prev => {
+        const newSet = new Set(prev);
+        if (payload.isTyping) {
+          newSet.add(payload.username);
+        } else {
+          newSet.delete(payload.username);
+        }
+        return newSet;
+      });
     };
 
     fetchChats();
 
+    // Set up socket listeners
     socket.on('chatUpdate', handleChatUpdate);
     socket.on('messageUpdate', handleMessageUpdate);
+    socket.on('typingIndicator', handleTypingIndicator);
+
+    // Also set up listeners when socket connects (in case it's not connected yet)
+    const onConnect = () => {
+      socket.on('chatUpdate', handleChatUpdate);
+      socket.on('messageUpdate', handleMessageUpdate);
+      socket.on('typingIndicator', handleTypingIndicator);
+    };
+    socket.on('connect', onConnect);
 
     return () => {
+      socket.off('connect', onConnect);
       socket.off('chatUpdate', handleChatUpdate);
       socket.off('messageUpdate', handleMessageUpdate);
-      socket.emit('leaveChat', String(selectedChat?._id));
+      socket.off('typingIndicator', handleTypingIndicator);
     };
-  }, [user.username, socket, selectedChat]);
+  }, [user.username, socket, selectedChat?._id]);
 
   // Merge chat messages with direct messages (friend requests, game invitations, etc.)
   // Convert MessageInChat to DatabaseMessage format for consistency
@@ -317,18 +435,61 @@ const useDirectMessage = () => {
           msgTo: msg.msgTo,
           friendRequestStatus: msg.friendRequestStatus,
           gameInvitation: msg.gameInvitation,
+          readBy: msg.readBy || [],
         })),
         ...directMessages.filter(
-          dm =>
-            !selectedChat.messages.some(
-              cm => String(cm._id) === String(dm._id)
-            )
+          dm => !selectedChat.messages.some(cm => String(cm._id) === String(dm._id)),
         ),
-      ].sort(
-        (a, b) =>
-          new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime()
-      )
+      ].sort((a, b) => new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime())
     : [];
+
+  /**
+   * Handles typing events - emits typingStart/typingStop with debouncing
+   */
+  const handleTyping = (value: string) => {
+    setNewMessage(value);
+
+    // Only handle typing if we have a selected chat
+    if (!selectedChat?._id) {
+      return;
+    }
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // If user started typing and wasn't typing before, emit typingStart
+    if (value.length > 0 && !isTypingRef.current) {
+      socket.emit('typingStart', { chatID: String(selectedChat._id), username: user.username });
+      isTypingRef.current = true;
+    }
+
+    // Set timeout to stop typing indicator after 3 seconds of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      if (isTypingRef.current && selectedChat?._id) {
+        socket.emit('typingStop', { chatID: String(selectedChat._id), username: user.username });
+        isTypingRef.current = false;
+      }
+      typingTimeoutRef.current = null;
+    }, 3000);
+  };
+
+  // Cleanup on unmount or when chat changes
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      if (isTypingRef.current && selectedChatIdRef.current) {
+        socket.emit('typingStop', {
+          chatID: String(selectedChatIdRef.current),
+          username: user.username,
+        });
+      }
+      setTypingUsers(new Set());
+    };
+  }, [socket, user.username]);
 
   return {
     selectedChat,
@@ -336,7 +497,7 @@ const useDirectMessage = () => {
     chats,
     messages: allMessages,
     newMessage,
-    setNewMessage,
+    setNewMessage: handleTyping,
     showCreatePanel,
     setShowCreatePanel,
     handleSendMessage,
@@ -345,6 +506,7 @@ const useDirectMessage = () => {
     handleCreateChat,
     refreshChat,
     error,
+    typingUsers,
   };
 };
 

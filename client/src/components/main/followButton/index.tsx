@@ -25,30 +25,29 @@ const FollowButton = ({ question }: FollowButtonProps) => {
   const handleFollow = async () => {
     if (!question?._id || !user?.username) return;
 
-        setFollowed((prev) => !prev);
+    setFollowed(prev => !prev);
 
     try {
       const res = await followQuestion(question._id, user.username);
 
       // reconcile with server response if it includes followers
       if (Array.isArray((res as any)?.followers)) {
-        const isFollowing = (res as any).followers.some(
-          (f: any) => (typeof f === 'string' ? f === user.username : f?.username === user.username)
+        const isFollowing = (res as any).followers.some((f: any) =>
+          typeof f === 'string' ? f === user.username : f?.username === user.username,
         );
         setFollowed(isFollowing);
       }
     } catch {
       // revert on error
-      setFollowed((prev) => !prev);
+      setFollowed(prev => !prev);
     }
   };
 
   return (
-    <div className="vote-container">
+    <div className='vote-container'>
       <button
         className={`vote-button ${followed ? 'vote-button-followed' : ''}`}
-        onClick={handleFollow}
-      >
+        onClick={handleFollow}>
         {followed ? 'Unfollow' : 'Follow'}
       </button>
     </div>

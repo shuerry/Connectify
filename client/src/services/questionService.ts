@@ -115,10 +115,7 @@ const getCommunityQuestionsById = async (
  * @param username - The username of the user following the question.
  * @throws Error if there is an issue adding the follower to the question.
  */
-const followQuestion = async (
-  qid: ObjectId,
-  username: string,
-): Promise<void> => {
+const followQuestion = async (qid: ObjectId, username: string): Promise<void> => {
   const data = { qid, username };
   const res = await api.post(`${QUESTION_API_URL}/followQuestion`, data);
 

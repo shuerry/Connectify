@@ -68,7 +68,7 @@ describe('ConnectFourGame tests', () => {
     it('creates an empty board with correct dimensions', () => {
       expect(connectFourGame.state.board).toHaveLength(6); // rows
       expect(connectFourGame.state.board[0]).toHaveLength(7); // columns
-      
+
       // Check all cells are null
       for (let row = 0; row < 6; row += 1) {
         for (let col = 0; col < 7; col += 1) {
@@ -308,23 +308,24 @@ describe('ConnectFourGame tests', () => {
 
     // Helper function to get current player whose turn it is
     const getCurrentPlayer = () => {
-      return connectFourGame.state.currentTurn === connectFourGame.state.player1Color 
-        ? connectFourGame.state.player1! 
+      return connectFourGame.state.currentTurn === connectFourGame.state.player1Color
+        ? connectFourGame.state.player1!
         : connectFourGame.state.player2!;
     };
 
     // Helper function to get other player (not current turn)
     const getOtherPlayer = () => {
-      return connectFourGame.state.currentTurn === connectFourGame.state.player1Color 
-        ? connectFourGame.state.player2! 
+      return connectFourGame.state.currentTurn === connectFourGame.state.player1Color
+        ? connectFourGame.state.player2!
         : connectFourGame.state.player1!;
     };
 
     it('applies valid move in empty column', () => {
       // Determine which player has the current turn
-      const currentPlayerID = connectFourGame.state.currentTurn === connectFourGame.state.player1Color 
-        ? connectFourGame.state.player1 
-        : connectFourGame.state.player2;
+      const currentPlayerID =
+        connectFourGame.state.currentTurn === connectFourGame.state.player1Color
+          ? connectFourGame.state.player1
+          : connectFourGame.state.player2;
       const currentPlayerColor = connectFourGame.state.currentTurn;
 
       const move: GameMove<ConnectFourMove> = {
@@ -366,11 +367,13 @@ describe('ConnectFourGame tests', () => {
       // The bottom piece should be from first player, top piece from second player
       expect(connectFourGame.state.board[5][0]).toBe(firstPlayerColor);
       expect(connectFourGame.state.board[4][0]).toBe(secondPlayerColor);
-    });    it('throws error for invalid column', () => {
+    });
+    it('throws error for invalid column', () => {
       // Use the current player whose turn it is
-      const currentPlayerID = connectFourGame.state.currentTurn === connectFourGame.state.player1Color 
-        ? connectFourGame.state.player1 
-        : connectFourGame.state.player2;
+      const currentPlayerID =
+        connectFourGame.state.currentTurn === connectFourGame.state.player1Color
+          ? connectFourGame.state.player1
+          : connectFourGame.state.player2;
 
       const invalidMoves = [{ column: -1 }, { column: 7 }, { column: 10 }];
 
@@ -452,8 +455,8 @@ describe('ConnectFourGame tests', () => {
 
     // Helper function to get current player whose turn it is
     const getCurrentPlayer = () => {
-      return connectFourGame.state.currentTurn === connectFourGame.state.player1Color 
-        ? connectFourGame.state.player1! 
+      return connectFourGame.state.currentTurn === connectFourGame.state.player1Color
+        ? connectFourGame.state.player1!
         : connectFourGame.state.player2!;
     };
 
@@ -461,7 +464,7 @@ describe('ConnectFourGame tests', () => {
       // Determine which player should get the horizontal win
       const winningPlayer = getCurrentPlayer();
       const winningPlayerColor = connectFourGame.state.currentTurn;
-      
+
       // Set up board for horizontal win (place 3 pieces directly)
       connectFourGame.state.board[5][0] = winningPlayerColor;
       connectFourGame.state.board[5][1] = winningPlayerColor;
@@ -483,7 +486,7 @@ describe('ConnectFourGame tests', () => {
     it('detects vertical win', () => {
       const winningPlayer = getCurrentPlayer();
       const winningPlayerColor = connectFourGame.state.currentTurn;
-      
+
       // Set up board for vertical win
       connectFourGame.state.board[5][0] = winningPlayerColor;
       connectFourGame.state.board[4][0] = winningPlayerColor;
@@ -506,12 +509,12 @@ describe('ConnectFourGame tests', () => {
       const winningPlayer = getCurrentPlayer();
       const winningPlayerColor = connectFourGame.state.currentTurn;
       const otherColor: ConnectFourColor = winningPlayerColor === 'RED' ? 'YELLOW' : 'RED';
-      
+
       // Set up board for diagonal win: (5,0), (4,1), (3,2), (2,3)
       connectFourGame.state.board[5][0] = winningPlayerColor;
       connectFourGame.state.board[4][1] = winningPlayerColor;
       connectFourGame.state.board[3][2] = winningPlayerColor;
-      
+
       // Fill column 3 up to row 3 so the new piece lands at (2,3)
       connectFourGame.state.board[5][3] = otherColor;
       connectFourGame.state.board[4][3] = otherColor;
@@ -532,12 +535,12 @@ describe('ConnectFourGame tests', () => {
       const winningPlayer = getCurrentPlayer();
       const winningPlayerColor = connectFourGame.state.currentTurn;
       const otherColor: ConnectFourColor = winningPlayerColor === 'RED' ? 'YELLOW' : 'RED';
-      
-      // Set up board for diagonal win: (5,6), (4,5), (3,4), (2,3)  
+
+      // Set up board for diagonal win: (5,6), (4,5), (3,4), (2,3)
       connectFourGame.state.board[5][6] = winningPlayerColor;
       connectFourGame.state.board[4][5] = winningPlayerColor;
       connectFourGame.state.board[3][4] = winningPlayerColor;
-      
+
       // Fill column 3 up to row 3 so the new piece lands at (2,3)
       connectFourGame.state.board[5][3] = otherColor;
       connectFourGame.state.board[4][3] = otherColor;
@@ -558,12 +561,12 @@ describe('ConnectFourGame tests', () => {
       // Create a board state that will result in a draw
       // We'll set up a specific pattern that breaks all possible wins
       const testBoard: (ConnectFourColor | null)[][] = [
-        ['YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW', 'RED', null],      // Top row
-        ['RED', 'YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW', 'RED'],     
-        ['YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW'],  
-        ['RED', 'YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW', 'RED'],     
-        ['YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW'],  
-        ['RED', 'YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW', 'RED'],     // Bottom row
+        ['YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW', 'RED', null], // Top row
+        ['RED', 'YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW', 'RED'],
+        ['YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW'],
+        ['RED', 'YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW', 'RED'],
+        ['YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW'],
+        ['RED', 'YELLOW', 'RED', 'YELLOW', 'RED', 'YELLOW', 'RED'], // Bottom row
       ];
 
       // Manually set the board
@@ -577,7 +580,7 @@ describe('ConnectFourGame tests', () => {
       // This will ensure no 4-in-a-row is created
       const currentPlayer = getCurrentPlayer();
       const expectedColor = connectFourGame.state.currentTurn;
-      
+
       // Only proceed if the current player will place YELLOW (to maintain pattern)
       // If not, switch players by making a dummy move and undoing it, or modify test
       connectFourGame.applyMove({

@@ -62,6 +62,10 @@ const messageSchema: Schema = new Schema(
       },
       required: false,
     },
+    readBy: {
+      type: [String],
+      default: [],
+    },
   },
   { collection: 'Message' },
 );

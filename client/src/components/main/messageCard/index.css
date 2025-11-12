@@ -45,3 +45,11 @@
   line-height: 1.5;
   word-wrap: break-word;
 }
+
+.read-receipt {
+  font-size: 0.75rem;
+  color: #999;
+  margin-top: 5px;
+  text-align: right;
+  font-style: italic;
+}

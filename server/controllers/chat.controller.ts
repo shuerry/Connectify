@@ -18,7 +18,7 @@ import {
   PopulatedDatabaseChat,
   Message,
 } from '../types/types';
-import { saveMessage } from '../services/message.service';
+import { saveMessage, markMessagesAsRead } from '../services/message.service';
 import { getRelations } from '../services/user.service';
 
 /*
@@ -50,11 +50,11 @@ const chatController = (socket: FakeSOSocket) => {
 
     try {
       const participantUsernames = Object.keys(participants);
-      
+
       // For 2-person chats, check if a chat already exists between these participants
       if (participantUsernames.length === 2) {
         const existingChats = await getChatsByParticipants(participantUsernames);
-        
+
         // Filter to only 2-person chats with exactly these participants
         const matchingChats = existingChats.filter(chat => {
           const chatParticipants = Object.keys(chat.participants);
@@ -69,11 +69,11 @@ const chatController = (socket: FakeSOSocket) => {
         if (matchingChats.length > 0) {
           const existingChat = matchingChats[0];
           const populatedChat = await populateDocument(existingChat._id.toString(), 'chat');
-          
+
           if ('error' in populatedChat) {
             throw new Error(populatedChat.error);
           }
-          
+
           res.json(populatedChat);
           return;
         }
@@ -82,27 +82,27 @@ const chatController = (socket: FakeSOSocket) => {
       // Validate that for 2-person chats, participants must be friends
       // UNLESS the chat contains only friend request messages (which are created automatically)
       const hasOnlyFriendRequests = formattedMessages.every(m => m.type === 'friendRequest');
-      
+
       if (participantUsernames.length === 2 && !hasOnlyFriendRequests) {
         const [user1, user2] = participantUsernames;
-        
+
         // Check if user1 has user2 as a friend
         const user1Relations = await getRelations(user1);
         if ('error' in user1Relations) {
           throw new Error(user1Relations.error);
         }
-        
+
         if (!user1Relations.friends.includes(user2)) {
           res.status(403).send('Users must be friends to create a direct message chat');
           return;
         }
-        
+
         // Check if user2 has user1 as a friend (bidirectional check)
         const user2Relations = await getRelations(user2);
         if ('error' in user2Relations) {
           throw new Error(user2Relations.error);
         }
-        
+
         if (!user2Relations.friends.includes(user1)) {
           res.status(403).send('Users must be friends to create a direct message chat');
           return;
@@ -154,19 +154,19 @@ const chatController = (socket: FakeSOSocket) => {
       const participantUsernames = Object.keys(chat.participants);
       if (participantUsernames.length === 2) {
         const [user1, user2] = participantUsernames;
-        
+
         // Check if user1 has user2 as a friend
         const user1Relations = await getRelations(user1);
         if ('error' in user1Relations) {
           throw new Error(user1Relations.error);
         }
-        
+
         // Check if user2 has user1 as a friend (bidirectional check)
         const user2Relations = await getRelations(user2);
         if ('error' in user2Relations) {
           throw new Error(user2Relations.error);
         }
-        
+
         // If they're not friends, prevent sending regular messages
         if (!user1Relations.friends.includes(user2) || !user2Relations.friends.includes(user1)) {
           res.status(403).send('You can only send messages to users who are your friends');
@@ -305,6 +305,31 @@ const chatController = (socket: FakeSOSocket) => {
         conn.leave(chatID);
       }
     });
+
+    // Handle typing indicators for direct messages
+    conn.on('typingStart', (data: { chatID?: string; username: string }) => {
+      const { chatID, username } = data;
+      if (chatID) {
+        // Direct message chat - emit to others in the chat room
+        conn.to(chatID).emit('typingIndicator', {
+          username,
+          chatID,
+          isTyping: true,
+        });
+      }
+    });
+
+    conn.on('typingStop', (data: { chatID?: string; username: string }) => {
+      const { chatID, username } = data;
+      if (chatID) {
+        // Direct message chat - emit to others in the chat room
+        conn.to(chatID).emit('typingIndicator', {
+          username,
+          chatID,
+          isTyping: false,
+        });
+      }
+    });
   });
 
   /**
@@ -336,6 +361,42 @@ const chatController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Marks messages in a chat as read by a user.
+   * @param req The request object containing the chat ID and username.
+   * @param res The response object to send the result.
+   * @returns {Promise<void>} A promise that resolves when messages are marked as read.
+   * @throws {Error} Throws an error if the operation fails.
+   */
+  const markMessagesAsReadRoute = async (req: ChatIdRequest, res: Response): Promise<void> => {
+    const { chatId } = req.params;
+    const { username } = req.body;
+
+    try {
+      const result = await markMessagesAsRead(chatId, username);
+
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+
+      // Emit chat update to notify other participants
+      const chat = await getChat(chatId);
+      if (!('error' in chat)) {
+        const populatedChat = await populateDocument(chat._id.toString(), 'chat');
+        if (!('error' in populatedChat)) {
+          socket.to(chatId).emit('chatUpdate', {
+            chat: populatedChat as PopulatedDatabaseChat,
+            type: 'readReceipt',
+          });
+        }
+      }
+
+      res.json(result);
+    } catch (err: unknown) {
+      res.status(500).send(`Error marking messages as read: ${(err as Error).message}`);
+    }
+  };
+
   // Register the routes
   router.post('/createChat', createChatRoute);
   router.post('/:chatId/addMessage', addMessageToChatRoute);
@@ -343,6 +404,7 @@ const chatController = (socket: FakeSOSocket) => {
   router.post('/:chatId/addParticipant', addParticipantToChatRoute);
   router.get('/getChatsByUser/:username', getChatsByUserRoute);
   router.post('/:chatId/toggleNotify', toggleNotifyRoute);
+  router.post('/:chatId/markAsRead', markMessagesAsReadRoute);
 
   return router;
 };

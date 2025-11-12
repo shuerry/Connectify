@@ -23,7 +23,10 @@ const useFollowStatus = ({ question }: { question: PopulatedDatabaseQuestion }) 
      * @returns The current follow status for the user in the question.
      */
     const getFollowStatus = () => {
-      if (user.username && question?.followers?.find(follower => follower.username === user.username)) {
+      if (
+        user.username &&
+        question?.followers?.find(follower => follower.username === user.username)
+      ) {
         return true;
       }
       return false;

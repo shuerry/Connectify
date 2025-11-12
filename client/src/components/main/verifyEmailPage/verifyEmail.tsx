@@ -13,7 +13,7 @@ export default function VerifyEmail() {
   const ranRef = useRef(false);
 
   useEffect(() => {
-    if (ranRef.current) return;                // ← prevent double-run in dev
+    if (ranRef.current) return; // ← prevent double-run in dev
     ranRef.current = true;
 
     const token = params.get('token');
@@ -37,24 +37,22 @@ export default function VerifyEmail() {
   }, [params]);
 
   return (
-    <div className="verify-container">
-      <div className="verify-card">
-        <h1 className="verify-title">Verify your email</h1>
+    <div className='verify-container'>
+      <div className='verify-card'>
+        <h1 className='verify-title'>Verify your email</h1>
 
-        {state === 'loading' && (
-          <p className="verify-text-muted">Verifying… please wait.</p>
-        )}
+        {state === 'loading' && <p className='verify-text-muted'>Verifying… please wait.</p>}
 
         {state === 'ok' && (
-          <div className="verify-section">
-            <p className="verify-success">{message}</p>
+          <div className='verify-section'>
+            <p className='verify-success'>{message}</p>
 
-            <div className="verify-actions">
-              <button className="verify-button" onClick={() => navigate('/')}>
+            <div className='verify-actions'>
+              <button className='verify-button' onClick={() => navigate('/')}>
                 Go to Login
               </button>
 
-              <Link to="/" className="verify-link">
+              <Link to='/' className='verify-link'>
                 Return to login page
               </Link>
             </div>
@@ -62,11 +60,11 @@ export default function VerifyEmail() {
         )}
 
         {state === 'err' && (
-          <div className="verify-section">
-            <p className="verify-error">{message}</p>
+          <div className='verify-section'>
+            <p className='verify-error'>{message}</p>
 
-            <div className="verify-actions">
-              <button className="verify-button-secondary" onClick={() => navigate('/')}>
+            <div className='verify-actions'>
+              <button className='verify-button-secondary' onClick={() => navigate('/')}>
                 Go to Login
               </button>
             </div>

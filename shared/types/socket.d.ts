@@ -54,7 +54,7 @@ export interface VoteUpdatePayload {
  */
 export interface ChatUpdatePayload {
   chat: PopulatedDatabaseChat;
-  type: 'created' | 'newMessage' | 'newParticipant';
+  type: 'created' | 'newMessage' | 'newParticipant' | 'readReceipt';
 }
 
 /**
@@ -140,6 +140,18 @@ export interface GameInvitationPayload {
 }
 
 /**
+ * Payload for a typing indicator event.
+ * - `username`: The username of the user who is typing.
+ * - `chatID`: The chat ID where typing is happening (optional for global chat).
+ * - `isTyping`: Whether the user is typing or stopped typing.
+ */
+export interface TypingIndicatorPayload {
+  username: string;
+  chatID?: string;
+  isTyping: boolean;
+}
+
+/**
  * Interface representing the events the client can emit to the server.
  * - `makeMove`: Client can emit a move in the game.
  * - `joinGame`: Client can join a game.
@@ -163,6 +175,9 @@ export interface ClientToServerEvents {
   }) => void;
   // Join user-specific room for notifications
   joinUserRoom: (username: string) => void;
+  // Typing indicator events
+  typingStart: (data: { chatID?: string; username: string }) => void;
+  typingStop: (data: { chatID?: string; username: string }) => void;
 }
 
 /**
@@ -199,6 +214,8 @@ export interface ServerToClientEvents {
   playerDisconnected: (payload: PlayerDisconnectedPayload) => void;
   // Send game invitation to specific users
   gameInvitation: (payload: GameInvitationPayload) => void;
+  // Typing indicator events
+  typingIndicator: (payload: TypingIndicatorPayload) => void;
   // Send notification update (for user-specific room)
   // TODO: add an event for notifications
 }

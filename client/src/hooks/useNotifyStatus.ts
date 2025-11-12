@@ -14,30 +14,30 @@ import { PopulatedDatabaseChat } from '../types/types';
  */
 
 const useNotifyStatus = ({ chat }: { chat: PopulatedDatabaseChat }) => {
-    const { user } = useUserContext();
-    const [notify, setNotify] = useState<boolean>(false);
+  const { user } = useUserContext();
+  const [notify, setNotify] = useState<boolean>(false);
 
-    useEffect(() => {
-        /**
-         * Function to get the current notification status for the user.
-         *
-         * @returns The current notification status for the user in the chat.
-         */
-        const getNotificationStatus = () => {
-            if (!user?.username || !chat?.participants) {
-                return false;
-            }
-            const status = (chat.participants as Record<string, boolean>)[user.username];
+  useEffect(() => {
+    /**
+     * Function to get the current notification status for the user.
+     *
+     * @returns The current notification status for the user in the chat.
+     */
+    const getNotificationStatus = () => {
+      if (!user?.username || !chat?.participants) {
+        return false;
+      }
+      const status = (chat.participants as Record<string, boolean>)[user.username];
 
-            return status ?? false;
-        };
-
-        setNotify(getNotificationStatus());
-    }, [chat, user?.username]);
-
-    return {
-        notify,
+      return status ?? false;
     };
+
+    setNotify(getNotificationStatus());
+  }, [chat, user?.username]);
+
+  return {
+    notify,
+  };
 };
 
 export default useNotifyStatus;
