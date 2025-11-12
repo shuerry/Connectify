@@ -204,3 +204,76 @@ export interface EditQuestionRequest extends Request {
  * - Either a PopulatedDatabaseQuestion object or an error message.
  */
 export type UpdateQuestionResponse = PopulatedDatabaseQuestion | { error: string };
+
+/**
+ * Represents a version of a question stored in the database.
+ * - `_id`: Unique identifier for the version.
+ * - `questionId`: Reference to the original question.
+ * - `title`: The title of the question at this version.
+ * - `text`: The detailed content of the question at this version.
+ * - `tags`: An array of ObjectIds referencing tags associated with this version.
+ * - `versionNumber`: The version number (1-based, where 1 is the oldest).
+ * - `createdAt`: The date and time when this version was created.
+ * - `createdBy`: The username of the user who created this version.
+ */
+export interface DatabaseQuestionVersion {
+  _id: ObjectId;
+  questionId: ObjectId;
+  title: string;
+  text: string;
+  tags: ObjectId[];
+  versionNumber: number;
+  createdAt: Date;
+  createdBy: string;
+}
+
+/**
+ * Represents a fully populated question version from the database.
+ * - `tags`: An array of populated `DatabaseTag` objects.
+ */
+export interface PopulatedDatabaseQuestionVersion
+  extends Omit<DatabaseQuestionVersion, 'tags'> {
+  tags: DatabaseTag[];
+}
+
+/**
+ * Interface for the request when getting version history of a question.
+ * - `qid`: The unique identifier of the question (params).
+ * - `username`: The username of the user making the request (query).
+ */
+export interface GetQuestionVersionsRequest extends Request {
+  params: {
+    qid: string;
+  };
+  query: {
+    username: string;
+  };
+}
+
+/**
+ * Interface for the request when rolling back to a previous version.
+ * - `qid`: The unique identifier of the question (params).
+ * - `versionId`: The unique identifier of the version to rollback to (params).
+ * - `username`: The username of the user making the request (body).
+ */
+export interface RollbackQuestionRequest extends Request {
+  params: {
+    qid: string;
+    versionId: string;
+  };
+  body: {
+    username: string;
+  };
+}
+
+/**
+ * Type representing possible responses for version-related operations.
+ * - Either an array of versions or an error message.
+ */
+export type QuestionVersionsResponse = PopulatedDatabaseQuestionVersion[] | { error: string };
+
+/**
+ * Type representing possible responses for a rollback operation.
+ * - Either a PopulatedDatabaseQuestion object or an error message.
+ */
+export type RollbackQuestionResponse = PopulatedDatabaseQuestion | { error: string };
