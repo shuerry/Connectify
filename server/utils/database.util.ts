@@ -110,16 +110,9 @@ const populateChat = async (chatID: string): Promise<PopulatedDatabaseChat | nul
   // Filters out null values
   const enrichedMessages = messagesWithUser.filter(Boolean) as MessageInChat[];
 
-  const participantsMap = chatDoc.participants as unknown as Map<string, boolean>;
-
-  const participantsObj: Record<string, boolean> = {};
-  for (const [username, notifyPref] of participantsMap.entries()) {
-    participantsObj[username] = notifyPref;
-  }
-
   const transformedChat: PopulatedDatabaseChat = {
     _id: chatDoc._id as unknown as ObjectId,
-    participants: participantsObj,
+    participants: chatDoc.participants,
     messages: enrichedMessages,
     createdAt: chatDoc.createdAt,
     updatedAt: chatDoc.updatedAt,

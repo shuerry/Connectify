@@ -56,7 +56,7 @@ const userSchema: Schema = new Schema(
       pendingEmail: { type: String },
       tokenHash: { type: String, index: true }, // index speeds up lookup by token
       expiresAt: { type: Date, index: true },
-    }
+    },
   },
   { collection: 'User' },
 );

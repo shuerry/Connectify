@@ -21,8 +21,10 @@ import {
   unblockUser,
   getRelations,
 } from '../services/user.service';
-import { confirmEmailVerification, startEmailVerification } from '../services/emailVerification.service';
-import UserModel from '../models/users.model';
+import {
+  confirmEmailVerification,
+  startEmailVerification,
+} from '../services/emailVerification.service';
 
 const userController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
@@ -207,35 +209,35 @@ const userController = (socket: FakeSOSocket) => {
    * @param res The response, either confirming the update or returning an error.
    * @returns A promise resolving to void.
    */
-const updateEmail = async (req: UpdateEmailRequest, res: Response): Promise<void> => {
-  try {
-    const { username, email } = req.body;
-    const r = await startEmailVerification(username, email);
-    if ('error' in r) throw new Error(r.error);
-    res.status(200).json({ msg: 'Verification email sent. Please check your inbox.' });
-  } catch (error) {
-    res.status(500).send(`Error when updating user email: ${error}`);
-  }
-};
+  const updateEmail = async (req: UpdateEmailRequest, res: Response): Promise<void> => {
+    try {
+      const { username, email } = req.body;
+      const r = await startEmailVerification(username, email);
+      if ('error' in r) throw new Error(r.error);
+      res.status(200).json({ msg: 'Verification email sent. Please check your inbox.' });
+    } catch (error) {
+      res.status(500).send(`Error when updating user email: ${error}`);
+    }
+  };
 
-const verifyEmail = async (req: express.Request, res: Response): Promise<void> => {
-  try {
-    const token = (req.query.token || req.body.token) as string | undefined;
-    if (!token) {
-      res.status(400).json({ error: 'Missing token' });
-      return;
+  const verifyEmail = async (req: express.Request, res: Response): Promise<void> => {
+    try {
+      const token = (req.query.token || req.body.token) as string | undefined;
+      if (!token) {
+        res.status(400).json({ error: 'Missing token' });
+        return;
+      }
+      const result = await confirmEmailVerification(token);
+      if ('error' in result) {
+        res.status(400).json(result);
+        return;
+      }
+      res.status(200).json({ msg: 'Email verified successfully', email: result.email });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to verify email' });
     }
-    const result = await confirmEmailVerification(token);
-    if ('error' in result) {
-      res.status(400).json(result);
-      return;
-    }
-    res.status(200).json({ msg: 'Email verified successfully', email: result.email });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to verify email' });
-  }
-};
-  
+  };
+
   /**
    * Adds a friend to the given user.
    */

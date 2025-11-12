@@ -1,13 +1,11 @@
 import express, { Response } from 'express';
 import { FakeSOSocket } from '../types/types';
 import {
-  createNotification,
   listNotifications,
   markRead,
   markAllRead,
   deleteNotification,
 } from '../services/notification.service';
-import { user } from '../tests/mockData.models';
 
 // TODO: Rewrite to match the structure of other controllers
 
