@@ -34,6 +34,7 @@ const QuestionView = ({ question }: QuestionProps) => {
     submitReport,
     setReportOpen,
     isHidden,
+    canReport,
   } = useQuestionView();
 
   if (isHidden(String(question._id))) {
@@ -82,16 +83,17 @@ const QuestionView = ({ question }: QuestionProps) => {
         className='collections-btn'>
         Edit My Collections
       </button>
-
-      <button
-        onClick={e => {
-          e.stopPropagation();
-          openReportModal(question);
-        }}
-        className='collections-btn'
-        style={{ marginLeft: '8px' }}>
-        Report
-      </button>
+      {canReport(question) && (
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            openReportModal(question);
+          }}
+          className='collections-btn'
+          style={{ marginLeft: '8px' }}>
+          Report
+        </button>
+      )}
 
       {isModalOpen && selectedQuestion && (
         <SaveToCollectionModal question={selectedQuestion} onClose={closeModal} />
