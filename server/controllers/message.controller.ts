@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import express, { Response, Request } from 'express';
-import { FakeSOSocket, AddMessageRequest } from '../types/types';
+import { FakeSOSocket, AddMessageRequest, PopulatedDatabaseChat, Message } from '../types/types';
 import {
   saveMessage,
   getMessages,
@@ -9,6 +9,8 @@ import {
   sendGameInvitation,
   updateGameInvitationStatus,
 } from '../services/message.service';
+import { getChatsByParticipants, saveChat, addMessageToChat } from '../services/chat.service';
+import { populateDocument } from '../utils/database.util';
 
 const messageController = (socket: FakeSOSocket) => {
   const router = express.Router();
@@ -61,6 +63,75 @@ const messageController = (socket: FakeSOSocket) => {
 
       if ('error' in msgFromDb) {
         throw new Error(msgFromDb.error);
+      }
+
+      // If this is a friend request, create or find a chat between the two users
+      if (msg.type === 'friendRequest' && msg.msgTo) {
+        const participants = { [msg.msgFrom]: true, [msg.msgTo]: true };
+        
+        // Check if a chat already exists between these users
+        let existingChats = await getChatsByParticipants([msg.msgFrom, msg.msgTo]);
+        
+        // Filter to only 2-person chats with exactly these participants
+        existingChats = existingChats.filter(chat => {
+          const chatParticipants = Object.keys(chat.participants);
+          return chatParticipants.length === 2 && 
+                 chatParticipants.includes(msg.msgFrom) && 
+                 chatParticipants.includes(msg.msgTo);
+        });
+
+        let chat;
+        if (existingChats.length > 0) {
+          // Use existing chat
+          chat = existingChats[0];
+          // Add the friend request message to the existing chat
+          const updatedChat = await addMessageToChat(chat._id.toString(), msgFromDb._id.toString());
+          if ('error' in updatedChat) {
+            console.error('Error adding friend request to chat:', updatedChat.error);
+          } else {
+            chat = updatedChat;
+            // Emit chatUpdate for existing chat
+            const populatedChat = await populateDocument(chat._id.toString(), 'chat');
+            if (!('error' in populatedChat)) {
+              socket.emit('chatUpdate', {
+                chat: populatedChat as PopulatedDatabaseChat,
+                type: 'newMessage',
+              });
+            }
+          }
+        } else {
+          // Create new chat with the friend request message
+          // Use saveChat but with an empty messages array, then add the message
+          // This avoids saving the message twice
+          const newChat = await saveChat({
+            participants,
+            messages: [],
+          });
+          
+          if ('error' in newChat) {
+            console.error('Error creating chat for friend request:', newChat.error);
+          } else {
+            // Add the friend request message to the chat
+            const updatedChat = await addMessageToChat(newChat._id.toString(), msgFromDb._id.toString());
+            if ('error' in updatedChat) {
+              console.error('Error adding friend request to new chat:', updatedChat.error);
+              chat = newChat;
+            } else {
+              chat = updatedChat;
+            }
+          }
+        }
+
+        // Emit chatUpdate so both users see it in their sidebar
+        if (chat && !('error' in chat)) {
+          const populatedChat = await populateDocument(chat._id.toString(), 'chat');
+          if (!('error' in populatedChat)) {
+            socket.emit('chatUpdate', {
+              chat: populatedChat as PopulatedDatabaseChat,
+              type: 'created',
+            });
+          }
+        }
       }
 
       socket.emit('messageUpdate', { msg: msgFromDb });
