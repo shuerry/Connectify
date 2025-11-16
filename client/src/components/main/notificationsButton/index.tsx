@@ -1,7 +1,7 @@
 // src/components/main/notificationsButton/index.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUnreadNotifications } from '../../../hooks/useUnreadNotifications';
+import useUnreadNotifications from '../../../hooks/useUnreadNotifications';
 
 const NotificationButton: React.FC<{ username: string }> = ({ username }) => {
   const navigate = useNavigate();

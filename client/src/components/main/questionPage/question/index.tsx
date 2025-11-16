@@ -192,11 +192,7 @@ const QuestionView = ({ question }: QuestionProps) => {
       </div>
       {canReport(question) && reportDropdownOpen === question._id.toString() && reportTarget && (
         <div className='report-dropdown-overlay'>
-          <ReportDropdown
-            question={reportTarget}
-            onClose={closeReportDropdown}
-            onSubmit={submitReport}
-          />
+          <ReportDropdown onClose={closeReportDropdown} onSubmit={submitReport} />
         </div>
       )}
     </>

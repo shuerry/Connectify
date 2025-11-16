@@ -70,7 +70,7 @@ const AnswerPage = () => {
           )}
 
           {/* Post Header */}
-          <AnswerHeader ansCount={question.answers.length} title={question.title} />
+          <AnswerHeader title={question.title} />
 
           {/* Post Body */}
           <QuestionBody
