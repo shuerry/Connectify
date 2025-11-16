@@ -9,6 +9,7 @@ import {
   PopulatedDatabaseChat,
   PopulatedDatabaseCollection,
   PopulatedDatabaseQuestion,
+  User,
 } from '../types/types';
 import AnswerModel from '../models/answers.model';
 import QuestionModel from '../models/questions.model';
@@ -33,6 +34,7 @@ const populateQuestion = async (questionID: string): Promise<PopulatedDatabaseQu
     answers: PopulatedDatabaseAnswer[];
     comments: DatabaseComment[];
     community: DatabaseCommunity;
+    followers: User[];
   }>([
     { path: 'tags', model: TagModel },
     {
@@ -42,6 +44,7 @@ const populateQuestion = async (questionID: string): Promise<PopulatedDatabaseQu
     },
     { path: 'comments', model: CommentModel },
     { path: 'community', model: CommunityModel },
+    { path: 'followers', model: UserModel, select: 'username dateJoined' },
   ]);
 
   return result;

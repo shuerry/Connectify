@@ -30,6 +30,7 @@ import FriendsListPage from './main/friendsList';
 import BlockedListPage from './main/blockedList';
 import VerifyEmail from './main/verifyEmailPage/verifyEmail';
 import NotificationsPage from './main/notificationsPage';
+import DraftsPage from './main/draftsPage';
 
 const ProtectedRoute = ({
   user,
@@ -126,6 +127,10 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
             <Route
               path='/notifications'
               element={<NotificationsPage username={user?.username || ''} />}
+            />
+            <Route 
+              path='/drafts' 
+              element={<DraftsPage userContext={{ username: user?.username || '' }} />} 
             />
           </Route>
         }

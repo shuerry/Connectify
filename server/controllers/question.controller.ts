@@ -13,6 +13,11 @@ import {
   FollowRequest,
   GetQuestionVersionsRequest,
   RollbackQuestionRequest,
+  SaveDraftRequest,
+  UpdateDraftRequest,
+  GetUserDraftsRequest,
+  DeleteDraftRequest,
+  PublishDraftRequest,
 } from '../types/types';
 import {
   addFollowerToQuestion,
@@ -26,6 +31,11 @@ import {
   updateQuestion,
   getQuestionVersions,
   rollbackQuestion,
+  saveDraft,
+  updateDraft,
+  getUserDrafts,
+  deleteDraft,
+  publishDraft,
 } from '../services/question.service';
 import { processTags } from '../services/tag.service';
 import { populateDocument } from '../utils/database.util';
@@ -429,6 +439,227 @@ const questionController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Saves a new draft question.
+   * If there is an error, the HTTP response's status is updated.
+   *
+   * @param req The SaveDraftRequest object containing the draft data in the body.
+   * @param res The HTTP response object used to send back the saved draft.
+   *
+   * @returns A Promise that resolves to void.
+   */
+  const saveDraftRoute = async (req: SaveDraftRequest, res: Response): Promise<void> => {
+    try {
+      const { title, text, tags, askedBy, community } = req.body;
+      
+      // Process tags to get ObjectIds
+      const processedTags = await processTags(tags);
+      const tagIds = processedTags.map(tag => tag._id);
+      
+      const result = await saveDraft(title, text, tagIds, askedBy, community);
+
+      if ('error' in result) {
+        res.status(400).send(result.error);
+        return;
+      }
+
+      res.status(201).json(result);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        res.status(500).send(`Error when saving draft: ${err.message}`);
+      } else {
+        res.status(500).send(`Error when saving draft`);
+      }
+    }
+  };
+
+  /**
+   * Updates an existing draft question.
+   * If there is an error, the HTTP response's status is updated.
+   *
+   * @param req The UpdateDraftRequest object containing the draft ID in params and updated data in body.
+   * @param res The HTTP response object used to send back the updated draft.
+   *
+   * @returns A Promise that resolves to void.
+   */
+  const updateDraftRoute = async (req: UpdateDraftRequest, res: Response): Promise<void> => {
+    const { draftId } = req.params;
+    const { title, text, tags, askedBy, community } = req.body;
+
+    // Validate draft ID format
+    if (!ObjectId.isValid(draftId)) {
+      res.status(400).send('Invalid draft ID format');
+      return;
+    }
+
+    try {
+      // Process tags to get ObjectIds
+      const processedTags = await processTags(tags);
+      const tagIds = processedTags.map(tag => tag._id);
+      
+      const result = await updateDraft(draftId, title, text, tagIds, askedBy, community);
+
+      if ('error' in result) {
+        if (result.error === 'Draft not found') {
+          res.status(404).send(result.error);
+        } else if (result.error.includes('Unauthorized')) {
+          res.status(403).send(result.error);
+        } else {
+          res.status(400).send(result.error);
+        }
+        return;
+      }
+
+      res.json(result);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        res.status(500).send(`Error when updating draft: ${err.message}`);
+      } else {
+        res.status(500).send(`Error when updating draft`);
+      }
+    }
+  };
+
+  /**
+   * Retrieves all drafts for a specific user.
+   * If there is an error, the HTTP response's status is updated.
+   *
+   * @param req The GetUserDraftsRequest object containing the username in query.
+   * @param res The HTTP response object used to send back the user's drafts.
+   *
+   * @returns A Promise that resolves to void.
+   */
+  const getUserDraftsRoute = async (req: GetUserDraftsRequest, res: Response): Promise<void> => {
+    const { username } = req.query;
+
+    if (!username) {
+      res.status(400).send('Username is required');
+      return;
+    }
+
+    try {
+      const result = await getUserDrafts(username);
+
+      if ('error' in result) {
+        res.status(400).send(result.error);
+        return;
+      }
+
+      res.json(result);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        res.status(500).send(`Error when fetching user drafts: ${err.message}`);
+      } else {
+        res.status(500).send(`Error when fetching user drafts`);
+      }
+    }
+  };
+
+  /**
+   * Deletes a draft question.
+   * If there is an error, the HTTP response's status is updated.
+   *
+   * @param req The DeleteDraftRequest object containing the draft ID in params and username in body.
+   * @param res The HTTP response object used to send back the success message.
+   *
+   * @returns A Promise that resolves to void.
+   */
+  const deleteDraftRoute = async (req: DeleteDraftRequest, res: Response): Promise<void> => {
+    const { draftId } = req.params;
+    const { username } = req.body;
+
+    // Validate draft ID format
+    if (!ObjectId.isValid(draftId)) {
+      res.status(400).send('Invalid draft ID format');
+      return;
+    }
+
+    if (!username) {
+      res.status(400).send('Username is required');
+      return;
+    }
+
+    try {
+      const result = await deleteDraft(draftId, username);
+
+      if ('error' in result) {
+        if (result.error === 'Draft not found') {
+          res.status(404).send(result.error);
+        } else if (result.error.includes('Unauthorized')) {
+          res.status(403).send(result.error);
+        } else {
+          res.status(400).send(result.error);
+        }
+        return;
+      }
+
+      res.json({ message: 'Draft deleted successfully' });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        res.status(500).send(`Error when deleting draft: ${err.message}`);
+      } else {
+        res.status(500).send(`Error when deleting draft`);
+      }
+    }
+  };
+
+  /**
+   * Publishes a draft as a question.
+   * If there is an error, the HTTP response's status is updated.
+   *
+   * @param req The PublishDraftRequest object containing the draft ID in params and username in body.
+   * @param res The HTTP response object used to send back the published question.
+   *
+   * @returns A Promise that resolves to void.
+   */
+  const publishDraftRoute = async (req: PublishDraftRequest, res: Response): Promise<void> => {
+    const { draftId } = req.params;
+    const { username } = req.body;
+
+    // Validate draft ID format
+    if (!ObjectId.isValid(draftId)) {
+      res.status(400).send('Invalid draft ID format');
+      return;
+    }
+
+    if (!username) {
+      res.status(400).send('Username is required');
+      return;
+    }
+
+    try {
+      const result = await publishDraft(draftId, username);
+
+      if ('error' in result) {
+        if (result.error === 'Draft not found') {
+          res.status(404).send(result.error);
+        } else if (result.error.includes('Unauthorized')) {
+          res.status(403).send(result.error);
+        } else {
+          res.status(400).send(result.error);
+        }
+        return;
+      }
+
+      // Populate the fields of the published question and emit it
+      const populatedQuestion = await populateDocument(result._id.toString(), 'question');
+      
+      if ('error' in populatedQuestion) {
+        throw new Error(populatedQuestion.error);
+      }
+
+      // Emit the new question to all connected clients
+      socket.emit('questionUpdate', populatedQuestion as PopulatedDatabaseQuestion);
+      res.status(201).json(populatedQuestion);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        res.status(500).send(`Error when publishing draft: ${err.message}`);
+      } else {
+        res.status(500).send(`Error when publishing draft`);
+      }
+    }
+  };
+
   // add appropriate HTTP verbs and their endpoints to the router
   router.get('/getQuestion', getQuestionsByFilter);
   router.get('/getQuestionById/:qid', getQuestionById);
@@ -440,6 +671,13 @@ const questionController = (socket: FakeSOSocket) => {
   router.post('/followQuestion', followQuestion);
   router.get('/getQuestionVersions/:qid', getQuestionVersionsRoute);
   router.post('/rollbackQuestion/:qid/:versionId', rollbackQuestionRoute);
+  
+  // Draft endpoints
+  router.post('/saveDraft', saveDraftRoute);
+  router.put('/updateDraft/:draftId', updateDraftRoute);
+  router.get('/getUserDrafts', getUserDraftsRoute);
+  router.delete('/deleteDraft/:draftId', deleteDraftRoute);
+  router.post('/publishDraft/:draftId', publishDraftRoute);
 
   return router;
 };

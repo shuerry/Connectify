@@ -4,6 +4,7 @@ import { Answer, PopulatedDatabaseAnswer } from './answer';
 import { DatabaseTag, Tag } from './tag';
 import { Comment, DatabaseComment } from './comment';
 import { DatabaseCommunity } from './community';
+import { User } from './user';
 
 /**
  * Type representing the possible ordering options for questions.
@@ -275,3 +276,121 @@ export type QuestionVersionsResponse = PopulatedDatabaseQuestionVersion[] | { er
  * - Either a PopulatedDatabaseQuestion object or an error message.
  */
 export type RollbackQuestionResponse = PopulatedDatabaseQuestion | { error: string };
+
+/**
+ * Represents a draft question.
+ * - `title`: The title of the draft question.
+ * - `text`: The detailed content of the draft question.
+ * - `tags`: An array of tags associated with the draft question.
+ * - `askedBy`: The username of the user who created the draft.
+ * - `community`: The ObjectId of the community the draft belongs to, or `null`.
+ * - `createdAt`: The timestamp when the draft was created.
+ * - `updatedAt`: The timestamp when the draft was last updated.
+ */
+export interface Draft {
+  title: string;
+  text: string;
+  tags: Tag[];
+  askedBy: string;
+  community: ObjectId | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Represents a draft stored in the database.
+ * - `_id`: Unique identifier for the draft.
+ * - `tags`: An array of ObjectIds referencing tags associated with the draft.
+ * - `community`: An ObjectId referencing the community the draft belongs to, or `null`.
+ */
+export interface DatabaseDraft extends Omit<Draft, 'tags' | 'community'> {
+  _id: ObjectId;
+  tags: ObjectId[];
+  community: ObjectId | null;
+}
+
+/**
+ * Represents a fully populated draft from the database.
+ * - `tags`: An array of populated `DatabaseTag` objects.
+ * - `community`: A populated `DatabaseCommunity` object or `null`.
+ */
+export interface PopulatedDatabaseDraft extends Omit<DatabaseDraft, 'tags' | 'community'> {
+  tags: DatabaseTag[];
+  community: DatabaseCommunity | null;
+}
+
+/**
+ * Interface for the request body when saving a new draft.
+ * - `body`: The draft being saved.
+ */
+export interface SaveDraftRequest extends Request {
+  body: Draft;
+}
+
+/**
+ * Interface for the request body when updating an existing draft.
+ * - `draftId`: The unique identifier of the draft being updated (params).
+ * - `body`: The updated draft data.
+ */
+export interface UpdateDraftRequest extends Request {
+  params: {
+    draftId: string;
+  };
+  body: Draft;
+}
+
+/**
+ * Interface for the request when getting user drafts.
+ * - `username`: The username of the user whose drafts to retrieve (query).
+ */
+export interface GetUserDraftsRequest extends Request {
+  query: {
+    username: string;
+  };
+}
+
+/**
+ * Interface for the request when deleting a draft.
+ * - `draftId`: The unique identifier of the draft to delete (params).
+ * - `username`: The username of the user making the request (body).
+ */
+export interface DeleteDraftRequest extends Request {
+  params: {
+    draftId: string;
+  };
+  body: {
+    username: string;
+  };
+}
+
+/**
+ * Interface for the request when publishing a draft as a question.
+ * - `draftId`: The unique identifier of the draft to publish (params).
+ * - `username`: The username of the user making the request (body).
+ */
+export interface PublishDraftRequest extends Request {
+  params: {
+    draftId: string;
+  };
+  body: {
+    username: string;
+  };
+}
+
+/**
+ * Type representing possible responses for draft-related operations.
+ * - Either a DatabaseDraft object or an error message.
+ */
+export type DraftResponse = DatabaseDraft | { error: string };
+
+/**
+ * Type representing possible responses for getting user drafts.
+ * - Either an array of PopulatedDatabaseDraft objects or an error message.
+ */
+export type UserDraftsResponse = PopulatedDatabaseDraft[] | { error: string };
+
+/**
+ * Type representing possible responses for publishing a draft.
+ * - Either a PopulatedDatabaseQuestion object or an error message.
+ */
+export type PublishDraftResponse = PopulatedDatabaseQuestion | { error: string };
