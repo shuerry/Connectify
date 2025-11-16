@@ -4,7 +4,6 @@ import { Answer, PopulatedDatabaseAnswer } from './answer';
 import { DatabaseTag, Tag } from './tag';
 import { Comment, DatabaseComment } from './comment';
 import { DatabaseCommunity } from './community';
-import { SafeDatabaseUser } from './user';
 
 /**
  * Type representing the possible ordering options for questions.
@@ -101,7 +100,7 @@ export type VoteInterface = { msg: string; upVotes: string[]; downVotes: string[
 export type VoteResponse = VoteInterface | { error: string };
 
 /**
- * Type representing an object with the follower success message and updated followers list.  
+ * Type representing an object with the follower success message and updated followers list.
  */
 export type FollowInterface = { msg: string; followers: User[] };
 
@@ -231,8 +230,7 @@ export interface DatabaseQuestionVersion {
  * Represents a fully populated question version from the database.
  * - `tags`: An array of populated `DatabaseTag` objects.
  */
-export interface PopulatedDatabaseQuestionVersion
-  extends Omit<DatabaseQuestionVersion, 'tags'> {
+export interface PopulatedDatabaseQuestionVersion extends Omit<DatabaseQuestionVersion, 'tags'> {
   tags: DatabaseTag[];
 }
 

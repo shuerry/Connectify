@@ -1,5 +1,16 @@
-import { Q1_DESC, Q2_DESC, Q3_DESC, Q4_DESC } from '../../../server/testData/post_strings';
-import { createQuestion, goToAskQuestion, loginUser, setupTest, teardownTest } from '../support/helpers';
+import {
+  Q1_DESC,
+  Q2_DESC,
+  Q3_DESC,
+  Q4_DESC,
+} from "../../../server/testData/post_strings";
+import {
+  createQuestion,
+  goToAskQuestion,
+  loginUser,
+  setupTest,
+  teardownTest,
+} from "../support/helpers";
 
 describe("Cypress Tests to verify asking new questions", () => {
   beforeEach(() => {
@@ -10,11 +21,14 @@ describe("Cypress Tests to verify asking new questions", () => {
     teardownTest();
   });
 
-
   it("2.1 | Ask a Question creates and displays expected meta data", () => {
-    loginUser('user123');
+    loginUser("user123");
 
-    createQuestion("Test Question Q1", "Test Question Q1 Text T1", "javascript");
+    createQuestion(
+      "Test Question Q1",
+      "Test Question Q1 Text T1",
+      "javascript",
+    );
 
     cy.contains("Fake Stack Overflow");
     cy.contains("11 questions");
@@ -30,7 +44,7 @@ describe("Cypress Tests to verify asking new questions", () => {
       "1 answers",
       "1 answers",
       "1 answers",
-      "1 answers"
+      "1 answers",
     ];
     const views = [
       "0 views",
@@ -55,13 +69,13 @@ describe("Cypress Tests to verify asking new questions", () => {
   });
 
   it("2.2 | Ask a Question with empty title shows error", () => {
-    loginUser('user123');
-    
+    loginUser("user123");
+
     cy.contains("Ask a Question").click();
     cy.get("#formTextInput").type("Test Question 1 Text Q1");
     cy.get("#formTagInput").type("javascript");
     cy.contains("Post Question").click();
-    
+
     cy.contains("Title cannot be empty");
   });
 });

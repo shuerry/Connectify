@@ -1,4 +1,12 @@
-import { createAnswer, createQuestion, goToAnswerQuestion, goToQuestions, loginUser, setupTest, teardownTest } from "../support/helpers";
+import {
+  createAnswer,
+  createQuestion,
+  goToAnswerQuestion,
+  goToQuestions,
+  loginUser,
+  setupTest,
+  teardownTest,
+} from "../support/helpers";
 
 const Q1_TITLE = "How to properly handle async data fetching in React?";
 const Q2_TITLE = "Node.js memory issues when handling large file uploads";
@@ -21,7 +29,7 @@ describe("Cypress Tests to verify order of questions displayed", () => {
   });
 
   it('10.1 | Adds three questions and one answer, then click "Questions", then click unanswered button, verifies the sequence', () => {
-    loginUser('user123');
+    loginUser("user123");
 
     createQuestion("Test Question A", "Test Question A Text", "javascript");
 
@@ -54,11 +62,11 @@ describe("Cypress Tests to verify order of questions displayed", () => {
       Q4_TITLE,
       Q3_TITLE,
       Q2_TITLE,
-      Q1_TITLE
+      Q1_TITLE,
     ];
 
-    loginUser('user123');
-    
+    loginUser("user123");
+
     cy.get(".postTitle").each(($el, index, $list) => {
       cy.wrap($el).should("contain", qTitles[index]);
     });
@@ -75,10 +83,10 @@ describe("Cypress Tests to verify order of questions displayed", () => {
       Q3_TITLE,
       Q10_TITLE,
       Q5_TITLE,
-      Q9_TITLE
+      Q9_TITLE,
     ];
 
-    loginUser('user123');
+    loginUser("user123");
 
     cy.contains("Most Viewed").click();
     cy.get(".postTitle").each(($el, index, $list) => {

@@ -1,5 +1,5 @@
 const { defineConfig } = require("cypress");
-require('dotenv').config();
+require("dotenv").config();
 
 export default defineConfig({
   // setupNodeEvents can be defined in either

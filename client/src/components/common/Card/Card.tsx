@@ -33,17 +33,18 @@ const Card: React.FC<CardProps> = ({
     .filter(Boolean)
     .join(' ');
 
-  const CardElement = onClick ? 'button' : 'div';
+  const elementType = onClick ? 'button' : 'div';
 
-  return (
-    <CardElement
-      className={cardClasses}
-      onClick={onClick}
-      type={onClick ? 'button' : undefined}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}>
-      {children}
-    </CardElement>
+  return React.createElement(
+    elementType,
+    {
+      className: cardClasses,
+      onClick,
+      type: onClick ? 'button' : undefined,
+      role: onClick ? 'button' : undefined,
+      tabIndex: onClick ? 0 : undefined,
+    },
+    children,
   );
 };
 

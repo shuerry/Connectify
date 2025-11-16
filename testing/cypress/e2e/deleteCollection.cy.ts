@@ -1,7 +1,13 @@
-import {deleteCollection, goToMyCollections, loginUser, setupTest, teardownTest, verifyCollectionExists } from '../support/helpers';
+import {
+  deleteCollection,
+  goToMyCollections,
+  loginUser,
+  setupTest,
+  teardownTest,
+  verifyCollectionExists,
+} from "../support/helpers";
 
 describe("Cypress Tests to verify deleting a collections", () => {
-
   beforeEach(() => {
     setupTest();
   });
@@ -11,12 +17,11 @@ describe("Cypress Tests to verify deleting a collections", () => {
   });
 
   it("9.1 | Delete an exisitng collections in the My Collections Page", () => {
-    
-    loginUser('user123');
+    loginUser("user123");
 
     goToMyCollections();
-    
-    cy.get('.collections-title').should('contain', "Collections");
+
+    cy.get(".collections-title").should("contain", "Collections");
 
     // Verify some pre-seeded collections appear
     verifyCollectionExists("React Favorites");
@@ -24,7 +29,6 @@ describe("Cypress Tests to verify deleting a collections", () => {
     deleteCollection("React Favorites");
 
     // Verify deletion
-    cy.get('.collection-name').should('not.contain', "React Favorites");
-
+    cy.get(".collection-name").should("not.contain", "React Favorites");
   });
 });
