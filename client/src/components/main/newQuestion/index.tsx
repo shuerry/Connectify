@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useNewQuestion from '../../../hooks/useNewQuestion';
 import './index.css';
 import ProfanityFilterModal from './profanityFilterModal';
 import filter from 'leo-profanity';
+import useDrafts from '../../../hooks/useDrafts';
+import useUserContext from '../../../hooks/useUserContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 /**
  * NewQuestionPage component allows users to submit a new question with a title,
@@ -16,6 +19,8 @@ const NewQuestionPage = () => {
     setText,
     tagNames,
     setTagNames,
+    community,
+    setCommunity,
     communityList,
     handleDropdownChange,
     titleErr,
@@ -26,6 +31,34 @@ const NewQuestionPage = () => {
 
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [filterReason, setFilterReason] = useState('');
+  const { saveDraft: apiSaveDraft, updateDraft: apiUpdateDraft, getUserDrafts } = useDrafts();
+  const { user } = useUserContext();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const draftId = params.get('draftId');
+    if (!draftId) return;
+    if (!user || !user.username) return;
+
+    (async () => {
+      try {
+        const drafts = await getUserDrafts(user.username);
+        const found = drafts.find(d => d._id.toString() === draftId);
+        if (found) {
+          setTitle(found.title || '');
+          setText(found.text || '');
+          setTagNames((found.tags || []).map((t: any) => t.name).join(' '));
+          if (found.community) setCommunity(found.community as any);
+          setCurrentDraftId(found._id.toString());
+        }
+      } catch (e) {
+        // ignore errors
+      }
+    })();
+  }, [location.search, user, getUserDrafts, setTitle, setText, setTagNames, setCommunity]);
 
   return (
     <div className='reddit-new-question'>
@@ -234,7 +267,43 @@ const NewQuestionPage = () => {
               </div>
             </div>
             <div className='reddit-actions-right'>
-              <button className='reddit-btn reddit-btn-secondary'>
+              <button
+                className='reddit-btn reddit-btn-secondary'
+                onClick={async () => {
+                  if (!user || !user.username) {
+                    alert('You must be logged in to save drafts');
+                    navigate('/login');
+                    return;
+                  }
+
+                  const tagArr = tagNames
+                    .trim()
+                    .split(/\s+/)
+                    .filter(t => t.length > 0)
+                    .map(name => ({ name, description: `Tag for ${name}` }));
+
+                  const payload = {
+                    title: title.trim(),
+                    text: text.trim(),
+                    tags: tagArr,
+                    askedBy: user.username,
+                    community: community ? community._id : null,
+                  };
+
+                  try {
+                    if (currentDraftId) {
+                      await apiUpdateDraft(currentDraftId, payload);
+                      alert('Draft updated');
+                    } else {
+                      const saved = await apiSaveDraft(payload);
+                      setCurrentDraftId(saved._id.toString());
+                      alert('Draft saved');
+                    }
+                  } catch (err) {
+                    alert(err instanceof Error ? err.message : 'Failed to save draft');
+                  }
+                }}
+              >
                 <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
                   <path d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4z' />
                 </svg>

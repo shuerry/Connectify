@@ -1,7 +1,6 @@
 import './index.css';
 import { useNavigate } from 'react-router-dom';
 import useAllGamesPage from '../../../../hooks/useAllGamesPage';
-import GameCard from './gameCard';
 
 /**
  * Component to display the "All Games" page, which provides functionality to view, create, and join games.
@@ -12,15 +11,7 @@ import GameCard from './gameCard';
  */
 const AllGamesPage = () => {
   const navigate = useNavigate();
-  const {
-    availableGames,
-    handleJoin,
-    fetchGames,
-    isModalOpen,
-    handleToggleModal,
-    handleSelectGameType,
-    error,
-  } = useAllGamesPage();
+  const { isModalOpen, handleToggleModal, handleSelectGameType } = useAllGamesPage();
 
   return (
     <div className='game-page'>

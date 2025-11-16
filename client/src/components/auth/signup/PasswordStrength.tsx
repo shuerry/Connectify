@@ -83,31 +83,29 @@ const PasswordStrength = ({ password }: PasswordStrengthProps) => {
           {analysis.strengthText}
         </div>
       </div>
-      
+
       <div className='strength-bar-container'>
-        <div 
+        <div
           className={`strength-bar strength-${analysis.strengthLevel}`}
           style={{ width: `${analysis.percentage}%` }}
         />
       </div>
-      
+
       <div className='requirements-list'>
         {PASSWORD_REQUIREMENTS.map((requirement: PasswordRequirement) => (
           <div
             key={requirement.id}
-            className={`requirement ${analysis.metRequirements.includes(requirement) ? 'met' : 'unmet'}`}
-          >
+            className={`requirement ${analysis.metRequirements.includes(requirement) ? 'met' : 'unmet'}`}>
             <svg
               className='requirement-icon'
               width='16'
               height='16'
               viewBox='0 0 24 24'
-              fill='currentColor'
-            >
+              fill='currentColor'>
               {analysis.metRequirements.includes(requirement) ? (
-                <path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/>
+                <path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z' />
               ) : (
-                <path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/>
+                <path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z' />
               )}
             </svg>
             <span className='requirement-text'>{requirement.label}</span>

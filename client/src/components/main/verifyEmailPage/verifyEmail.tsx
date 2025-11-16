@@ -28,8 +28,9 @@ export default function VerifyEmail() {
         const r = await verifyEmail(token);
         setState('ok');
         setMessage(r?.msg || 'Email verified successfully.');
-      } catch (e: any) {
-        const apiErr = e?.response?.data?.error || e?.message || 'Verification failed.';
+      } catch (e: unknown) {
+        const error = e as Error & { response?: { data?: { error?: string } } };
+        const apiErr = error?.response?.data?.error || error?.message || 'Verification failed.';
         setState('err');
         setMessage(apiErr);
       }

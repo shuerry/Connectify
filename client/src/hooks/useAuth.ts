@@ -111,17 +111,20 @@ const useAuth = (authType: 'login' | 'signup') => {
       }
 
       setUser(user);
-      
+
       // Handle remember me functionality for login
       if (authType === 'login' && rememberMe) {
-        localStorage.setItem('rememberedUser', JSON.stringify({
-          user,
-          timestamp: Date.now(),
-          // Store for 30 days
-          expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000)
-        }));
+        localStorage.setItem(
+          'rememberedUser',
+          JSON.stringify({
+            user,
+            timestamp: Date.now(),
+            // Store for 30 days
+            expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+          }),
+        );
       }
-      
+
       navigate('/home');
     } catch (error) {
       setErr((error as Error).message);

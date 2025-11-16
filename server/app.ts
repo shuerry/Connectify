@@ -115,17 +115,7 @@ console.log('Allowed CORS origins:', ALLOWED_CLIENT_ORIGINS);
 // Minimal CORS for REST API (avoids adding a dependency). Uses same allowed origins as Socket.IO
 app.use((req: Request, res: Response, next: NextFunction) => {
   const requestOrigin = req.headers.origin;
-  let isAllowed = requestOrigin && ALLOWED_CLIENT_ORIGINS.includes(requestOrigin);
-
-  // In production, also allow any onrender.com subdomain for flexibility
-  if (!isAllowed && process.env.NODE_ENV === 'production' && requestOrigin) {
-    isAllowed = requestOrigin.endsWith('.onrender.com') && requestOrigin.startsWith('https://');
-  }
-
-  // Log CORS decisions for debugging
-  if (requestOrigin) {
-    console.log(`CORS check - Origin: ${requestOrigin}, Allowed: ${isAllowed}`);
-  }
+  const isAllowed = requestOrigin && ALLOWED_CLIENT_ORIGINS.includes(requestOrigin);
   if (isAllowed) {
     res.header('Access-Control-Allow-Origin', requestOrigin);
     res.header('Vary', 'Origin');

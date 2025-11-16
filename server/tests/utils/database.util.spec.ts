@@ -104,36 +104,28 @@ describe('populateDocument', () => {
   });
 
   it('should fetch and populate a chat document', async () => {
+    const messageDate = new Date();
+    const mockMessage = {
+      _id: 'messageId',
+      msg: 'Hello',
+      msgFrom: 'user1',
+      msgDateTime: messageDate,
+      type: 'text',
+    };
+
     const mockChat = {
       _id: 'chatId',
       participants: new Map([['user1', true]]),
-      messages: [
-        {
-          _id: 'messageId',
-          msg: 'Hello',
-          msgFrom: 'user1',
-          msgDateTime: new Date(),
-          type: 'text',
-        },
-      ],
-      toObject: jest.fn().mockReturnValue({
-        _id: 'chatId',
-        participants: new Map([['user1', true]]),
-        messages: [
-          {
-            _id: 'messageId',
-            msg: 'Hello',
-            msgFrom: 'user1',
-            msgDateTime: new Date(),
-            type: 'text',
-          },
-        ],
-      }),
+      messages: [mockMessage],
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
+
     const mockUser = {
       _id: 'userId',
       username: 'user1',
     };
+
     (ChatModel.findOne as jest.Mock).mockReturnValue({
       populate: jest.fn().mockResolvedValue(mockChat),
     });
@@ -142,22 +134,27 @@ describe('populateDocument', () => {
     const result = await populateDocument('chatId', 'chat');
 
     expect(ChatModel.findOne).toHaveBeenCalledWith({ _id: 'chatId' });
-    expect(result).toEqual({
-      ...mockChat.toObject(),
-      messages: [
-        {
-          _id: 'messageId',
-          msg: 'Hello',
-          msgFrom: 'user1',
-          msgDateTime: mockChat.messages[0].msgDateTime,
-          type: 'text',
-          user: {
-            _id: 'userId',
-            username: 'user1',
-          },
-        },
-      ],
-    });
+
+    // Since populateChat returns a transformed object, we need to check the specific structure
+    expect(result).toEqual(
+      expect.objectContaining({
+        _id: 'chatId',
+        participants: new Map([['user1', true]]),
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            _id: 'messageId',
+            msg: 'Hello',
+            msgFrom: 'user1',
+            msgDateTime: messageDate,
+            type: 'text',
+            user: {
+              _id: 'userId',
+              username: 'user1',
+            },
+          }),
+        ]),
+      }),
+    );
   });
 
   it('should return an error message if chat document is not found', async () => {

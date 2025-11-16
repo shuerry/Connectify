@@ -17,14 +17,17 @@ const TermsOfService = () => {
           <section className='terms-section'>
             <h2>1. Acceptance of Terms</h2>
             <p>
-              By accessing and using this Stack Overflow-style platform ("Service"), you accept and agree to be bound by the terms and provision of this agreement.
+              By accessing and using this Stack Overflow-style platform ("Service"), you accept and
+              agree to be bound by the terms and provision of this agreement.
             </p>
           </section>
 
           <section className='terms-section'>
             <h2>2. User Accounts and Registration</h2>
             <p>
-              You must provide accurate and complete registration information. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.
+              You must provide accurate and complete registration information. You are responsible
+              for maintaining the confidentiality of your account credentials and for all activities
+              that occur under your account.
             </p>
             <ul>
               <li>Users must be at least 13 years old to create an account</li>
@@ -37,8 +40,11 @@ const TermsOfService = () => {
           <section className='terms-section'>
             <h2>3. Content Policy and Community Guidelines</h2>
             <h3>3.1 Acceptable Content</h3>
-            <p>Users may post questions, answers, comments, and other content related to programming and technology topics.</p>
-            
+            <p>
+              Users may post questions, answers, comments, and other content related to programming
+              and technology topics.
+            </p>
+
             <h3>3.2 Prohibited Content</h3>
             <p>The following types of content are strictly prohibited:</p>
             <ul>
@@ -70,9 +76,7 @@ const TermsOfService = () => {
           <section className='terms-section'>
             <h2>5. Private Rooms and Communities</h2>
             <h3>5.1 Private Communities</h3>
-            <p>
-              Users can create private communities with restricted access:
-            </p>
+            <p>Users can create private communities with restricted access:</p>
             <ul>
               <li>Community creators act as moderators</li>
               <li>Invitation-only or approval-based membership</li>
@@ -81,9 +85,7 @@ const TermsOfService = () => {
             </ul>
 
             <h3>5.2 Direct Messaging</h3>
-            <p>
-              Private messaging between users is available with the following guidelines:
-            </p>
+            <p>Private messaging between users is available with the following guidelines:</p>
             <ul>
               <li>No spam or unsolicited commercial messages</li>
               <li>Harassment via direct messages is prohibited</li>
@@ -94,9 +96,7 @@ const TermsOfService = () => {
 
           <section className='terms-section'>
             <h2>6. Gaming Features</h2>
-            <p>
-              Our platform includes gaming features such as Connect Four:
-            </p>
+            <p>Our platform includes gaming features such as Connect Four:</p>
             <ul>
               <li>Games are for entertainment purposes only</li>
               <li>No wagering or gambling is permitted</li>
@@ -127,38 +127,43 @@ const TermsOfService = () => {
           <section className='terms-section'>
             <h2>8. Intellectual Property</h2>
             <p>
-              By posting content, you grant us a non-exclusive license to use, modify, and distribute your content. You retain ownership of your original content but are responsible for ensuring you have the right to share any content you post.
+              By posting content, you grant us a non-exclusive license to use, modify, and
+              distribute your content. You retain ownership of your original content but are
+              responsible for ensuring you have the right to share any content you post.
             </p>
           </section>
 
           <section className='terms-section'>
             <h2>9. Limitation of Liability</h2>
             <p>
-              The Service is provided "as is" without warranties. We are not liable for any damages arising from your use of the Service, including but not limited to data loss, security breaches, or interactions with other users.
+              The Service is provided "as is" without warranties. We are not liable for any damages
+              arising from your use of the Service, including but not limited to data loss, security
+              breaches, or interactions with other users.
             </p>
           </section>
 
           <section className='terms-section'>
             <h2>10. Changes to Terms</h2>
             <p>
-              We reserve the right to modify these terms at any time. Users will be notified of significant changes, and continued use constitutes acceptance of updated terms.
+              We reserve the right to modify these terms at any time. Users will be notified of
+              significant changes, and continued use constitutes acceptance of updated terms.
             </p>
           </section>
 
           <section className='terms-section'>
             <h2>11. Contact Information</h2>
             <p>
-              For questions about these terms or to report violations, contact our support team through the platform's reporting system or email us at legal@stackoverflowclone.com.
+              For questions about these terms or to report violations, contact our support team
+              through the platform's reporting system or email us at legal@stackoverflowclone.com.
             </p>
           </section>
         </div>
 
         <footer className='terms-footer'>
+          <p>Last updated: November 10, 2025</p>
           <p>
-            Last updated: November 10, 2025
-          </p>
-          <p>
-            By using this service, you acknowledge that you have read and understood these Terms of Service.
+            By using this service, you acknowledge that you have read and understood these Terms of
+            Service.
           </p>
         </footer>
       </div>

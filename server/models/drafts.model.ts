@@ -3,23 +3,24 @@ import { Schema, model } from 'mongoose';
 /**
  * Schema for the drafts collection.
  */
-const DraftSchema = new Schema(
+const draftSchema = new Schema(
   {
     title: {
       type: String,
       required: true,
-      maxlength: 50,
+      maxlength: 100,
     },
     text: {
       type: String,
-      required: true,
-      maxlength: 140,
+      required: false,
+      maxlength: 5000,
+      default: '',
     },
     tags: [
       {
         type: Schema.Types.ObjectId,
         ref: 'Tag',
-        required: true,
+        required: false,
       },
     ],
     askedBy: {
@@ -34,9 +35,9 @@ const DraftSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-const Draft = model('Draft', DraftSchema);
+const draft = model('Draft', draftSchema);
 
-export default Draft;
+export default draft;

@@ -615,11 +615,11 @@ export const saveDraft = async (
   tags: ObjectId[],
   askedBy: string,
   community?: ObjectId | null,
-): Promise<{ msg: string } | { error: string }> => {
+): Promise<any | { error: string }> => {
   try {
-    const Draft = (await import('../models/drafts.model')).default;
-    
-    const newDraft = new Draft({
+    const DraftModel = (await import('../models/drafts.model')).default;
+
+    const newDraft = new DraftModel({
       title,
       text,
       tags,
@@ -632,8 +632,16 @@ export const saveDraft = async (
       return { error: 'Failed to save draft' };
     }
 
-    return { msg: 'Draft saved successfully' };
+    // Populate tags and community before returning (Mongoose v6+ pattern)
+    try {
+      const populated = await (savedDraft as any).populate('tags').populate('community');
+      return populated;
+    } catch (e) {
+      return savedDraft;
+    }
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('saveDraft error:', error);
     return { error: 'Error when saving draft' };
   }
 };
@@ -648,11 +656,11 @@ export const updateDraft = async (
   tags: ObjectId[],
   askedBy: string,
   community?: ObjectId | null,
-): Promise<{ msg: string } | { error: string }> => {
+): Promise<any | { error: string }> => {
   try {
-    const Draft = (await import('../models/drafts.model')).default;
-    
-    const updatedDraft = await Draft.findOneAndUpdate(
+    const DraftModel = (await import('../models/drafts.model')).default;
+
+    const updatedDraft = await DraftModel.findOneAndUpdate(
       { _id: draftId, askedBy },
       { title, text, tags, community },
       { new: true },
@@ -662,8 +670,16 @@ export const updateDraft = async (
       return { error: 'Draft not found or unauthorized' };
     }
 
-    return { msg: 'Draft updated successfully' };
+    // Populate tags and community before returning (Mongoose v6+ pattern)
+    try {
+      const populated = await (updatedDraft as any).populate('tags').populate('community');
+      return populated;
+    } catch (e) {
+      return updatedDraft;
+    }
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('updateDraft error:', error);
     return { error: 'Error when updating draft' };
   }
 };
@@ -673,9 +689,9 @@ export const updateDraft = async (
  */
 export const getUserDrafts = async (username: string) => {
   try {
-    const Draft = (await import('../models/drafts.model')).default;
-    
-    const drafts = await Draft.find({ askedBy: username })
+    const DraftModel = (await import('../models/drafts.model')).default;
+
+    const drafts = await DraftModel.find({ askedBy: username })
       .populate('tags')
       .populate('community')
       .sort({ updatedAt: -1 });
@@ -694,9 +710,9 @@ export const deleteDraft = async (
   username: string,
 ): Promise<{ msg: string } | { error: string }> => {
   try {
-    const Draft = (await import('../models/drafts.model')).default;
-    
-    const deletedDraft = await Draft.findOneAndDelete({ _id: draftId, askedBy: username });
+    const DraftModel = (await import('../models/drafts.model')).default;
+
+    const deletedDraft = await DraftModel.findOneAndDelete({ _id: draftId, askedBy: username });
 
     if (!deletedDraft) {
       return { error: 'Draft not found or unauthorized' };
@@ -716,9 +732,9 @@ export const publishDraft = async (
   username: string,
 ): Promise<QuestionResponse> => {
   try {
-    const Draft = (await import('../models/drafts.model')).default;
-    
-    const draft = await Draft.findOne({ _id: draftId, askedBy: username })
+    const DraftModel = (await import('../models/drafts.model')).default;
+
+    const draft = await DraftModel.findOne({ _id: draftId, askedBy: username })
       .populate('tags')
       .populate('community');
 
@@ -729,8 +745,11 @@ export const publishDraft = async (
     // Create a new question from the draft
     const question: Question = {
       title: draft.title,
-      text: draft.text,
-      tags: draft.tags.map((tag: any) => ({ name: tag.name, description: tag.description })),
+      text: draft.text ?? '',
+      tags: (draft.tags as unknown as DatabaseTag[]).map(tag => ({
+        name: tag.name,
+        description: tag.description,
+      })),
       askedBy: username,
       askDateTime: new Date(),
       answers: [],
@@ -741,7 +760,7 @@ export const publishDraft = async (
       community: draft.community?._id || null,
       followers: [],
     };
-    
+
     const questionResult = await saveQuestion(question);
 
     if ('error' in questionResult) {
@@ -749,7 +768,7 @@ export const publishDraft = async (
     }
 
     // Delete the draft after successful publication
-    await Draft.findByIdAndDelete(draftId);
+    await DraftModel.findByIdAndDelete(draftId);
 
     return questionResult;
   } catch (error) {

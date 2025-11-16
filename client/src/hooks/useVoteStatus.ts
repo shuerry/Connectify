@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import useUserContext from './useUserContext';
 import { PopulatedDatabaseQuestion } from '../types/types';
 
+interface VoteUpdateData {
+  qid: string;
+  upVotes?: string[];
+  downVotes?: string[];
+}
+
 /**
  * Custom hook to handle voting logic for a question.
  * It manages the current vote count, user vote status (upvoted, downvoted),
@@ -21,33 +27,12 @@ const useVoteStatus = ({ question }: { question: PopulatedDatabaseQuestion }) =>
   const [voted, setVoted] = useState<number>(0);
 
   useEffect(() => {
-    /**
-     * Function to get the current vote value for the user.
-     *
-     * @returns The current vote value for the user in the question, 1 for upvote, -1 for downvote, 0 for no vote.
-     */
-    const getVoteValue = () => {
-      if (user.username && question?.upVotes?.includes(user.username)) {
-        return 1;
-      }
-      if (user.username && question?.downVotes?.includes(user.username)) {
-        return -1;
-      }
-      return 0;
-    };
-
-    // Set the initial count and vote value
-    if (question) {
-      setCount((question.upVotes || []).length - (question.downVotes || []).length);
-      setVoted(getVoteValue());
-    }
-
     // Listen for vote updates via socket
-    const handleVoteUpdate = (voteData: any) => {
+    const handleVoteUpdate = (voteData: VoteUpdateData) => {
       if (voteData.qid === String(question?._id)) {
         const newCount = (voteData.upVotes || []).length - (voteData.downVotes || []).length;
         setCount(newCount);
-        
+
         // Update user's vote status
         if (user.username && voteData.upVotes?.includes(user.username)) {
           setVoted(1);

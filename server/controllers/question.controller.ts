@@ -451,14 +451,28 @@ const questionController = (socket: FakeSOSocket) => {
   const saveDraftRoute = async (req: SaveDraftRequest, res: Response): Promise<void> => {
     try {
       const { title, text, tags, askedBy, community } = req.body;
-      
+
+      // Only title is required for saving drafts; other fields are optional
+      if (!title || typeof title !== 'string' || title.trim().length === 0) {
+        res.status(400).send('Title is required');
+        return;
+      }
+
+      // Ensure tags/text/askedBy have safe defaults if omitted
+      const incomingTags = Array.isArray(tags) ? tags : [];
+      const incomingText = typeof text === 'string' ? text : '';
+      const incomingAskedBy = typeof askedBy === 'string' && askedBy.trim().length > 0 ? askedBy : 'unknown';
+
       // Process tags to get ObjectIds
-      const processedTags = await processTags(tags);
+      const processedTags = await processTags(incomingTags);
       const tagIds = processedTags.map(tag => tag._id);
-      
-      const result = await saveDraft(title, text, tagIds, askedBy, community);
+
+      const result = await saveDraft(title, incomingText, tagIds, incomingAskedBy, community);
 
       if ('error' in result) {
+        // service returned an error object; log it and forward
+        // eslint-disable-next-line no-console
+        console.error('saveDraft service error:', result.error);
         res.status(400).send(result.error);
         return;
       }
@@ -492,12 +506,22 @@ const questionController = (socket: FakeSOSocket) => {
       return;
     }
 
+    // Only title is required for updating drafts; other fields optional
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
+      res.status(400).send('Title is required');
+      return;
+    }
+
+    const incomingTags = Array.isArray(tags) ? tags : [];
+    const incomingText = typeof text === 'string' ? text : '';
+    const incomingAskedBy = typeof askedBy === 'string' && askedBy.trim().length > 0 ? askedBy : 'unknown';
+
     try {
       // Process tags to get ObjectIds
-      const processedTags = await processTags(tags);
+      const processedTags = await processTags(incomingTags);
       const tagIds = processedTags.map(tag => tag._id);
-      
-      const result = await updateDraft(draftId, title, text, tagIds, askedBy, community);
+
+      const result = await updateDraft(draftId, title, incomingText, tagIds, incomingAskedBy, community);
 
       if ('error' in result) {
         if (result.error === 'Draft not found') {
@@ -643,7 +667,7 @@ const questionController = (socket: FakeSOSocket) => {
 
       // Populate the fields of the published question and emit it
       const populatedQuestion = await populateDocument(result._id.toString(), 'question');
-      
+
       if ('error' in populatedQuestion) {
         throw new Error(populatedQuestion.error);
       }
@@ -671,7 +695,7 @@ const questionController = (socket: FakeSOSocket) => {
   router.post('/followQuestion', followQuestion);
   router.get('/getQuestionVersions/:qid', getQuestionVersionsRoute);
   router.post('/rollbackQuestion/:qid/:versionId', rollbackQuestionRoute);
-  
+
   // Draft endpoints
   router.post('/saveDraft', saveDraftRoute);
   router.put('/updateDraft/:draftId', updateDraftRoute);

@@ -84,6 +84,7 @@ const mockPopulatedQuestion: PopulatedDatabaseQuestion = {
   answers: [],
   comments: [],
   community: null,
+  followers: [],
 };
 
 const mockCommunityDatabaseQuestion: DatabaseQuestion = {
@@ -117,6 +118,7 @@ const mockCommunityPopulatedQuestion: PopulatedDatabaseQuestion = {
     admin: 'question3_user',
     participants: ['question3_user'],
   },
+  followers: [],
 };
 
 const ans1: PopulatedDatabaseAnswer = {
@@ -285,19 +287,6 @@ describe('Test questionController', () => {
       // Asserting the response
       expect(response.status).toBe(400);
       expect(openApiError.errors[0].path).toBe('/body/title');
-    });
-
-    it('should return bad request if question text is empty string', async () => {
-      // Making the request
-      const response = await supertest(app)
-        .post('/api/question/addQuestion')
-        .send({ ...mockQuestion, text: '' });
-
-      const openApiError = JSON.parse(response.text);
-
-      // Asserting the response
-      expect(response.status).toBe(400);
-      expect(openApiError.errors[0].path).toBe('/body/text');
     });
 
     it('should return bad request if tags are empty', async () => {

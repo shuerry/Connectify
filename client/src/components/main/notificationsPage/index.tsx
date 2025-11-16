@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   getNotifications,
@@ -14,20 +14,23 @@ export default function NotificationsPage({ username }: { username: string }) {
   const [nextCursor, setNextCursor] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
-  const load = async (cursor?: string) => {
-    setLoading(true);
-    try {
-      const { items: page, nextCursor } = await getNotifications(username, 20, cursor);
-      setItems(prev => (cursor ? [...prev, ...page] : page));
-      setNextCursor(nextCursor);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const load = useCallback(
+    async (cursor?: string) => {
+      setLoading(true);
+      try {
+        const { items: page, nextCursor } = await getNotifications(username, 20, cursor);
+        setItems(prev => (cursor ? [...prev, ...page] : page));
+        setNextCursor(nextCursor);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [username],
+  );
 
   useEffect(() => {
     load();
-  }, [username]);
+  }, [load]);
 
   const onMarkRead = async (id: string) => {
     const updated = await markNotificationRead(id);

@@ -98,8 +98,10 @@ const MessageCard = ({
     }
   };
 
+  const isCurrentUser = message.msgFrom === currentUser.username;
+
   return (
-    <div className='message'>
+    <div className={`message ${isCurrentUser ? 'sender' : 'receiver'}`}>
       <div className='message-header'>
         <div className='message-sender'>{message.msgFrom}</div>
         <div className='message-time'>{getMetaData(new Date(message.msgDateTime))}</div>

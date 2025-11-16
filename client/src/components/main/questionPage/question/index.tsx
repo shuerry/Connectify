@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import './index.css';
 import { getMetaData } from '../../../../tool';
 import { PopulatedDatabaseQuestion } from '../../../../types/types';
@@ -31,14 +32,12 @@ const QuestionView = ({ question }: QuestionProps) => {
     clickTag,
     handleAnswer,
     handleSaveClick,
-    closeModal,
-    isModalOpen,
-    selectedQuestion,
+
     openReportModal,
-    isReportOpen,
+
     reportTarget,
     submitReport,
-    setReportOpen,
+
     isHidden,
     canReport,
     saveDropdownOpen,
