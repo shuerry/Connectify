@@ -34,20 +34,46 @@ const app = express();
 const server = http.createServer(app);
 // allow requests from the local dev client or the production client only
 // Build allowed client origins from env (comma-separated) with sensible defaults
-const allowedClientOrigins: string[] = (
+const ALLOWED_CLIENT_ORIGINS: string[] = (
   process.env.CLIENT_URLS
     ? process.env.CLIENT_URLS.split(',')
         .map(o => o.trim())
         .filter(o => o.length > 0)
     : process.env.CLIENT_URL
       ? [process.env.CLIENT_URL]
-      : ['http://localhost:4530', 'http://127.0.0.1:4530']
+      : [
+          'http://localhost:4530',
+          'http://127.0.0.1:4530',
+          // Add common Render deployment patterns
+          'https://cs4530-f25-509-6v2m.onrender.com',
+          // Allow any onrender.com subdomain in production
+          ...(process.env.NODE_ENV === 'production' ? [] : []),
+        ]
 ) as string[];
 
 const socket: FakeSOSocket = new Server(server, {
   path: '/socket.io',
   cors: {
-    origin: allowedClientOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Check if origin is in allowed list
+      if (ALLOWED_CLIENT_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // In production, allow any onrender.com subdomain
+      if (
+        process.env.NODE_ENV === 'production' &&
+        origin.endsWith('.onrender.com') &&
+        origin.startsWith('https://')
+      ) {
+        return callback(null, true);
+      }
+
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   },
 });
@@ -83,10 +109,23 @@ process.on('SIGINT', async () => {
 
 app.use(express.json());
 
+// Log allowed origins for debugging
+console.log('Allowed CORS origins:', ALLOWED_CLIENT_ORIGINS);
+
 // Minimal CORS for REST API (avoids adding a dependency). Uses same allowed origins as Socket.IO
 app.use((req: Request, res: Response, next: NextFunction) => {
   const requestOrigin = req.headers.origin;
-  const isAllowed = requestOrigin && allowedClientOrigins.includes(requestOrigin);
+  let isAllowed = requestOrigin && ALLOWED_CLIENT_ORIGINS.includes(requestOrigin);
+
+  // In production, also allow any onrender.com subdomain for flexibility
+  if (!isAllowed && process.env.NODE_ENV === 'production' && requestOrigin) {
+    isAllowed = requestOrigin.endsWith('.onrender.com') && requestOrigin.startsWith('https://');
+  }
+
+  // Log CORS decisions for debugging
+  if (requestOrigin) {
+    console.log(`CORS check - Origin: ${requestOrigin}, Allowed: ${isAllowed}`);
+  }
   if (isAllowed) {
     res.header('Access-Control-Allow-Origin', requestOrigin);
     res.header('Vary', 'Origin');
