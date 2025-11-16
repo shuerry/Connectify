@@ -25,27 +25,27 @@ A class diagram for the schema definition is shown below:
 
 ### `/answer`
 
-| Endpoint   | Method | Description      |
-| ---------- | ------ | ---------------- |
+| Endpoint     | Method | Description      |
+| ------------ | ------ | ---------------- |
 | `/addAnswer` | POST   | Add a new answer |
 
 ### `/comment`
 
-| Endpoint    | Method | Description       |
-| ----------- | ------ | ----------------- |
+| Endpoint      | Method | Description       |
+| ------------- | ------ | ----------------- |
 | `/addComment` | POST   | Add a new comment |
 
 ### `/messaging`
 
-| Endpoint     | Method | Description           |
-| ------------ | ------ | --------------------- |
+| Endpoint       | Method | Description           |
+| -------------- | ------ | --------------------- |
 | `/addMessage`  | POST   | Add a new message     |
 | `/getMessages` | GET    | Retrieve all messages |
 
 ### `/question`
 
-| Endpoint          | Method | Description                     |
-| ----------------- | ------ | ------------------------------- |
+| Endpoint            | Method | Description                     |
+| ------------------- | ------ | ------------------------------- |
 | `/getQuestion`      | GET    | Fetch questions by filter       |
 | `/getQuestionById/` | GET    | Fetch a specific question by ID |
 | `/addQuestion`      | POST   | Add a new question              |
@@ -54,15 +54,15 @@ A class diagram for the schema definition is shown below:
 
 ### `/tag`
 
-| Endpoint                   | Method | Description                                   |
-| -------------------------- | ------ | --------------------------------------------- |
+| Endpoint                     | Method | Description                                   |
+| ---------------------------- | ------ | --------------------------------------------- |
 | `/getTagsWithQuestionNumber` | GET    | Fetch tags along with the number of questions |
 | `/getTagByName/`             | GET    | Fetch a specific tag by name                  |
 
 ### `/user`
 
-| Endpoint         | Method | Description                    |
-| ---------------- | ------ | ------------------------------ |
+| Endpoint           | Method | Description                    |
+| ------------------ | ------ | ------------------------------ |
 | `/signup`          | POST   | Create a new user account      |
 | `/login`           | POST   | Log in as a user               |
 | `/resetPassword`   | PATCH  | Reset user password            |
@@ -83,17 +83,17 @@ A class diagram for the schema definition is shown below:
 
 ### `/games`
 
-| Endpoint | Method | Description           |
-| -------- | ------ | --------------------- |
-| `/create`  | POST   | Create a new game     |
-| `/join`    | POST   | Join an existing game |
-| `/leave`   | POST   | Leave a game          |
-| `/games`   | GET    | Retrieve all games    |
+| Endpoint  | Method | Description           |
+| --------- | ------ | --------------------- |
+| `/create` | POST   | Create a new game     |
+| `/join`   | POST   | Join an existing game |
+| `/leave`  | POST   | Leave a game          |
+| `/games`  | GET    | Retrieve all games    |
 
 ### `/api/collection`
 
-| Endpoint                            | Method | Description                         |
-| ----------------------------------- | ------ | ----------------------------------- |
+| Endpoint                              | Method | Description                         |
+| ------------------------------------- | ------ | ----------------------------------- |
 | `/create`                             | POST   | Create a new collection             |
 | `/delete/:collectionId`               | DELETE | Delete a collection                 |
 | `/toggleSaveQuestion`                 | PATCH  | Add/remove question from collection |
@@ -102,13 +102,13 @@ A class diagram for the schema definition is shown below:
 
 ### `/api/community`
 
-| Endpoint                    | Method | Description                      |
-| --------------------------- | ------ | -------------------------------- |
-| `/getCommunity/:communityId`  | GET    | Get a specific community         |
-| `/getAllCommunities`          | GET    | Get all communities              |
-| `/toggleMembership`           | POST   | Join/leave a community           |
-| `/create`                     | POST   | Create a new community           |
-| `/delete/:communityId`        | DELETE | Delete a community          |
+| Endpoint                     | Method | Description              |
+| ---------------------------- | ------ | ------------------------ |
+| `/getCommunity/:communityId` | GET    | Get a specific community |
+| `/getAllCommunities`         | GET    | Get all communities      |
+| `/toggleMembership`          | POST   | Join/leave a community   |
+| `/create`                    | POST   | Create a new community   |
+| `/delete/:communityId`       | DELETE | Delete a community       |
 
 ## OpenAPI specification
 
@@ -116,7 +116,7 @@ OpenAPI specifications as given in the [`server/openapi.yaml`](./server/openapi.
 
 - Start the server as specified earlier (`cd server && npm run dev`).
 - Visit `http://localhost:8000/api/docs` to see the complete API specification in a user friendly manner.
-- You should be able to see and test out individual endpoints using the *Try it out* button associated with each endpoint.
+- You should be able to see and test out individual endpoints using the _Try it out_ button associated with each endpoint.
 
 The specification itself is coupled with an OpenAPI validator (present as a middleware) that validates every request and response against the provided spec document.
 
@@ -127,16 +127,19 @@ Cypress tests are end-to-end tests that can help verify your implementation.
 ### Setup Instructions
 
 1. Navigate to the `testing` directory:
+
    ```sh
    cd testing
    ```
 
 2. Install dependencies:
+
    ```sh
    npm install
    ```
 
 3. Create a `.env` file in the `testing/` directory with the following content:
+
    ```
    MONGODB_URI=mongodb://127.0.0.1:27017
    ```
@@ -144,12 +147,13 @@ Cypress tests are end-to-end tests that can help verify your implementation.
 4. Make sure that both the server and client are already running
 
 5. Run Cypress tests:
+
    ```sh
    npx cypress open
    ```
 
 6. In the Cypress UI that opens:
-   - Select *E2E Testing*
+   - Select _E2E Testing_
    - Choose your browser (Chrome is preferred)
    - Click on any of the test files to run it
    - If any of the tests fail, you should be able to see the exact sequence of steps that led to the failure.

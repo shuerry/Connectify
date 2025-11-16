@@ -1,4 +1,11 @@
-import { setupTest, teardownTest, loginUser, goToCommunities, createCommunity, verifyCommunityDetailsDisplayed } from "../support/helpers";
+import {
+  setupTest,
+  teardownTest,
+  loginUser,
+  goToCommunities,
+  createCommunity,
+  verifyCommunityDetailsDisplayed,
+} from "../support/helpers";
 
 describe("NewCommunityButton", () => {
   beforeEach(() => {

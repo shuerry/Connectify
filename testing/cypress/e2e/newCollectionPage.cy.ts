@@ -6,10 +6,10 @@ import {
   goToCreateCollection,
   verifyCollectionPageDetails,
   createNewCollection,
-  verifyCollectionExists
-} from '../support/helpers';
+  verifyCollectionExists,
+} from "../support/helpers";
 
-describe('Cypress Tests for creating collections', () => {
+describe("Cypress Tests for creating collections", () => {
   beforeEach(() => {
     setupTest();
   });
@@ -18,11 +18,11 @@ describe('Cypress Tests for creating collections', () => {
     teardownTest();
   });
 
-  it('13.1 | Allows user to create a new Public collection', () => {
-    const collectionName = 'Reactss Favorites';
+  it("13.1 | Allows user to create a new Public collection", () => {
+    const collectionName = "Reactss Favorites";
 
     // Log in
-    loginUser('user123');
+    loginUser("user123");
 
     // Navigate to My Collections
     goToMyCollections();
@@ -30,7 +30,11 @@ describe('Cypress Tests for creating collections', () => {
     // Click "Create Collection"
     goToCreateCollection();
 
-    createNewCollection('Reactss Favorites', 'A list of React resources', false);
+    createNewCollection(
+      "Reactss Favorites",
+      "A list of React resources",
+      false,
+    );
 
     goToMyCollections();
 
@@ -40,18 +44,18 @@ describe('Cypress Tests for creating collections', () => {
     verifyCollectionPageDetails(collectionName, "user123");
   });
 
-  it('13.2 | Allows user to create a new Private collection', () => {
-    const collectionName = 'Private Collection';
+  it("13.2 | Allows user to create a new Private collection", () => {
+    const collectionName = "Private Collection";
 
     // Log in
-    loginUser('user123');
+    loginUser("user123");
 
     // Navigate to My Collections
     goToMyCollections();
 
     // Click "Create Collection"
     goToCreateCollection();
-    createNewCollection('Private Collection', 'Only I can see this', true);
+    createNewCollection("Private Collection", "Only I can see this", true);
 
     // Verify the resulting collection page
     verifyCollectionExists(collectionName);

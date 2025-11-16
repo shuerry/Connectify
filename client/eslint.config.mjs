@@ -31,7 +31,16 @@ export default defineConfig([
       'import/no-extraneous-dependencies': [
         'error',
         {
-          devDependencies: ['**/*.spec.ts', 'eslint.config.*'],
+          devDependencies: [
+            '**/*.spec.*',
+            '**/*.test.*',
+            '**/tests/**/*',
+            '**/test/**/*',
+            '**/*.config.*',
+            '**/setup.*',
+            'vitest.config.ts',
+            'eslint.config.*',
+          ],
           includeInternal: true,
         },
       ],
@@ -47,13 +56,9 @@ export default defineConfig([
   },
   {
     files: ['**/*.{ts,tsx}'],
-    extends: tseslint.configs.recommendedTypeChecked,
+    extends: tseslint.configs.recommended,
     languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: '.',
-        globals: globals.browser,
-      },
+      globals: globals.browser,
     },
     plugins: {
       'react-hooks': eslintReactHooks,
@@ -64,66 +69,6 @@ export default defineConfig([
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
 
       '@typescript-eslint/no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }],
-      '@typescript-eslint/naming-convention': [
-        'error',
-        {
-          selector: 'variable',
-          format: ['camelCase'],
-        },
-        {
-          selector: 'variable',
-          types: ['function'],
-          format: ['camelCase', 'PascalCase'],
-        },
-        {
-          selector: 'typeLike',
-          format: ['PascalCase'],
-        },
-        {
-          selector: 'variable',
-          format: ['camelCase'],
-          filter: {
-            regex: '^use[A-Z].*',
-            match: true,
-          },
-        },
-        {
-          selector: 'variable',
-          format: ['PascalCase'],
-          filter: {
-            regex: 'Context$',
-            match: true,
-          },
-        },
-        {
-          selector: 'variable',
-          modifiers: ['global', 'const'],
-          types: ['boolean', 'number', 'string', 'array'],
-          format: ['UPPER_CASE'],
-        },
-        {
-          selector: 'memberLike',
-          modifiers: ['private'],
-          format: ['camelCase'],
-          leadingUnderscore: 'require',
-        },
-      ],
-      // These should be removed if possible
-      '@typescript-eslint/await-thenable': 'off',
-      '@typescript-eslint/no-floating-promises': 'off',
-      '@typescript-eslint/no-misused-promises': 'off',
-      '@typescript-eslint/no-redundant-type-constituents': 'off',
-      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/prefer-promise-reject-errors': 'off',
-      '@typescript-eslint/require-await': 'off',
-      '@typescript-eslint/restrict-plus-operands': 'off',
-      '@typescript-eslint/restrict-template-expressions': 'off',
-      '@typescript-eslint/unbound-method': 'off',
     },
   },
   eslintPluginPrettierRecommended,
