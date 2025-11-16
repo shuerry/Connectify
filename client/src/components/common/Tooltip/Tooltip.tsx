@@ -30,7 +30,7 @@ const Tooltip: React.FC<TooltipProps> = ({
   const [actualPosition, setActualPosition] = useState(position);
   const triggerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const showTooltip = () => {
     if (disabled) return;

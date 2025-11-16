@@ -1,9 +1,7 @@
 import './index.css';
-import { PopulatedDatabaseQuestion } from '../../../../types/types';
 import { useState } from 'react';
 
 interface ReportDropdownProps {
-  question: PopulatedDatabaseQuestion;
   onClose: () => void;
   onSubmit: (reason: string) => void;
 }
@@ -11,7 +9,7 @@ interface ReportDropdownProps {
 /**
  * ReportDropdown component for reporting questions without a modal
  */
-const ReportDropdown = ({ question, onClose, onSubmit }: ReportDropdownProps) => {
+const ReportDropdown = ({ onClose, onSubmit }: ReportDropdownProps) => {
   const [reason, setReason] = useState('');
 
   const handleSubmit = () => {

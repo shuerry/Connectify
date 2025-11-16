@@ -238,7 +238,6 @@
   background-color: var(--gray-50);
 }
 
-<<<<<<< HEAD
 .view-profile-button:active {
   background-color: #003f7f;
 }
@@ -272,7 +271,8 @@
 
 .notifications-count {
   white-space: nowrap;
-=======
+}
+
 .logout-item {
   color: var(--error-600);
 }
@@ -320,5 +320,4 @@
   .search-container {
     margin: 0 var(--space-2);
   }
->>>>>>> 8882380 (Restore comprehensive UI improvements: modern design system, auth forms, dark mode, Connect Four lobby, and accessibility enhancements)
 }

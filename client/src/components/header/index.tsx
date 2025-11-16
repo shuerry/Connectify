@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import useHeader from '../../hooks/useHeader';
 import './index.css';
 import useUserContext from '../../hooks/useUserContext';
-import { NotificationButton } from '../main/notificationsButton';
+import NotificationButton from '../main/notificationsButton';
 
 /**
  * Modern Header component with improved design and user experience.
