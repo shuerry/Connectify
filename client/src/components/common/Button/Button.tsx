@@ -2,17 +2,17 @@ import './Button.css';
 import React from 'react';
 
 interface ButtonProps {
-  children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'success' | 'warning' | 'error';
-  size?: 'xs' | 'sm' | 'md' | 'lg';
-  disabled?: boolean;
-  loading?: boolean;
-  fullWidth?: boolean;
-  icon?: React.ReactNode;
-  iconPosition?: 'left' | 'right';
-  onClick?: () => void;
-  type?: 'button' | 'submit' | 'reset';
-  className?: string;
+  'children': React.ReactNode;
+  'variant'?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'success' | 'warning' | 'error';
+  'size'?: 'xs' | 'sm' | 'md' | 'lg';
+  'disabled'?: boolean;
+  'loading'?: boolean;
+  'fullWidth'?: boolean;
+  'icon'?: React.ReactNode;
+  'iconPosition'?: 'left' | 'right';
+  'onClick'?: () => void;
+  'type'?: 'button' | 'submit' | 'reset';
+  'className'?: string;
   'aria-label'?: string;
 }
 
@@ -52,8 +52,7 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       disabled={disabled || loading}
       aria-label={ariaLabel}
-      aria-disabled={disabled || loading}
-    >
+      aria-disabled={disabled || loading}>
       {loading && (
         <div className='btn-spinner' role='status' aria-label='Loading'>
           <div className='spinner'></div>

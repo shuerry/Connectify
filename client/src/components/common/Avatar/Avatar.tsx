@@ -41,7 +41,7 @@ const Avatar: React.FC<AvatarProps> = ({
 
   const getFallbackColor = (name: string) => {
     if (fallbackColor) return fallbackColor;
-    
+
     const colors = [
       'bg-gradient-to-br from-purple-400 to-purple-600',
       'bg-gradient-to-br from-blue-400 to-blue-600',
@@ -52,7 +52,7 @@ const Avatar: React.FC<AvatarProps> = ({
       'bg-gradient-to-br from-pink-400 to-pink-600',
       'bg-gradient-to-br from-teal-400 to-teal-600',
     ];
-    
+
     const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
   };
@@ -77,19 +77,19 @@ const Avatar: React.FC<AvatarProps> = ({
           <img
             src={src}
             alt={alt || `${name}'s avatar`}
-            className="avatar__image"
-            onError={(e) => {
+            className='avatar__image'
+            onError={e => {
               e.currentTarget.style.display = 'none';
             }}
           />
         ) : (
-          <span className="avatar__initials">{initials}</span>
+          <span className='avatar__initials'>{initials}</span>
         )}
       </div>
-      
+
       {showStatus && status && (
         <div className={`avatar__status avatar__status--${status}`} title={status}>
-          <div className="avatar__status-dot"></div>
+          <div className='avatar__status-dot'></div>
         </div>
       )}
     </div>

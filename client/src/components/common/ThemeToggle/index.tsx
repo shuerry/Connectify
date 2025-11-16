@@ -29,8 +29,7 @@ const ThemeToggle = () => {
       className='theme-toggle'
       onClick={toggleTheme}
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-    >
+      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}>
       <div className={`theme-icon ${isDark ? 'dark' : 'light'}`}>
         {isDark ? (
           // Sun icon for dark mode (switch to light)
@@ -40,7 +39,11 @@ const ThemeToggle = () => {
         ) : (
           // Moon icon for light mode (switch to dark)
           <svg viewBox='0 0 24 24' fill='currentColor'>
-            <path fillRule='evenodd' d='M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z' clipRule='evenodd' />
+            <path
+              fillRule='evenodd'
+              d='M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z'
+              clipRule='evenodd'
+            />
           </svg>
         )}
       </div>

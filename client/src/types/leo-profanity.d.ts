@@ -41,4 +41,3 @@ declare module 'leo-profanity' {
   const leoProfanity: LeoProfanity;
   export default leoProfanity;
 }
-

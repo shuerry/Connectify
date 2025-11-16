@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import {
-  PopulatedDatabaseQuestion,
-  PopulatedDatabaseQuestionVersion,
-} from '../types/types';
+import { PopulatedDatabaseQuestion, PopulatedDatabaseQuestionVersion } from '../types/types';
 
 interface UseQuestionVersionsReturn {
-  getVersions: (qid: string, username: string) => Promise<PopulatedDatabaseQuestionVersion[] | null>;
+  getVersions: (
+    qid: string,
+    username: string,
+  ) => Promise<PopulatedDatabaseQuestionVersion[] | null>;
   rollbackToVersion: (
     qid: string,
     versionId: string,
@@ -104,4 +104,3 @@ export const useQuestionVersions = (): UseQuestionVersionsReturn => {
 };
 
 export default useQuestionVersions;
-

@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { PopulatedDatabaseQuestion, PopulatedDatabaseQuestionVersion } from '../../../../types/types';
-import useQuestionVersions from '../../../../hooks/useQuestionVersions';
+import {
+  PopulatedDatabaseQuestion,
+  PopulatedDatabaseQuestionVersion,
+} from '../../../../types/types';
+import { useQuestionVersions } from '../../../../hooks/useQuestionVersions';
 import useUserContext from '../../../../hooks/useUserContext';
 import './index.css';
 
@@ -15,10 +18,7 @@ interface QuestionVersionHistoryProps {
  * Component for displaying and managing question version history.
  * Allows users to view previous versions and rollback to them.
  */
-const QuestionVersionHistory = ({
-  question,
-  onVersionRollback,
-}: QuestionVersionHistoryProps) => {
+const QuestionVersionHistory = ({ question, onVersionRollback }: QuestionVersionHistoryProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [versions, setVersions] = useState<PopulatedDatabaseQuestionVersion[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<PopulatedDatabaseQuestionVersion | null>(
@@ -183,4 +183,3 @@ const QuestionVersionHistory = ({
 };
 
 export default QuestionVersionHistory;
-

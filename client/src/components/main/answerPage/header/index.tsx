@@ -19,10 +19,10 @@ interface AnswerHeaderProps {
  * @param title The title of the question or discussion thread.
  */
 const AnswerHeader = ({ ansCount, title }: AnswerHeaderProps) => (
-  <div className="reddit-post-header">
-    <h1 className="reddit-post-title">{title}</h1>
-    <div className="reddit-post-meta">
-      <span className="reddit-post-flair">Discussion</span>
+  <div className='reddit-post-header'>
+    <h1 className='reddit-post-title'>{title}</h1>
+    <div className='reddit-post-meta'>
+      <span className='reddit-post-flair'>Discussion</span>
     </div>
   </div>
 );

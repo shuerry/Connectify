@@ -33,10 +33,7 @@ const OrderButton = ({ orderType, setQuestionOrder }: OrderButtonProps) => {
   };
 
   return (
-    <button
-      className={`order-btn ${isActive ? 'active' : ''}`}
-      onClick={handleClick}
-    >
+    <button className={`order-btn ${isActive ? 'active' : ''}`} onClick={handleClick}>
       {orderTypeDisplayName[orderType]}
     </button>
   );

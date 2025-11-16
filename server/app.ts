@@ -34,7 +34,7 @@ const app = express();
 const server = http.createServer(app);
 // allow requests from the local dev client or the production client only
 // Build allowed client origins from env (comma-separated) with sensible defaults
-const allowedClientOrigins: string[] = (
+const ALLOWED_CLIENT_ORIGINS: string[] = (
   process.env.CLIENT_URLS
     ? process.env.CLIENT_URLS.split(',')
         .map(o => o.trim())
@@ -47,7 +47,7 @@ const allowedClientOrigins: string[] = (
 const socket: FakeSOSocket = new Server(server, {
   path: '/socket.io',
   cors: {
-    origin: allowedClientOrigins,
+    origin: ALLOWED_CLIENT_ORIGINS,
     credentials: true,
   },
 });
@@ -86,7 +86,7 @@ app.use(express.json());
 // Minimal CORS for REST API (avoids adding a dependency). Uses same allowed origins as Socket.IO
 app.use((req: Request, res: Response, next: NextFunction) => {
   const requestOrigin = req.headers.origin;
-  const isAllowed = requestOrigin && allowedClientOrigins.includes(requestOrigin);
+  const isAllowed = requestOrigin && ALLOWED_CLIENT_ORIGINS.includes(requestOrigin);
   if (isAllowed) {
     res.header('Access-Control-Allow-Origin', requestOrigin);
     res.header('Vary', 'Origin');

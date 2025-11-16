@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { FollowResponse, PopulatedDatabaseQuestion, Question, VoteInterface } from '../types/types';
+import { PopulatedDatabaseQuestion, Question, VoteInterface } from '../types/types';
 import api from './config';
 
 const QUESTION_API_URL = `/api/question`;

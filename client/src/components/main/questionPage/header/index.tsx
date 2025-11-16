@@ -40,7 +40,7 @@ const QuestionHeader = ({ titleText, qcnt, setQuestionOrder }: QuestionHeaderPro
         <AskQuestionButton />
       </div>
     </div>
-    
+
     <div className='filter-section'>
       <div className='filter-label'>Sort by:</div>
       <div className='filter-buttons'>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getNotifications } from '../services/notificationService';
 
-export const useUnreadNotifications = (username: string) => {
+const useUnreadNotifications = (username: string) => {
   const [unread, setUnread] = useState<number>(0);
 
   useEffect(() => {
@@ -26,3 +26,5 @@ export const useUnreadNotifications = (username: string) => {
 
   return { unread };
 };
+
+export default useUnreadNotifications;

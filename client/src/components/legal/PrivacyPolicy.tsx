@@ -123,7 +123,8 @@ const PrivacyPolicy = () => {
               <li>Personalized content recommendations</li>
             </ul>
             <p>
-              You can control cookie settings in your browser, but some features may not work properly if cookies are disabled.
+              You can control cookie settings in your browser, but some features may not work
+              properly if cookies are disabled.
             </p>
           </section>
 
@@ -152,28 +153,35 @@ const PrivacyPolicy = () => {
           <section className='privacy-section'>
             <h2>7. Children's Privacy</h2>
             <p>
-              Our service is not intended for children under 13. We do not knowingly collect personal information from children under 13. If we discover that we have collected information from a child under 13, we will delete it immediately.
+              Our service is not intended for children under 13. We do not knowingly collect
+              personal information from children under 13. If we discover that we have collected
+              information from a child under 13, we will delete it immediately.
             </p>
           </section>
 
           <section className='privacy-section'>
             <h2>8. International Data Transfers</h2>
             <p>
-              Your data may be processed and stored in countries other than your own. We ensure appropriate safeguards are in place to protect your information according to this privacy policy.
+              Your data may be processed and stored in countries other than your own. We ensure
+              appropriate safeguards are in place to protect your information according to this
+              privacy policy.
             </p>
           </section>
 
           <section className='privacy-section'>
             <h2>9. Changes to This Policy</h2>
             <p>
-              We may update this privacy policy from time to time. We will notify users of significant changes through email or platform notifications. Your continued use of the service after changes constitute acceptance of the updated policy.
+              We may update this privacy policy from time to time. We will notify users of
+              significant changes through email or platform notifications. Your continued use of the
+              service after changes constitute acceptance of the updated policy.
             </p>
           </section>
 
           <section className='privacy-section'>
             <h2>10. Contact Us</h2>
             <p>
-              For questions about this privacy policy or to exercise your privacy rights, contact us at:
+              For questions about this privacy policy or to exercise your privacy rights, contact us
+              at:
             </p>
             <ul>
               <li>Email: privacy@stackoverflowclone.com</li>
@@ -184,11 +192,10 @@ const PrivacyPolicy = () => {
         </div>
 
         <footer className='privacy-footer'>
+          <p>Last updated: November 10, 2025</p>
           <p>
-            Last updated: November 10, 2025
-          </p>
-          <p>
-            We are committed to protecting your privacy and being transparent about our data practices.
+            We are committed to protecting your privacy and being transparent about our data
+            practices.
           </p>
         </footer>
       </div>

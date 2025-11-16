@@ -37,14 +37,15 @@ const Badge: React.FC<BadgeProps> = ({
     .join(' ');
 
   if (dot) {
-    return <span className={badgeClasses} aria-label={typeof children === 'string' ? children : 'notification'} />;
+    return (
+      <span
+        className={badgeClasses}
+        aria-label={typeof children === 'string' ? children : 'notification'}
+      />
+    );
   }
 
-  return (
-    <span className={badgeClasses}>
-      {children}
-    </span>
-  );
+  return <span className={badgeClasses}>{children}</span>;
 };
 
 export default Badge;

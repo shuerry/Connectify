@@ -237,7 +237,10 @@ const forgotPassword = async (usernameOrEmail: string): Promise<{ message: strin
  * @returns A promise that resolves to a success message
  * @throws {Error} If the request to the server is unsuccessful
  */
-const resetPasswordWithToken = async (token: string, newPassword: string): Promise<{ message: string }> => {
+const resetPasswordWithToken = async (
+  token: string,
+  newPassword: string,
+): Promise<{ message: string }> => {
   const res = await api.post(`${USER_API_URL}/resetPasswordWithToken`, { token, newPassword });
   if (res.status !== 200) {
     throw new Error('Error when resetting password');

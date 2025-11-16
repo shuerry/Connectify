@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { downvoteQuestion, upvoteQuestion } from '../../../services/questionService';
 import './index.css';
 import useUserContext from '../../../hooks/useUserContext';
@@ -51,19 +52,19 @@ const VoteComponent = ({ question }: VoteComponentProps) => {
         aria-label='Upvote'
         title='Upvote this question'>
         <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
-          <path d='M7 14l5-5 5 5H7z'/>
+          <path d='M7 14l5-5 5 5H7z' />
         </svg>
       </button>
-      
+
       <span className='vote-count'>{count}</span>
-      
+
       <button
         className={`vote-button ${voted === -1 ? 'vote-button-downvoted' : ''}`}
         onClick={() => handleVote('downvote')}
         aria-label='Downvote'
         title='Downvote this question'>
         <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
-          <path d='M7 10l5 5 5-5H7z'/>
+          <path d='M7 10l5 5 5-5H7z' />
         </svg>
       </button>
     </div>

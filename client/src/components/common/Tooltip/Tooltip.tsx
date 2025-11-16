@@ -34,7 +34,7 @@ const Tooltip: React.FC<TooltipProps> = ({
 
   const showTooltip = () => {
     if (disabled) return;
-    
+
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       setIsVisible(true);
@@ -69,11 +69,17 @@ const Tooltip: React.FC<TooltipProps> = ({
       // Check if tooltip would go off-screen and adjust position
       if (position === 'top' && triggerRect.top - tooltipRect.height < 10) {
         newPosition = 'bottom';
-      } else if (position === 'bottom' && triggerRect.bottom + tooltipRect.height > viewport.height - 10) {
+      } else if (
+        position === 'bottom' &&
+        triggerRect.bottom + tooltipRect.height > viewport.height - 10
+      ) {
         newPosition = 'top';
       } else if (position === 'left' && triggerRect.left - tooltipRect.width < 10) {
         newPosition = 'right';
-      } else if (position === 'right' && triggerRect.right + tooltipRect.width > viewport.width - 10) {
+      } else if (
+        position === 'right' &&
+        triggerRect.right + tooltipRect.width > viewport.width - 10
+      ) {
         newPosition = 'left';
       }
 
@@ -87,16 +93,15 @@ const Tooltip: React.FC<TooltipProps> = ({
     }
   };
 
-  const tooltipClasses = [
-    'tooltip',
-    className,
-  ].filter(Boolean).join(' ');
+  const tooltipClasses = ['tooltip', className].filter(Boolean).join(' ');
 
   const contentClasses = [
     'tooltip__content',
     `tooltip__content--${actualPosition}`,
     isVisible && 'tooltip__content--visible',
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const triggerProps = {
     ...(trigger === 'hover' && {
@@ -116,22 +121,19 @@ const Tooltip: React.FC<TooltipProps> = ({
 
   return (
     <div className={tooltipClasses} ref={triggerRef} onKeyDown={handleKeyDown}>
-      <div {...triggerProps} className="tooltip__trigger">
+      <div {...triggerProps} className='tooltip__trigger'>
         {children}
       </div>
-      
+
       {isVisible && (
         <div
           ref={tooltipRef}
           className={contentClasses}
           style={{ maxWidth }}
-          role="tooltip"
-          aria-hidden={!isVisible}
-        >
-          <div className="tooltip__inner">
-            {content}
-          </div>
-          <div className="tooltip__arrow"></div>
+          role='tooltip'
+          aria-hidden={!isVisible}>
+          <div className='tooltip__inner'>{content}</div>
+          <div className='tooltip__arrow'></div>
         </div>
       )}
     </div>

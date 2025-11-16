@@ -1,16 +1,17 @@
-.vote-container {
+/* Clean Follow Button Styles */
+.follow-container {
   display: flex;
   align-items: center;
-  padding: 0;
 }
 
-.vote-button {
+.follow-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 16px;
-  margin-right: 0;
-  border: 1px solid #0079D3;
+  border: 1px solid;
   border-radius: 20px;
-  background-color: transparent;
-  color: #0079D3;
+  background: white;
   cursor: pointer;
   outline: none;
   font-size: 12px;
@@ -18,21 +19,95 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   transition: all 0.2s ease;
+  min-width: 90px;
+  justify-content: center;
 }
 
-.vote-button:hover {
-  background-color: #0079D3;
+/* Not Following State */
+.follow-btn.not-followed {
+  border-color: #0079d3;
+  color: #0079d3;
+}
+
+.follow-btn.not-followed:hover {
+  background-color: #0079d3;
   color: white;
 }
 
-.vote-button-followed {
-  background-color: #0079D3;
+/* Following State */
+.follow-btn.followed {
+  border-color: #46d160;
+  background-color: #46d160;
   color: white;
-  border-color: #0079D3;
 }
 
-.vote-button-followed:hover {
-  background-color: #FF4500;
-  border-color: #FF4500;
-  color: white;
+.follow-btn.followed:hover {
+  background-color: #ff4500;
+  border-color: #ff4500;
+}
+
+/* Icon Styles */
+.follow-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Text Styles */
+.follow-text {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Active/Click State */
+.follow-btn:active {
+  transform: scale(0.98);
+}
+
+/* Focus State */
+.follow-btn:focus {
+  outline: 2px solid #0079d3;
+  outline-offset: 2px;
+}
+
+/* Disabled State */
+.follow-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .follow-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+    min-width: 80px;
+    gap: 4px;
+  }
+  
+  .follow-icon svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .follow-btn {
+    padding: 6px 10px;
+    font-size: 10px;
+    min-width: 70px;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .follow-btn {
+    transition: none;
+  }
+  
+  .follow-btn:active {
+    transform: none;
+  }
 }

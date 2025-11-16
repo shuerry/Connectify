@@ -67,7 +67,7 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
         const rememberedData = localStorage.getItem('rememberedUser');
         if (rememberedData) {
           const { user: rememberedUser, expiresAt } = JSON.parse(rememberedData);
-          
+
           // Check if the remembered session is still valid
           if (Date.now() < expiresAt) {
             setUser(rememberedUser);

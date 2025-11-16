@@ -41,8 +41,7 @@ const Card: React.FC<CardProps> = ({
       onClick={onClick}
       type={onClick ? 'button' : undefined}
       role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-    >
+      tabIndex={onClick ? 0 : undefined}>
       {children}
     </CardElement>
   );

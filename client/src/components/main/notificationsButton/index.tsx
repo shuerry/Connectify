@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUnreadNotifications } from '../../../hooks/useUnreadNotifications';
 
-export const NotificationButton: React.FC<{ username: string }> = ({ username }) => {
+const NotificationButton: React.FC<{ username: string }> = ({ username }) => {
   const navigate = useNavigate();
   const { unread } = useUnreadNotifications(username);
 
@@ -34,3 +34,5 @@ export const NotificationButton: React.FC<{ username: string }> = ({ username })
     </button>
   );
 };
+
+export default NotificationButton;

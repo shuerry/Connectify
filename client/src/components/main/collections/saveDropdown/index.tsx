@@ -22,13 +22,18 @@ const SaveDropdown = ({ question, onClose }: SaveDropdownProps) => {
     <div className='save-dropdown' onClick={e => e.stopPropagation()}>
       <div className='dropdown-header'>
         <span className='dropdown-title'>Save to Collection</span>
-        <button className='dropdown-close' onClick={e => { e.stopPropagation(); onClose(); }}>
+        <button
+          className='dropdown-close'
+          onClick={e => {
+            e.stopPropagation();
+            onClose();
+          }}>
           <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
             <path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z' />
           </svg>
         </button>
       </div>
-      
+
       {collections.length === 0 ? (
         <div className='no-collections-dropdown'>
           <p>No collections available</p>

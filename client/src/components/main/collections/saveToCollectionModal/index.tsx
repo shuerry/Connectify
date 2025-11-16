@@ -26,7 +26,7 @@ const SaveToCollectionModal = ({
             </svg>
           </button>
         </div>
-        
+
         {collections.length === 0 ? (
           <div className='no-collections'>
             <p>You don't have any collections yet.</p>
