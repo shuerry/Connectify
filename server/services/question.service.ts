@@ -13,6 +13,7 @@ import {
   QuestionResponse,
   QuestionVersionsResponse,
   RollbackQuestionResponse,
+  User,
   VoteResponse,
 } from '../types/types';
 import AnswerModel from '../models/answers.model';
@@ -62,6 +63,7 @@ export const getQuestionsByOrder = async (
       answers: PopulatedDatabaseAnswer[];
       comments: DatabaseComment[];
       community: DatabaseCommunity;
+      followers: User[];
     }>([
       { path: 'tags', model: TagModel },
       { path: 'answers', model: AnswerModel, populate: { path: 'comments', model: CommentModel } },
@@ -176,6 +178,7 @@ export const fetchAndIncrementQuestionViewsById = async (
       answers: PopulatedDatabaseAnswer[];
       comments: DatabaseComment[];
       community: DatabaseCommunity;
+      followers: User[];
     }>([
       { path: 'tags', model: TagModel },
       { path: 'answers', model: AnswerModel, populate: { path: 'comments', model: CommentModel } },
@@ -398,6 +401,7 @@ export const updateQuestion = async (
       answers: PopulatedDatabaseAnswer[];
       comments: DatabaseComment[];
       community: DatabaseCommunity;
+      followers: User[];
     }>([
       { path: 'tags', model: TagModel },
       { path: 'answers', model: AnswerModel, populate: { path: 'comments', model: CommentModel } },
@@ -455,7 +459,7 @@ export const addFollowerToQuestion = async (
 
     //console.log('Already followed:', alreadyFollowed);
 
-    const result: DatabaseQuestion | null = await QuestionModel.findOneAndUpdate(
+    const result = await QuestionModel.findOneAndUpdate(
       { _id: qid },
       alreadyFollowed
         ? { $pull: { followers: followerId } }
@@ -469,7 +473,7 @@ export const addFollowerToQuestion = async (
 
     return {
       msg: alreadyFollowed ? 'Question unfollowed successfully' : 'Question followed successfully',
-      followers: result.followers || [],
+      followers: (result.followers || []) as unknown as User[],
     };
   } catch (err) {
     return {
@@ -584,6 +588,7 @@ export const rollbackQuestion = async (
       answers: PopulatedDatabaseAnswer[];
       comments: DatabaseComment[];
       community: DatabaseCommunity;
+      followers: User[];
     }>([
       { path: 'tags', model: TagModel },
       { path: 'answers', model: AnswerModel, populate: { path: 'comments', model: CommentModel } },
@@ -598,5 +603,156 @@ export const rollbackQuestion = async (
     return rolledBackQuestion;
   } catch (error) {
     return { error: 'Error when rolling back question' };
+  }
+};
+
+/**
+ * Saves a draft for a user
+ */
+export const saveDraft = async (
+  title: string,
+  text: string,
+  tags: ObjectId[],
+  askedBy: string,
+  community?: ObjectId | null,
+): Promise<{ msg: string } | { error: string }> => {
+  try {
+    const Draft = (await import('../models/drafts.model')).default;
+    
+    const newDraft = new Draft({
+      title,
+      text,
+      tags,
+      askedBy,
+      community,
+    });
+
+    const savedDraft = await newDraft.save();
+    if (!savedDraft) {
+      return { error: 'Failed to save draft' };
+    }
+
+    return { msg: 'Draft saved successfully' };
+  } catch (error) {
+    return { error: 'Error when saving draft' };
+  }
+};
+
+/**
+ * Updates an existing draft
+ */
+export const updateDraft = async (
+  draftId: string,
+  title: string,
+  text: string,
+  tags: ObjectId[],
+  askedBy: string,
+  community?: ObjectId | null,
+): Promise<{ msg: string } | { error: string }> => {
+  try {
+    const Draft = (await import('../models/drafts.model')).default;
+    
+    const updatedDraft = await Draft.findOneAndUpdate(
+      { _id: draftId, askedBy },
+      { title, text, tags, community },
+      { new: true },
+    );
+
+    if (!updatedDraft) {
+      return { error: 'Draft not found or unauthorized' };
+    }
+
+    return { msg: 'Draft updated successfully' };
+  } catch (error) {
+    return { error: 'Error when updating draft' };
+  }
+};
+
+/**
+ * Retrieves all drafts for a user
+ */
+export const getUserDrafts = async (username: string) => {
+  try {
+    const Draft = (await import('../models/drafts.model')).default;
+    
+    const drafts = await Draft.find({ askedBy: username })
+      .populate('tags')
+      .populate('community')
+      .sort({ updatedAt: -1 });
+
+    return drafts;
+  } catch (error) {
+    return { error: 'Error when retrieving drafts' };
+  }
+};
+
+/**
+ * Deletes a draft
+ */
+export const deleteDraft = async (
+  draftId: string,
+  username: string,
+): Promise<{ msg: string } | { error: string }> => {
+  try {
+    const Draft = (await import('../models/drafts.model')).default;
+    
+    const deletedDraft = await Draft.findOneAndDelete({ _id: draftId, askedBy: username });
+
+    if (!deletedDraft) {
+      return { error: 'Draft not found or unauthorized' };
+    }
+
+    return { msg: 'Draft deleted successfully' };
+  } catch (error) {
+    return { error: 'Error when deleting draft' };
+  }
+};
+
+/**
+ * Publishes a draft as a question
+ */
+export const publishDraft = async (
+  draftId: string,
+  username: string,
+): Promise<QuestionResponse> => {
+  try {
+    const Draft = (await import('../models/drafts.model')).default;
+    
+    const draft = await Draft.findOne({ _id: draftId, askedBy: username })
+      .populate('tags')
+      .populate('community');
+
+    if (!draft) {
+      return { error: 'Draft not found or unauthorized' };
+    }
+
+    // Create a new question from the draft
+    const question: Question = {
+      title: draft.title,
+      text: draft.text,
+      tags: draft.tags.map((tag: any) => ({ name: tag.name, description: tag.description })),
+      askedBy: username,
+      askDateTime: new Date(),
+      answers: [],
+      views: [],
+      upVotes: [],
+      downVotes: [],
+      comments: [],
+      community: draft.community?._id || null,
+      followers: [],
+    };
+    
+    const questionResult = await saveQuestion(question);
+
+    if ('error' in questionResult) {
+      return questionResult;
+    }
+
+    // Delete the draft after successful publication
+    await Draft.findByIdAndDelete(draftId);
+
+    return questionResult;
+  } catch (error) {
+    return { error: 'Error when publishing draft' };
   }
 };

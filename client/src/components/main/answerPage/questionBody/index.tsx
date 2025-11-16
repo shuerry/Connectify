@@ -68,7 +68,13 @@ const QuestionBody = ({
   };
 
   if (isEditing) {
-    return <EditQuestionForm onCancel={handleEditCancel} />;
+    return (
+      <EditQuestionForm 
+        question={question}
+        onCancel={handleEditCancel}
+        onSuccess={handleEditSuccess}
+      />
+    );
   }
 
   return (
