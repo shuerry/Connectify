@@ -19,7 +19,11 @@ const questionsResolver: ReferenceResolver<QuestionImport, Omit<DatabaseQuestion
   answers: resolveRefs(doc.answers, insertedDocs.answer, 'Answer'),
   community: resolveSingleRef(doc.community, insertedDocs.community, 'Community'),
   // Resolve followers (if present in import) to ObjectId references
-  followers: resolveRefs((doc as any).followers || [], insertedDocs.user, 'User'),
+  followers: resolveRefs(
+    ((doc as QuestionImport).followers || []).map(f => (typeof f === 'string' ? f : f._id)),
+    insertedDocs.user,
+    'User',
+  ),
 });
 
 export default questionsResolver;

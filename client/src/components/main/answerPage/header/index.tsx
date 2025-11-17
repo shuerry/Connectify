@@ -23,7 +23,9 @@ const AnswerHeader = ({ title, ansCount }: AnswerHeaderProps) => (
     <div className='reddit-post-meta'>
       <span className='reddit-post-flair'>Discussion</span>
       {typeof ansCount === 'number' && (
-        <span className='reddit-post-anscount'>{ansCount} {ansCount === 1 ? 'answer' : 'answers'}</span>
+        <span className='reddit-post-anscount'>
+          {ansCount} {ansCount === 1 ? 'answer' : 'answers'}
+        </span>
       )}
     </div>
   </div>
