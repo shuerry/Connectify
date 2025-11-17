@@ -9,6 +9,22 @@
   position: relative;
 }
 
+/*
+  Hide browser-native password reveal / clear icons that can overlap
+  the custom eye toggle. Covers Edge/IE and WebKit/Blink rules.
+*/
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+input[type="password"]::-webkit-textfield-decoration-container,
+input[type="password"]::-webkit-textfield-decoration-button,
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-clear-button {
+  display: none !important;
+}
+
 .auth-container::before {
   content: '';
   position: absolute;

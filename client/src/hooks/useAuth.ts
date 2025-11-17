@@ -125,6 +125,15 @@ const useAuth = (authType: 'login' | 'signup') => {
         );
       }
 
+      // Persist current user across page reloads so refreshing keeps the user on the same page.
+      // We store under `currentUser` (no expiry). If you want explicit "remember me" semantics,
+      // keep using `rememberedUser` as well.
+      try {
+        localStorage.setItem('currentUser', JSON.stringify(user));
+      } catch (e) {
+        // ignore localStorage errors
+      }
+
       navigate('/home');
     } catch (error) {
       setErr((error as Error).message);

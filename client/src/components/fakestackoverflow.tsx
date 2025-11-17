@@ -1,4 +1,4 @@
-import { JSX, useState, useEffect } from 'react';
+import { JSX, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './layout';
 import Login from './auth/login';
@@ -42,7 +42,22 @@ const ProtectedRoute = ({
   children: JSX.Element;
 }) => {
   if (!user || !socket) {
-    return <Navigate to='/' />;
+    if (!user) return <Navigate to='/' />;
+    // If the user is present but the socket hasn't been initialized yet,
+    // show a small loading placeholder until the socket connects. This
+    // prevents child components from mounting and calling socket methods
+    // when `socket` is null.
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+        }}>
+        <div>Loading...</div>
+      </div>
+    );
   }
 
   return <UserContext.Provider value={{ user, socket }}>{children}</UserContext.Provider>;
@@ -53,38 +68,30 @@ const ProtectedRoute = ({
  * It manages the state for search terms and the main title.
  */
 const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
-  const [user, setUser] = useState<SafeDatabaseUser | null>(null);
+  const [user, setUser] = useState<SafeDatabaseUser | null>(() => {
+    try {
+      const current = localStorage.getItem('currentUser');
+      if (current) return JSON.parse(current);
+      const remembered = localStorage.getItem('rememberedUser');
+      if (remembered) {
+        const { user: rememberedUser, expiresAt } = JSON.parse(remembered);
+        if (Date.now() < expiresAt) return rememberedUser;
+      }
+    } catch (err) {
+      // ignore parse errors and fall through to null
+    }
+    return null;
+  });
 
   // Logout function to clear user and remembered session
   const logout = () => {
     setUser(null);
     localStorage.removeItem('rememberedUser');
+    localStorage.removeItem('currentUser');
   };
 
-  // Check for remembered user on app startup
-  useEffect(() => {
-    const checkRememberedUser = () => {
-      try {
-        const rememberedData = localStorage.getItem('rememberedUser');
-        if (rememberedData) {
-          const { user: rememberedUser, expiresAt } = JSON.parse(rememberedData);
-
-          // Check if the remembered session is still valid
-          if (Date.now() < expiresAt) {
-            setUser(rememberedUser);
-          } else {
-            // Remove expired session
-            localStorage.removeItem('rememberedUser');
-          }
-        }
-      } catch (error) {
-        // Silent error handling for localStorage issues
-        localStorage.removeItem('rememberedUser');
-      }
-    };
-
-    checkRememberedUser();
-  }, []);
+  // user is initialized synchronously from localStorage to avoid redirecting
+  // to login during the initial render on page reload.
 
   return (
     <LoginContext.Provider value={{ setUser, logout }}>

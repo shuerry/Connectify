@@ -5,6 +5,7 @@ import ProfanityFilterModal from './profanityFilterModal';
 import filter from 'leo-profanity';
 import useDrafts from '../../../hooks/useDrafts';
 import useUserContext from '../../../hooks/useUserContext';
+import useAutosave from '../../../hooks/useAutosave';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 /**
@@ -36,6 +37,14 @@ const NewQuestionPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const storageKey = `unsaved_question_${user?.username || 'guest'}`;
+
+  useAutosave(
+    storageKey,
+    { title, text, tagNames, community },
+    { setTitle, setText, setTagNames, setCommunity },
+    { skipRestore: Boolean(new URLSearchParams(location.search).get('draftId')), communityList },
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -293,10 +302,25 @@ const NewQuestionPage = () => {
                   try {
                     if (currentDraftId) {
                       await apiUpdateDraft(currentDraftId, payload);
+                      // clear autosave since server draft now persists content
+                      try {
+                        localStorage.removeItem(storageKey);
+                      } catch (e) {
+                        // ignore localStorage errors
+                        // eslint-disable-next-line no-console
+                        console.warn('Failed to remove autosave key', e);
+                      }
                       alert('Draft updated');
                     } else {
                       const saved = await apiSaveDraft(payload);
                       setCurrentDraftId(saved._id.toString());
+                      try {
+                        localStorage.removeItem(storageKey);
+                      } catch (e) {
+                        // ignore localStorage errors
+                        // eslint-disable-next-line no-console
+                        console.warn('Failed to remove autosave key', e);
+                      }
                       alert('Draft saved');
                     }
                   } catch (err) {
