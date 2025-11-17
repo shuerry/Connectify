@@ -114,22 +114,57 @@ console.log('Allowed CORS origins:', ALLOWED_CLIENT_ORIGINS);
 
 // Minimal CORS for REST API (avoids adding a dependency). Uses same allowed origins as Socket.IO
 app.use((req: Request, res: Response, next: NextFunction) => {
-  const requestOrigin = req.headers.origin;
-  const isAllowed = requestOrigin && ALLOWED_CLIENT_ORIGINS.includes(requestOrigin);
-  if (isAllowed) {
+  const requestOrigin = req.headers.origin as string | undefined;
+
+  // Helper to check allowed origins more flexibly (handles exact matches and common patterns)
+  const originIsAllowed = (origin?: string) => {
+    if (!origin) return false;
+    // Exact match
+    if (ALLOWED_CLIENT_ORIGINS.includes(origin)) return true;
+    // Allow onrender.com subdomains in production
+    if (
+      process.env.NODE_ENV === 'production' &&
+      origin.endsWith('.onrender.com') &&
+      origin.startsWith('https://')
+    )
+      return true;
+    // Allow when an allowed origin is a prefix of the request origin (helps with trailing slashes/ports)
+    for (const allowed of ALLOWED_CLIENT_ORIGINS) {
+      if (origin === allowed) return true;
+      if (origin.startsWith(allowed)) return true;
+    }
+    return false;
+  };
+
+  const isAllowed = originIsAllowed(requestOrigin);
+
+  // Debug logging when origin present but not allowed
+  if (requestOrigin && !isAllowed) {
+    console.warn(`CORS: request origin not allowed: ${requestOrigin}`);
+  }
+
+  if (isAllowed && requestOrigin) {
     res.header('Access-Control-Allow-Origin', requestOrigin);
     res.header('Vary', 'Origin');
   }
+
+  // As a fallback for development, allow all origins when not in production
+  if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'production') {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   res.header(
     'Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content-Type, Accept, Authorization',
   );
+
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
     return;
   }
+
   next();
 });
 
