@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PopulatedDatabaseDraft } from '@fake-stack-overflow/shared';
+import useDrafts from '../../../hooks/useDrafts';
 import './index.css';
 
 interface DraftsPageProps {
@@ -15,25 +16,19 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ userContext }) => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  const { getUserDrafts, deleteDraft } = useDrafts();
+
   const fetchUserDrafts = React.useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `http://localhost:8000/api/question/getUserDrafts?username=${encodeURIComponent(userContext.username)}`,
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch drafts');
-      }
-
-      const data = await response.json();
+      const data = await getUserDrafts(userContext.username);
       setDrafts(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch drafts');
     } finally {
       setLoading(false);
     }
-  }, [userContext.username]);
+  }, [userContext.username, getUserDrafts]);
 
   useEffect(() => {
     if (!userContext.username) {
@@ -54,18 +49,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ userContext }) => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/question/deleteDraft/${draftId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username: userContext.username }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete draft');
-      }
-
+      await deleteDraft(draftId, userContext.username);
       // Remove the draft from local state
       setDrafts(drafts.filter(draft => draft._id.toString() !== draftId));
     } catch (err) {

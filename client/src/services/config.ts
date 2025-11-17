@@ -14,7 +14,10 @@ const handleErr = (err: AxiosError) => {
   return Promise.reject(err);
 };
 
-const api = axios.create({ withCredentials: true });
+// Use Vite environment variable when available to point to the API server.
+// If not set, relative requests will be sent to the same origin as the client.
+const BASE_URL = (import.meta as ImportMeta).env?.VITE_SERVER_URL || '';
+const api = axios.create({ baseURL: BASE_URL, withCredentials: true });
 
 /**
  * Add a request interceptor to the Axios instance.
