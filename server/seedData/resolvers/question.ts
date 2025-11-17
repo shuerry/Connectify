@@ -10,7 +10,7 @@ import { resolveSingleRef, resolveRefs } from './helpers';
  * @returns {Omit<DatabaseQuestion, '_id'>} - The processed question with resolved tag, comment, and answer ObjectIds.
  */
 const questionsResolver: ReferenceResolver<QuestionImport, Omit<DatabaseQuestion, '_id'>> = (
-  doc,
+  doc: QuestionImport,
   insertedDocs,
 ) => ({
   ...doc,
@@ -19,11 +19,7 @@ const questionsResolver: ReferenceResolver<QuestionImport, Omit<DatabaseQuestion
   answers: resolveRefs(doc.answers, insertedDocs.answer, 'Answer'),
   community: resolveSingleRef(doc.community, insertedDocs.community, 'Community'),
   // Resolve followers (if present in import) to ObjectId references
-  followers: resolveRefs(
-    ((doc as QuestionImport).followers || []).map(f => (typeof f === 'string' ? f : f._id)),
-    insertedDocs.user,
-    'User',
-  ),
+  followers: resolveRefs(doc.followers || [], insertedDocs.user, 'User'),
 });
 
 export default questionsResolver;

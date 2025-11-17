@@ -2,11 +2,12 @@ import { Answer, Collection, Question } from '@fake-stack-overflow/shared';
 import { ObjectId } from 'mongodb';
 
 export interface QuestionImport
-  extends Omit<Question, 'tags' | 'answers' | 'comments' | 'community'> {
+  extends Omit<Question, 'tags' | 'answers' | 'comments' | 'community' | 'followers'> {
   tags: string[];
   answers: string[];
   comments: string[];
   community: string | null;
+  followers?: string[];
 }
 
 export interface AnswerImport extends Omit<Answer, 'comments'> {
