@@ -15,26 +15,17 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ userContext }) => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!userContext.username) {
-      navigate('/login');
-      return;
-    }
-    
-    fetchUserDrafts();
-  }, [userContext.username, navigate]);
-
-  const fetchUserDrafts = async () => {
+  const fetchUserDrafts = React.useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8000/api/question/getUserDrafts?username=${encodeURIComponent(userContext.username)}`
+        `http://localhost:8000/api/question/getUserDrafts?username=${encodeURIComponent(userContext.username)}`,
       );
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch drafts');
       }
-      
+
       const data = await response.json();
       setDrafts(data);
     } catch (err) {
@@ -42,7 +33,16 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ userContext }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userContext.username]);
+
+  useEffect(() => {
+    if (!userContext.username) {
+      navigate('/login');
+      return;
+    }
+
+    fetchUserDrafts();
+  }, [userContext.username, navigate, fetchUserDrafts]);
 
   const handleEditDraft = (draftId: string) => {
     navigate(`/new/question?draftId=${draftId}`);
@@ -54,16 +54,13 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ userContext }) => {
     }
 
     try {
-      const response = await fetch(
-        `http://localhost:8000/api/question/deleteDraft/${draftId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ username: userContext.username }),
-        }
-      );
+      const response = await fetch(`http://localhost:8000/api/question/deleteDraft/${draftId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: userContext.username }),
+      });
 
       if (!response.ok) {
         throw new Error('Failed to delete draft');
@@ -73,37 +70,6 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ userContext }) => {
       setDrafts(drafts.filter(draft => draft._id.toString() !== draftId));
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete draft');
-    }
-  };
-
-  const handlePublishDraft = async (draftId: string, title: string) => {
-    if (!window.confirm(`Are you sure you want to publish the draft "${title}" as a question?`)) {
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `http://localhost:8000/api/question/publishDraft/${draftId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ username: userContext.username }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to publish draft');
-      }
-
-      // Remove the draft from local state since it's now published
-      setDrafts(drafts.filter(draft => draft._id.toString() !== draftId));
-      
-      // Navigate to the questions page to see the published question
-      navigate('/');
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to publish draft');
     }
   };
 
@@ -123,17 +89,17 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ userContext }) => {
 
   if (loading) {
     return (
-      <div className="drafts-page">
-        <div className="loading">Loading your drafts...</div>
+      <div className='drafts-page'>
+        <div className='loading'>Loading your drafts...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="drafts-page">
-        <div className="error">Error: {error}</div>
-        <button onClick={fetchUserDrafts} className="retry-button">
+      <div className='drafts-page'>
+        <div className='error'>Error: {error}</div>
+        <button onClick={fetchUserDrafts} className='retry-button'>
           Retry
         </button>
       </div>
@@ -141,56 +107,43 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ userContext }) => {
   }
 
   return (
-    <div className="drafts-page">
-      <div className="drafts-header">
+    <div className='drafts-page'>
+      <div className='drafts-header'>
         <h1>My Drafts</h1>
-        <p className="drafts-count">
+        <p className='drafts-count'>
           {drafts.length} {drafts.length === 1 ? 'draft' : 'drafts'}
         </p>
       </div>
 
       {drafts.length === 0 ? (
-        <div className="no-drafts">
+        <div className='no-drafts'>
           <h2>No drafts yet</h2>
           <p>Start writing a question and save it as a draft to see it here.</p>
-          <button 
-            onClick={() => navigate('/new/question')} 
-            className="ask-question-button"
-          >
+          <button onClick={() => navigate('/new/question')} className='ask-question-button'>
             Ask a Question
           </button>
         </div>
       ) : (
-        <div className="drafts-list">
-          {drafts.map((draft) => (
-            <div key={draft._id.toString()} className="draft-card">
-              <div className="draft-header">
-                <h3 className="draft-title">
-                  {draft.title || 'Untitled Draft'}
-                </h3>
-                <div className="draft-meta">
-                  <span className="draft-date">
-                    Last updated: {formatDate(draft.updatedAt)}
-                  </span>
+        <div className='drafts-list'>
+          {drafts.map(draft => (
+            <div key={draft._id.toString()} className='draft-card'>
+              <div className='draft-header'>
+                <h3 className='draft-title'>{draft.title || 'Untitled Draft'}</h3>
+                <div className='draft-meta'>
+                  <span className='draft-date'>Last updated: {formatDate(draft.updatedAt)}</span>
                   {draft.community && (
-                    <span className="draft-community">
-                      in {draft.community.name}
-                    </span>
+                    <span className='draft-community'>in {draft.community.name}</span>
                   )}
                 </div>
               </div>
 
-              <div className="draft-content">
-                {draft.text && (
-                  <p className="draft-text">
-                    {truncateText(draft.text)}
-                  </p>
-                )}
-                
+              <div className='draft-content'>
+                {draft.text && <p className='draft-text'>{truncateText(draft.text)}</p>}
+
                 {draft.tags.length > 0 && (
-                  <div className="draft-tags">
-                    {draft.tags.map((tag) => (
-                      <span key={tag._id.toString()} className="tag">
+                  <div className='draft-tags'>
+                    {draft.tags.map(tag => (
+                      <span key={tag._id.toString()} className='tag'>
                         {tag.name}
                       </span>
                     ))}
@@ -198,23 +151,15 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ userContext }) => {
                 )}
               </div>
 
-              <div className="draft-actions">
+              <div className='draft-actions'>
                 <button
                   onClick={() => handleEditDraft(draft._id.toString())}
-                  className="edit-button"
-                >
+                  className='edit-button'>
                   Edit
                 </button>
                 <button
-                  onClick={() => handlePublishDraft(draft._id.toString(), draft.title)}
-                  className="publish-button"
-                >
-                  Publish
-                </button>
-                <button
                   onClick={() => handleDeleteDraft(draft._id.toString(), draft.title)}
-                  className="delete-button"
-                >
+                  className='delete-button'>
                   Delete
                 </button>
               </div>

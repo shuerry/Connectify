@@ -165,7 +165,6 @@
 }
 
 .edit-button,
-.publish-button,
 .delete-button {
   padding: 8px 16px;
   border: none;
@@ -185,14 +184,7 @@
   background-color: #e0e0e0;
 }
 
-.publish-button {
-  background-color: #4caf50;
-  color: white;
-}
-
-.publish-button:hover {
-  background-color: #45a049;
-}
+/* publish button removed */
 
 .delete-button {
   background-color: #f44336;
@@ -223,7 +215,6 @@
   }
   
   .edit-button,
-  .publish-button,
   .delete-button {
     width: 100%;
   }

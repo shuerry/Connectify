@@ -3,13 +3,21 @@ import { PopulatedDatabaseDraft } from '@fake-stack-overflow/shared';
 
 const DRAFT_API = '/api/question';
 
-const saveDraft = async (payload: any) => {
+interface DraftPayload {
+  title: string;
+  text?: string;
+  tags?: Array<{ name: string; description?: string } | string>;
+  askedBy?: string;
+  community?: string | null;
+}
+
+const saveDraft = async (payload: DraftPayload) => {
   const res = await api.post(`${DRAFT_API}/saveDraft`, payload);
   if (res.status !== 201) throw new Error('Failed to save draft');
   return res.data as PopulatedDatabaseDraft;
 };
 
-const updateDraft = async (draftId: string, payload: any) => {
+const updateDraft = async (draftId: string, payload: DraftPayload) => {
   const res = await api.put(`${DRAFT_API}/updateDraft/${draftId}`, payload);
   if (res.status !== 200) throw new Error('Failed to update draft');
   return res.data as PopulatedDatabaseDraft;

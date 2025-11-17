@@ -128,9 +128,9 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
               path='/notifications'
               element={<NotificationsPage username={user?.username || ''} />}
             />
-            <Route 
-              path='/drafts' 
-              element={<DraftsPage userContext={{ username: user?.username || '' }} />} 
+            <Route
+              path='/drafts'
+              element={<DraftsPage userContext={{ username: user?.username || '' }} />}
             />
           </Route>
         }

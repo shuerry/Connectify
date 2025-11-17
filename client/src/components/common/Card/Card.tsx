@@ -35,17 +35,6 @@ const Card: React.FC<CardProps> = ({
 
   const elementType = onClick ? 'button' : 'div';
 
-<<<<<<< HEAD
-  return (
-    <CardElement
-      className={cardClasses}
-      onClick={onClick}
-      type={onClick ? 'button' : undefined}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}>
-      {children}
-    </CardElement>
-=======
   return React.createElement(
     elementType,
     {
@@ -56,7 +45,6 @@ const Card: React.FC<CardProps> = ({
       tabIndex: onClick ? 0 : undefined,
     },
     children,
->>>>>>> d2014c3 (run lint)
   );
 };
 

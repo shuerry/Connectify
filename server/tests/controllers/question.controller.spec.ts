@@ -350,7 +350,7 @@ describe('Test questionController', () => {
         answers: [],
         comments: [],
         community: null,
-      });
+      } as unknown as DatabaseQuestion);
 
       jest.spyOn(databaseUtil, 'populateDocument').mockResolvedValueOnce(result);
 
@@ -1144,6 +1144,84 @@ describe('Test questionController', () => {
 
       expect(response.status).toBe(400);
       expect(response.text).toBe('Title and text cannot be empty');
+    });
+  });
+
+  describe('Draft endpoints', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('POST /saveDraft should save a draft with only title provided', async () => {
+      const mockDraft = {
+        _id: new mongoose.Types.ObjectId('65e9b5a995b6c7045a30d900'),
+        title: 'Draft Title',
+        text: '',
+        tags: [],
+        askedBy: 'testuser',
+        community: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any;
+
+      jest.spyOn(tagUtil, 'processTags').mockResolvedValueOnce([]);
+      jest.spyOn(questionUtil, 'saveDraft').mockResolvedValueOnce(mockDraft);
+
+      const response = await supertest(app).post('/api/question/saveDraft').send({
+        title: 'Draft Title',
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual(JSON.parse(JSON.stringify(mockDraft)));
+    });
+
+    it('POST /saveDraft should return 400 when service returns error', async () => {
+      jest.spyOn(tagUtil, 'processTags').mockResolvedValueOnce([]);
+      jest
+        .spyOn(questionUtil, 'saveDraft')
+        .mockResolvedValueOnce({ error: 'Failed to save' } as any);
+
+      const response = await supertest(app).post('/api/question/saveDraft').send({
+        title: 'Draft Title',
+      });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('GET /getUserDrafts should return drafts for a user', async () => {
+      const mockDrafts = [
+        {
+          _id: new mongoose.Types.ObjectId('65e9b5a995b6c7045a30d901'),
+          title: 'Draft 1',
+          text: '',
+          tags: [],
+          askedBy: 'testuser',
+          community: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ] as any;
+
+      jest.spyOn(questionUtil, 'getUserDrafts').mockResolvedValueOnce(mockDrafts);
+
+      const response = await supertest(app)
+        .get('/api/question/getUserDrafts')
+        .query({ username: 'testuser' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(JSON.parse(JSON.stringify(mockDrafts)));
+    });
+
+    it('DELETE /deleteDraft/:draftId should delete a draft', async () => {
+      jest.spyOn(questionUtil, 'deleteDraft').mockResolvedValueOnce({ msg: 'deleted' } as any);
+
+      const draftId = '65e9b5a995b6c7045a30d902';
+      const response = await supertest(app)
+        .delete(`/api/question/deleteDraft/${draftId}`)
+        .send({ username: 'testuser' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ message: 'Draft deleted successfully' });
     });
   });
 });

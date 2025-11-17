@@ -73,10 +73,38 @@ const SideBarNav = () => {
                     strokeLinecap='round'
                     strokeLinejoin='round'
                   />
-                  <polyline points='14,2 14,8 20,8' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' />
-                  <line x1='16' y1='13' x2='8' y2='13' stroke='currentColor' strokeWidth='2' strokeLinecap='round' />
-                  <line x1='16' y1='17' x2='8' y2='17' stroke='currentColor' strokeWidth='2' strokeLinecap='round' />
-                  <polyline points='10,9 9,9 8,9' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' />
+                  <polyline
+                    points='14,2 14,8 20,8'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
+                  <line
+                    x1='16'
+                    y1='13'
+                    x2='8'
+                    y2='13'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                    strokeLinecap='round'
+                  />
+                  <line
+                    x1='16'
+                    y1='17'
+                    x2='8'
+                    y2='17'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                    strokeLinecap='round'
+                  />
+                  <polyline
+                    points='10,9 9,9 8,9'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
                 </svg>
               </div>
               <span className='nav-item-text'>My Drafts</span>

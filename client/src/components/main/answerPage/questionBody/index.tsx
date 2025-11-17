@@ -69,7 +69,7 @@ const QuestionBody = ({
 
   if (isEditing) {
     return (
-      <EditQuestionForm 
+      <EditQuestionForm
         question={question}
         onCancel={handleEditCancel}
         onSuccess={handleEditSuccess}

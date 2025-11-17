@@ -85,9 +85,9 @@ const communityController = (socket: FakeSOSocket) => {
 
       if ('error' in result) {
         // Handle different error types with appropriate status codes
-        if (result.error.includes('admins cannot leave')) {
+        if (typeof result.error === 'string' && result.error.includes('admins cannot leave')) {
           res.status(403).json({ error: result.error });
-        } else if (result.error.includes('not found')) {
+        } else if (typeof result.error === 'string' && result.error.includes('not found')) {
           res.status(404).json({ error: result.error });
         } else {
           res.status(500).json({ error: result.error });
@@ -166,9 +166,9 @@ const communityController = (socket: FakeSOSocket) => {
 
       if ('error' in result) {
         // Determine appropriate status code based on error
-        if (result.error.includes('Unauthorized')) {
+        if (typeof result.error === 'string' && result.error.includes('Unauthorized')) {
           res.status(403).json({ error: result.error });
-        } else if (result.error.includes('not found')) {
+        } else if (typeof result.error === 'string' && result.error.includes('not found')) {
           res.status(404).json({ error: result.error });
         } else {
           res.status(500).json({ error: result.error });

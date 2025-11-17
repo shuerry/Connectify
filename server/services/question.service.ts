@@ -615,7 +615,7 @@ export const saveDraft = async (
   tags: ObjectId[],
   askedBy: string,
   community?: ObjectId | null,
-): Promise<any | { error: string }> => {
+): Promise<{ error: string } | object> => {
   try {
     const DraftModel = (await import('../models/drafts.model')).default;
 
@@ -632,12 +632,14 @@ export const saveDraft = async (
       return { error: 'Failed to save draft' };
     }
 
-    // Populate tags and community before returning (Mongoose v6+ pattern)
+    // Populate tags and community before returning by re-querying the created draft
     try {
-      const populated = await (savedDraft as any).populate('tags').populate('community');
-      return populated;
+      const populated = await DraftModel.findById(savedDraft._id)
+        .populate('tags')
+        .populate('community');
+      return populated ?? savedDraft;
     } catch (e) {
-      return savedDraft;
+      return { error: 'Failed to populate draft after saving' };
     }
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -656,7 +658,7 @@ export const updateDraft = async (
   tags: ObjectId[],
   askedBy: string,
   community?: ObjectId | null,
-): Promise<any | { error: string }> => {
+): Promise<object | { error: string }> => {
   try {
     const DraftModel = (await import('../models/drafts.model')).default;
 
@@ -670,12 +672,16 @@ export const updateDraft = async (
       return { error: 'Draft not found or unauthorized' };
     }
 
-    // Populate tags and community before returning (Mongoose v6+ pattern)
+    // Populate tags and community before returning by re-querying the updated draft
     try {
-      const populated = await (updatedDraft as any).populate('tags').populate('community');
-      return populated;
+      const populated = await DraftModel.findById(updatedDraft._id)
+        .populate('tags')
+        .populate('community');
+      return populated ?? updatedDraft.toObject();
     } catch (e) {
-      return updatedDraft;
+      // eslint-disable-next-line no-console
+      console.error('updateDraft error:', e);
+      return updatedDraft.toObject();
     }
   } catch (error) {
     // eslint-disable-next-line no-console

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { PopulatedDatabaseQuestion, Tag } from '../../../../types/types';
 import useUserContext from '../../../../hooks/useUserContext';
 import filter from 'leo-profanity';
@@ -11,17 +11,11 @@ interface EditQuestionFormProps {
   onSuccess: (updatedQuestion: PopulatedDatabaseQuestion) => void;
 }
 
-const EditQuestionForm: React.FC<EditQuestionFormProps> = ({ 
-  question, 
-  onCancel, 
-  onSuccess 
-}) => {
+const EditQuestionForm: React.FC<EditQuestionFormProps> = ({ question, onCancel, onSuccess }) => {
   const { user } = useUserContext();
   const [title, setTitle] = useState(question.title);
   const [text, setText] = useState(question.text);
-  const [tagNames, setTagNames] = useState(
-    question.tags.map(tag => tag.name).join(' ')
-  );
+  const [tagNames, setTagNames] = useState(question.tags.map(tag => tag.name).join(' '));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [filterReason, setFilterReason] = useState('');
@@ -29,7 +23,7 @@ const EditQuestionForm: React.FC<EditQuestionFormProps> = ({
     title: '',
     text: '',
     tags: '',
-    general: ''
+    general: '',
   });
 
   const validateForm = (): boolean => {
@@ -37,7 +31,7 @@ const EditQuestionForm: React.FC<EditQuestionFormProps> = ({
       title: '',
       text: '',
       tags: '',
-      general: ''
+      general: '',
     };
 
     if (!title.trim()) {
@@ -71,7 +65,7 @@ const EditQuestionForm: React.FC<EditQuestionFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -81,7 +75,7 @@ const EditQuestionForm: React.FC<EditQuestionFormProps> = ({
     const hits = filter.badWordsUsed(textToCheck);
     if (hits.length > 0) {
       setFilterReason(
-        `Your post contains inappropriate language. Please remove: ${hits.join(', ')}`
+        `Your post contains inappropriate language. Please remove: ${hits.join(', ')}`,
       );
       setIsFilterModalOpen(true);
       return;
@@ -92,10 +86,13 @@ const EditQuestionForm: React.FC<EditQuestionFormProps> = ({
 
     try {
       // Parse tags into the expected format
-      const tags: Tag[] = tagNames.trim().split(/\s+/).map(tagName => ({
-        name: tagName,
-        description: `Tag for ${tagName}`
-      }));
+      const tags: Tag[] = tagNames
+        .trim()
+        .split(/\s+/)
+        .map(tagName => ({
+          name: tagName,
+          description: `Tag for ${tagName}`,
+        }));
 
       const response = await fetch(
         `http://localhost:8000/api/question/editQuestion/${question._id}`,
@@ -110,7 +107,7 @@ const EditQuestionForm: React.FC<EditQuestionFormProps> = ({
             tags,
             username: user.username,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -123,7 +120,7 @@ const EditQuestionForm: React.FC<EditQuestionFormProps> = ({
     } catch (error) {
       setErrors(prev => ({
         ...prev,
-        general: error instanceof Error ? error.message : 'Failed to update question'
+        general: error instanceof Error ? error.message : 'Failed to update question',
       }));
     } finally {
       setIsSubmitting(false);
@@ -144,7 +141,7 @@ const EditQuestionForm: React.FC<EditQuestionFormProps> = ({
             id='edit-title'
             type='text'
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={e => setTitle(e.target.value)}
             placeholder='Enter question title'
             className={errors.title ? 'error' : ''}
             disabled={isSubmitting}
@@ -158,7 +155,7 @@ const EditQuestionForm: React.FC<EditQuestionFormProps> = ({
           <textarea
             id='edit-text'
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={e => setText(e.target.value)}
             placeholder='Describe your question in detail'
             rows={8}
             className={errors.text ? 'error' : ''}
@@ -174,7 +171,7 @@ const EditQuestionForm: React.FC<EditQuestionFormProps> = ({
             id='edit-tags'
             type='text'
             value={tagNames}
-            onChange={(e) => setTagNames(e.target.value)}
+            onChange={e => setTagNames(e.target.value)}
             placeholder='Enter tags separated by spaces (e.g. javascript react nodejs)'
             className={errors.tags ? 'error' : ''}
             disabled={isSubmitting}
@@ -186,37 +183,21 @@ const EditQuestionForm: React.FC<EditQuestionFormProps> = ({
         </div>
 
         {/* General Error */}
-        {errors.general && (
-          <div className='api-error'>
-            {errors.general}
-          </div>
-        )}
+        {errors.general && <div className='api-error'>{errors.general}</div>}
 
         {/* Action Buttons */}
         <div className='form-actions'>
-          <button
-            type='button'
-            onClick={onCancel}
-            className='btn-cancel'
-            disabled={isSubmitting}
-          >
+          <button type='button' onClick={onCancel} className='btn-cancel' disabled={isSubmitting}>
             Cancel
           </button>
-          <button
-            type='submit'
-            className='btn-submit'
-            disabled={isSubmitting}
-          >
+          <button type='submit' className='btn-submit' disabled={isSubmitting}>
             {isSubmitting ? 'Updating...' : 'Update Question'}
           </button>
         </div>
       </form>
 
       {isFilterModalOpen && (
-        <ProfanityFilterModal 
-          reason={filterReason} 
-          onClose={() => setIsFilterModalOpen(false)} 
-        />
+        <ProfanityFilterModal reason={filterReason} onClose={() => setIsFilterModalOpen(false)} />
       )}
     </div>
   );

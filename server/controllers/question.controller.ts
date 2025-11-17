@@ -258,7 +258,7 @@ const questionController = (socket: FakeSOSocket) => {
       if ('error' in result) {
         if (result.error === 'Question not found') {
           res.status(404).send(result.error);
-        } else if (result.error.includes('Unauthorized')) {
+        } else if (typeof result.error === 'string' && result.error.includes('Unauthorized')) {
           res.status(403).send(result.error);
         } else {
           res.status(400).send(result.error);
@@ -366,7 +366,7 @@ const questionController = (socket: FakeSOSocket) => {
       if ('error' in result) {
         if (result.error === 'Question not found') {
           res.status(404).send(result.error);
-        } else if (result.error.includes('Unauthorized')) {
+        } else if (typeof result.error === 'string' && result.error.includes('Unauthorized')) {
           res.status(403).send(result.error);
         } else {
           res.status(400).send(result.error);
@@ -419,7 +419,7 @@ const questionController = (socket: FakeSOSocket) => {
       if ('error' in result) {
         if (result.error === 'Question not found' || result.error === 'Version not found') {
           res.status(404).send(result.error);
-        } else if (result.error.includes('Unauthorized')) {
+        } else if (typeof result.error === 'string' && result.error.includes('Unauthorized')) {
           res.status(403).send(result.error);
         } else {
           res.status(400).send(result.error);
@@ -461,7 +461,8 @@ const questionController = (socket: FakeSOSocket) => {
       // Ensure tags/text/askedBy have safe defaults if omitted
       const incomingTags = Array.isArray(tags) ? tags : [];
       const incomingText = typeof text === 'string' ? text : '';
-      const incomingAskedBy = typeof askedBy === 'string' && askedBy.trim().length > 0 ? askedBy : 'unknown';
+      const incomingAskedBy =
+        typeof askedBy === 'string' && askedBy.trim().length > 0 ? askedBy : 'unknown';
 
       // Process tags to get ObjectIds
       const processedTags = await processTags(incomingTags);
@@ -514,19 +515,27 @@ const questionController = (socket: FakeSOSocket) => {
 
     const incomingTags = Array.isArray(tags) ? tags : [];
     const incomingText = typeof text === 'string' ? text : '';
-    const incomingAskedBy = typeof askedBy === 'string' && askedBy.trim().length > 0 ? askedBy : 'unknown';
+    const incomingAskedBy =
+      typeof askedBy === 'string' && askedBy.trim().length > 0 ? askedBy : 'unknown';
 
     try {
       // Process tags to get ObjectIds
       const processedTags = await processTags(incomingTags);
       const tagIds = processedTags.map(tag => tag._id);
 
-      const result = await updateDraft(draftId, title, incomingText, tagIds, incomingAskedBy, community);
+      const result = await updateDraft(
+        draftId,
+        title,
+        incomingText,
+        tagIds,
+        incomingAskedBy,
+        community,
+      );
 
       if ('error' in result) {
         if (result.error === 'Draft not found') {
           res.status(404).send(result.error);
-        } else if (result.error.includes('Unauthorized')) {
+        } else if (typeof result.error === 'string' && result.error.includes('Unauthorized')) {
           res.status(403).send(result.error);
         } else {
           res.status(400).send(result.error);
@@ -609,7 +618,7 @@ const questionController = (socket: FakeSOSocket) => {
       if ('error' in result) {
         if (result.error === 'Draft not found') {
           res.status(404).send(result.error);
-        } else if (result.error.includes('Unauthorized')) {
+        } else if (typeof result.error === 'string' && result.error.includes('Unauthorized')) {
           res.status(403).send(result.error);
         } else {
           res.status(400).send(result.error);
@@ -657,7 +666,7 @@ const questionController = (socket: FakeSOSocket) => {
       if ('error' in result) {
         if (result.error === 'Draft not found') {
           res.status(404).send(result.error);
-        } else if (result.error.includes('Unauthorized')) {
+        } else if (typeof result.error === 'string' && result.error.includes('Unauthorized')) {
           res.status(403).send(result.error);
         } else {
           res.status(400).send(result.error);

@@ -50,8 +50,8 @@ const NewQuestionPage = () => {
         if (found) {
           setTitle(found.title || '');
           setText(found.text || '');
-          setTagNames((found.tags || []).map((t: any) => t.name).join(' '));
-          if (found.community) setCommunity(found.community as any);
+          setTagNames((found.tags || []).map((t: { name: string }) => t.name).join(' '));
+          if (found.community) setCommunity(found.community as typeof community);
           setCurrentDraftId(found._id.toString());
         }
       } catch (e) {
@@ -302,8 +302,7 @@ const NewQuestionPage = () => {
                   } catch (err) {
                     alert(err instanceof Error ? err.message : 'Failed to save draft');
                   }
-                }}
-              >
+                }}>
                 <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
                   <path d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4z' />
                 </svg>

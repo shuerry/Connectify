@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 /**
  * Schema for the drafts collection.
@@ -39,5 +39,16 @@ const draftSchema = new Schema(
 );
 
 const draft = model('Draft', draftSchema);
+
+// Export DraftDocument type for TypeScript usage elsewhere
+export type DraftDocument = Document & {
+  title: string;
+  text?: string;
+  tags?: Types.ObjectId[];
+  askedBy: string;
+  community?: Types.ObjectId | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 export default draft;
