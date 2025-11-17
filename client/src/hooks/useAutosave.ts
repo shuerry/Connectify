@@ -1,21 +1,18 @@
-import { useEffect } from 'react';
-
-type Community = {
-  _id: { toString: () => string };
-};
+import { useEffect, Dispatch, SetStateAction } from 'react';
+import { DatabaseCommunity } from '../types/types';
 
 type Setters = {
   setTitle: (v: string) => void;
   setText: (v: string) => void;
   setTagNames: (v: string) => void;
-  setCommunity: (v: Community | null) => void;
+  setCommunity: Dispatch<SetStateAction<DatabaseCommunity | null>>;
 };
 
 type Values = {
   title: string;
   text: string;
   tagNames: string;
-  community: Community | null;
+  community: DatabaseCommunity | null;
 };
 
 /**
@@ -28,7 +25,7 @@ const useAutosave = (
   key: string,
   values: Values,
   setters: Setters,
-  options?: { skipRestore?: boolean; communityList?: Community[] },
+  options?: { skipRestore?: boolean; communityList?: DatabaseCommunity[] },
 ) => {
   const { title, text, tagNames, community } = values;
   const { setTitle, setText, setTagNames, setCommunity } = setters;
