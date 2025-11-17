@@ -208,7 +208,7 @@ const DirectMessage = () => {
                   </div>
                   <div className='participant-details'>
                     <h2>{otherParticipant}</h2>
-                    <p>Active now</p>
+                    <p>{typingText || ''}</p>
                   </div>
                 </div>
                 <div className='chat-actions'>

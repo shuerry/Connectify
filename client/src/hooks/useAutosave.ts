@@ -1,17 +1,21 @@
 import { useEffect } from 'react';
 
+type Community = {
+  _id: string;
+};
+
 type Setters = {
   setTitle: (v: string) => void;
   setText: (v: string) => void;
   setTagNames: (v: string) => void;
-  setCommunity: (v: any) => void;
+  setCommunity: (v: Community | null) => void;
 };
 
 type Values = {
   title: string;
   text: string;
   tagNames: string;
-  community: any;
+  community: Community | null;
 };
 
 /**
@@ -24,7 +28,7 @@ const useAutosave = (
   key: string,
   values: Values,
   setters: Setters,
-  options?: { skipRestore?: boolean; communityList?: any[] },
+  options?: { skipRestore?: boolean; communityList?: Community[] },
 ) => {
   const { title, text, tagNames, community } = values;
   const { setTitle, setText, setTagNames, setCommunity } = setters;
@@ -52,15 +56,27 @@ const useAutosave = (
       console.warn('Failed to restore autosave', e);
     }
     // We only want to run this on mount (and when communityList becomes available)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, options?.skipRestore, options?.communityList]);
+  }, [
+    key,
+    options?.skipRestore,
+    options?.communityList,
+    title,
+    text,
+    tagNames,
+    setTitle,
+    setText,
+    setTagNames,
+    setCommunity,
+  ]);
+
+  const communityId = community ? community._id : null;
 
   useEffect(() => {
     const payload = {
       title,
       text,
       tagNames,
-      communityId: community ? community._id : null,
+      communityId,
       updatedAt: Date.now(),
     };
 
@@ -75,7 +91,7 @@ const useAutosave = (
     }, 800);
 
     return () => clearTimeout(id);
-  }, [key, title, text, tagNames, community ? community._id : null]);
+  }, [key, title, text, tagNames, community, communityId]);
 };
 
 export default useAutosave;

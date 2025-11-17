@@ -46,8 +46,7 @@ const MessagingPage = () => {
             <div className='header-text'>
               <h1>Global Chat</h1>
               <p>
-                {messages.length} messages •{' '}
-                {typingUsersArray.length > 0 ? typingText : 'Active now'}
+                {messages.length} messages{typingText ? ` • ${typingText}` : ''}
               </p>
             </div>
           </div>
