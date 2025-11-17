@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 type Community = {
-  _id: string;
+  _id: { toString: () => string };
 };
 
 type Setters = {
