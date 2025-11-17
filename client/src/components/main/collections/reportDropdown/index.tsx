@@ -4,6 +4,8 @@ import { useState } from 'react';
 interface ReportDropdownProps {
   onClose: () => void;
   onSubmit: (reason: string) => void;
+  // Optional target being reported (component often passes a question)
+  question?: any;
 }
 
 /**

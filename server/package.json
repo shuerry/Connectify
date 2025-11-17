@@ -49,7 +49,7 @@
     "start": "MODE=production node ./dist/server.js",
     "test": "jest -w=1 --coverage --detectOpenHandles --coverageReporters='json-summary'",
     "debug-test": "jest -w=1 --coverage --detectOpenHandles",
-    "prebuild": "cd ..; npm run build --workspace=shared",
+    "prebuild": "cd .. && npm run build --workspace=shared",
     "stryker": "stryker run",
     "populate-db": "ts-node ./seedData/populateDB.ts",
     "delete-db": "ts-node ./seedData/deleteDB.ts"

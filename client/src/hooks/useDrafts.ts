@@ -8,7 +8,8 @@ interface DraftPayload {
   text?: string;
   tags?: Array<{ name: string; description?: string } | string>;
   askedBy?: string;
-  community?: string | null;
+  // Accept either a string id, an ObjectId-like object, or null
+  community?: string | { toString(): string } | null;
 }
 
 const saveDraft = async (payload: DraftPayload) => {

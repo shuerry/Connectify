@@ -7,6 +7,7 @@ import './index.css';
  */
 interface AnswerHeaderProps {
   title: string;
+  ansCount?: number;
 }
 
 /**
@@ -16,11 +17,14 @@ interface AnswerHeaderProps {
  * @param title The title of the question or discussion thread.
  */
 
-const AnswerHeader = ({ title }: AnswerHeaderProps) => (
+const AnswerHeader = ({ title, ansCount }: AnswerHeaderProps) => (
   <div className='reddit-post-header'>
     <h1 className='reddit-post-title'>{title}</h1>
     <div className='reddit-post-meta'>
       <span className='reddit-post-flair'>Discussion</span>
+      {typeof ansCount === 'number' && (
+        <span className='reddit-post-anscount'>{ansCount} {ansCount === 1 ? 'answer' : 'answers'}</span>
+      )}
     </div>
   </div>
 );

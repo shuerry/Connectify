@@ -18,6 +18,8 @@ const questionsResolver: ReferenceResolver<QuestionImport, Omit<DatabaseQuestion
   comments: resolveRefs(doc.comments, insertedDocs.comment, 'Comment'),
   answers: resolveRefs(doc.answers, insertedDocs.answer, 'Answer'),
   community: resolveSingleRef(doc.community, insertedDocs.community, 'Community'),
+  // Resolve followers (if present in import) to ObjectId references
+  followers: resolveRefs((doc as any).followers || [], insertedDocs.user, 'User'),
 });
 
 export default questionsResolver;
