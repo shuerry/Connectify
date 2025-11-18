@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -151,7 +152,11 @@ const useProfileSettings = () => {
       setErrorMessage(null);
 
       // optional: reflect pending state locally
-      setUserData(u => (u ? { ...u, emailVerified: false } : u));
+      setUserData(u => {
+        const updatedUser = u ? { ...u, emailVerified: false } : u;
+        console.log('Updated userData state:', updatedUser); // Debugging log
+        return updatedUser;
+      });
     } catch (error) {
       setErrorMessage('Failed to update email.');
       setSuccessMessage(null);
