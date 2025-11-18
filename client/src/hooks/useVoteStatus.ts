@@ -25,6 +25,30 @@ const useVoteStatus = ({ question }: { question: PopulatedDatabaseQuestion }) =>
   const { user, socket } = useUserContext();
   const [count, setCount] = useState<number>(0);
   const [voted, setVoted] = useState<number>(0);
+  // Initialize from question prop so UI reflects stored votes immediately
+  useEffect(() => {
+    if (question) {
+      const initialUp = Array.isArray(question.upVotes) ? question.upVotes.length : 0;
+      const initialDown = Array.isArray(question.downVotes) ? question.downVotes.length : 0;
+      setCount(initialUp - initialDown);
+
+      if (
+        user.username &&
+        Array.isArray(question.upVotes) &&
+        question.upVotes.includes(user.username)
+      ) {
+        setVoted(1);
+      } else if (
+        user.username &&
+        Array.isArray(question.downVotes) &&
+        question.downVotes.includes(user.username)
+      ) {
+        setVoted(-1);
+      } else {
+        setVoted(0);
+      }
+    }
+  }, [question, user.username]);
 
   useEffect(() => {
     // Listen for vote updates via socket
