@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import UserModel from '../models/users.model';
 import { NotificationService } from '../services/notification.service';
 import { generateVerificationToken, hashToken } from '../utils/crypto.util';
@@ -36,13 +37,29 @@ export async function startEmailVerification(username: string, newEmail: string)
   // 3) build verification link and send
   const site = process.env.SITE_URL || 'http://localhost:4530';
   const verifyUrl = `${site}/verify-email?token=${encodeURIComponent(token)}`;
-  await notifier.sendEmailVerification({
-    toEmail: newEmail,
-    username,
-    token, // sent only via email; never stored plaintext
-    verifyUrl, // used to build the nice button
-    expiresAt,
-  });
+
+  try {
+    await notifier.sendEmailVerification({
+      toEmail: newEmail,
+      username,
+      token, // sent only via email; never stored plaintext
+      verifyUrl, // used to build the nice button
+      expiresAt,
+    });
+  } catch (error) {
+    console.error('Failed to send verification email:', error); // Debugging log
+
+    // Roll back the database update
+    await UserModel.findOneAndUpdate(
+      { username },
+      {
+        $unset: { emailVerification: '' },
+        $set: { emailVerified: true },
+      },
+    );
+
+    return { error: 'Failed to send verification email' as const };
+  }
 
   return { ok: true as const };
 }
