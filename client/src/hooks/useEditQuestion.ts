@@ -41,7 +41,12 @@ export const useEditQuestion = (): UseEditQuestionReturn => {
     setError(null);
 
     try {
-      const response = await fetch(`http://localhost:8000/api/question/editQuestion/${qid}`, {
+      const SERVER = (import.meta as ImportMeta).env.VITE_SERVER_URL || '';
+      const url = SERVER
+        ? `${SERVER}/api/question/editQuestion/${qid}`
+        : `/api/question/editQuestion/${qid}`;
+
+      const response = await fetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

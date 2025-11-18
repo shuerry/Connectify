@@ -63,12 +63,8 @@ const socket: FakeSOSocket = new Server(server, {
         return callback(null, true);
       }
 
-      // In production, allow any onrender.com subdomain
-      if (
-        process.env.NODE_ENV === 'production' &&
-        origin.endsWith('.onrender.com') &&
-        origin.startsWith('https://')
-      ) {
+      // Allow any https onrender.com subdomain (deployed clients)
+      if (origin.startsWith('https://') && origin.endsWith('.onrender.com')) {
         return callback(null, true);
       }
 
@@ -121,13 +117,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     if (!origin) return false;
     // Exact match
     if (ALLOWED_CLIENT_ORIGINS.includes(origin)) return true;
-    // Allow onrender.com subdomains in production
-    if (
-      process.env.NODE_ENV === 'production' &&
-      origin.endsWith('.onrender.com') &&
-      origin.startsWith('https://')
-    )
-      return true;
+    // Allow onrender.com subdomains (deployed clients)
+    if (origin.startsWith('https://') && origin.endsWith('.onrender.com')) return true;
     // Allow when an allowed origin is a prefix of the request origin (helps with trailing slashes/ports)
     for (const allowed of ALLOWED_CLIENT_ORIGINS) {
       if (origin === allowed) return true;
