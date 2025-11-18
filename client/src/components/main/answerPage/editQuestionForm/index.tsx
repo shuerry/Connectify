@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE } from '../../../../services/api';
 import { PopulatedDatabaseQuestion, Tag } from '../../../../types/types';
 import useUserContext from '../../../../hooks/useUserContext';
 import filter from 'leo-profanity';
@@ -94,21 +95,18 @@ const EditQuestionForm: React.FC<EditQuestionFormProps> = ({ question, onCancel,
           description: `Tag for ${tagName}`,
         }));
 
-      const response = await fetch(
-        `http://localhost:8000/api/question/editQuestion/${question._id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: title.trim(),
-            text: text.trim(),
-            tags,
-            username: user.username,
-          }),
+      const response = await fetch(`${API_BASE}/api/question/editQuestion/${question._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify({
+          title: title.trim(),
+          text: text.trim(),
+          tags,
+          username: user.username,
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
