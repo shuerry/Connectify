@@ -329,7 +329,7 @@ const useConnectFourPage = () => {
     });
   };
 
-  // (handleLeaveGame moved above)
+ 
 
   return {
     games,
