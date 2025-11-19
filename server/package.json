@@ -10,6 +10,7 @@
     "mongoose": "8.9.2",
     "nanoid": "^3.3.8",
     "nodemailer": "^7.0.10",
+    "resend": "^6.5.2",
     "socket.io": "^4.8.1",
     "swagger-ui-express": "^5.0.1",
     "yaml": "^2.8.1"

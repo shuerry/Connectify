@@ -129,6 +129,7 @@ const useProfileSettings = () => {
     try {
       // now returns { msg } instead of a user
       await updateEmail(username, newEmail);
+      //console.log("Passed updateEmail");
 
       setUserData(u =>
         u
