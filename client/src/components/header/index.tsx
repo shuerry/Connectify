@@ -166,9 +166,7 @@ const Header = () => {
                   strokeLinecap='round'
                   strokeLinejoin='round'
                 />
-                {unread > 0 && (
-                  <circle cx='18' cy='6' r='4' fill='#3075ffff' />
-                )}
+                {unread > 0 && <circle cx='18' cy='6' r='4' fill='#3075ffff' />}
               </svg>
             </button>
           </div>

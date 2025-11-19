@@ -96,13 +96,13 @@ describe('Chat service', () => {
     });
 
     it('happy path: pushes message, creates DB notifications for enabled non-sender participants, and emails verified recipients', async () => {
-      // Updated chat returned by findByIdAndUpdate (DB doc shape)
+      // Updated chat returned by findByIdAndUpdate().lean() (lean result)
       const updatedChat: DatabaseChat = {
         _id: chatId,
         participants: {
-          alice: true, // sender (skipped)
-          bob: true, // enabled → DB notif + email
-          charlie: false, // disabled → skipped
+          alice: true,
+          bob: true,
+          charlie: false,
         },
         messages: [messageId],
         createdAt: new Date(),
@@ -119,8 +119,11 @@ describe('Chat service', () => {
       // Recipient lookup (lean results)
       const bobUser = { username: 'bob', email: 'bob@example.com', emailVerified: true };
 
-      // Spies/mocks
-      jest.spyOn(ChatModel, 'findByIdAndUpdate').mockResolvedValue(updatedChat as any);
+      // ---- Spies/mocks ----
+      // ChatModel.findByIdAndUpdate(...).lean() -> updatedChat
+      jest.spyOn(ChatModel, 'findByIdAndUpdate').mockReturnValue(asLeanQuery(updatedChat) as any);
+
+      // MessageModel.findById(...).lean() -> messageDoc
       jest.spyOn(MessageModel, 'findById').mockReturnValue(asLeanQuery(messageDoc) as any);
 
       const findOneSpy = jest.spyOn(UserModel, 'findOne').mockImplementation((cond: any) => {
@@ -156,9 +159,10 @@ describe('Chat service', () => {
           recipient: 'bob',
           kind: 'chat',
           title: expect.stringContaining('alice'),
-          link: `/chat/${chatIdString}`, // link uses string id
+          // 🔁 link changed in new implementation:
+          link: `/messaging/direct-message`,
           actorUsername: 'alice',
-          meta: { chatId: chatIdString, isMention: false }, // meta uses string id
+          meta: { chatId: chatIdString, isMention: false },
         }),
       );
 
@@ -176,7 +180,8 @@ describe('Chat service', () => {
     });
 
     it('returns {error} when chat is not found', async () => {
-      jest.spyOn(ChatModel, 'findByIdAndUpdate').mockResolvedValue(null as any);
+      // ChatModel.findByIdAndUpdate(...).lean() -> null
+      jest.spyOn(ChatModel, 'findByIdAndUpdate').mockReturnValue(asLeanQuery(null) as any);
 
       // create spies so "not called" assertions are valid
       const findByIdSpy = jest.spyOn(MessageModel, 'findById');
@@ -202,7 +207,10 @@ describe('Chat service', () => {
         updatedAt: new Date(),
       };
 
-      jest.spyOn(ChatModel, 'findByIdAndUpdate').mockResolvedValue(updatedChat as any);
+      // ChatModel.findByIdAndUpdate(...).lean() -> updatedChat
+      jest.spyOn(ChatModel, 'findByIdAndUpdate').mockReturnValue(asLeanQuery(updatedChat) as any);
+
+      // MessageModel.findById(...).lean() -> null
       jest.spyOn(MessageModel, 'findById').mockReturnValue(asLeanQuery(null) as any);
 
       // spies for "not called"
@@ -227,7 +235,10 @@ describe('Chat service', () => {
         updatedAt: new Date(),
       };
 
-      jest.spyOn(ChatModel, 'findByIdAndUpdate').mockResolvedValue(updatedChat as any);
+      // ChatModel.findByIdAndUpdate(...).lean() -> updatedChat
+      jest.spyOn(ChatModel, 'findByIdAndUpdate').mockReturnValue(asLeanQuery(updatedChat) as any);
+
+      // message doc (lean)
       jest
         .spyOn(MessageModel, 'findById')
         .mockReturnValue(asLeanQuery({ _id: messageId, msgFrom: 'alice', msg: 'ping' }) as any);
@@ -263,12 +274,17 @@ describe('Chat service', () => {
         updatedAt: new Date(),
       };
 
-      jest.spyOn(ChatModel, 'findByIdAndUpdate').mockResolvedValue(updatedChat as any);
+      // ChatModel.findByIdAndUpdate(...).lean() -> updatedChat
+      jest.spyOn(ChatModel, 'findByIdAndUpdate').mockReturnValue(asLeanQuery(updatedChat) as any);
+
+      // message doc (lean)
       jest
         .spyOn(MessageModel, 'findById')
         .mockReturnValue(
           asLeanQuery({ _id: messageId, msgFrom: 'alice', msg: 'hello again' }) as any,
         );
+
+      // bob with verified email
       jest
         .spyOn(UserModel, 'findOne')
         .mockReturnValue(
@@ -276,6 +292,7 @@ describe('Chat service', () => {
         );
 
       jest.spyOn(NotificationModel, 'create').mockResolvedValue({} as any);
+
       jest
         .spyOn(NotificationService.prototype, 'sendChatNotification')
         .mockRejectedValue(new Error('SMTP down'));

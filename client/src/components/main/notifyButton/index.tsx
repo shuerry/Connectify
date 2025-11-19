@@ -26,7 +26,6 @@ const NotifComponent = ({ chat }: NotifComponentProps) => {
         onClick={e => {
           e.stopPropagation();
           toggleLocalNotify();
-          console.log('Notify button clicked');
         }}
         title={
           notify ? 'Disable notifications for this chat' : 'Enable notifications for this chat'
@@ -48,14 +47,15 @@ const NotifComponent = ({ chat }: NotifComponentProps) => {
           />
           {!notify && (
             <line
-              x1="4"
-              y1="4"
-              x2="20"
-              y2="23"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />)}
+              x1='4'
+              y1='4'
+              x2='20'
+              y2='23'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+            />
+          )}
         </svg>
       </button>
     </div>

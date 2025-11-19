@@ -9,13 +9,13 @@ const useNotifyStatus = ({ chat }: { chat: PopulatedDatabaseChat }) => {
 
   useEffect(() => {
     const getNotificationStatus = () => {
-      console.log('Checking notification status for user:', user?.username);
+      //console.log('Checking notification status for user:', user?.username);
       if (!user?.username || !chat?.participants) {
-        console.log('No user or chat participants found');
+        //console.log('No user or chat participants found');
         return false;
       }
       const status = (chat.participants as Record<string, boolean>)[user.username];
-      console.log('User notification status:', status);
+      //console.log('User notification status:', status);
       return status ?? false;
     };
 
