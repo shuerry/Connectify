@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PopulatedDatabaseQuestion, PopulatedDatabaseQuestionVersion } from '../types/types';
+import { API_BASE } from '../services/api';
 
 interface UseQuestionVersionsReturn {
   getVersions: (
@@ -21,6 +22,7 @@ interface UseQuestionVersionsReturn {
  *
  * @returns {UseQuestionVersionsReturn}
  */
+
 export const useQuestionVersions = (): UseQuestionVersionsReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +36,7 @@ export const useQuestionVersions = (): UseQuestionVersionsReturn => {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/question/getQuestionVersions/${qid}?username=${encodeURIComponent(username)}`,
+        `${API_BASE}/api/question/getQuestionVersions/${qid}?username=${encodeURIComponent(username)}`,
         {
           method: 'GET',
           headers: {
@@ -69,7 +71,7 @@ export const useQuestionVersions = (): UseQuestionVersionsReturn => {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/question/rollbackQuestion/${qid}/${versionId}`,
+        `${API_BASE}/api/question/rollbackQuestion/${qid}/${versionId}`,
         {
           method: 'POST',
           headers: {

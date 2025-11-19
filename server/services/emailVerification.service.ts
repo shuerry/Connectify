@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import UserModel from '../models/users.model';
 import { NotificationService } from '../services/notification.service';
 import { generateVerificationToken, hashToken } from '../utils/crypto.util';

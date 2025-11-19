@@ -214,22 +214,6 @@ const useConnectFourPage = () => {
       if (currentGame && currentGame.gameID === updatedGame.gameID) {
         setCurrentGame(updatedGame);
         saveGameState(updatedGame, isSpectator);
-
-        // Check if game is over
-        if (updatedGame.state.status === 'OVER') {
-          setTimeout(() => {
-            const shouldReturn = window.confirm(
-              `Game Over! ${
-                updatedGame.state.winners && updatedGame.state.winners.length > 0
-                  ? `${updatedGame.state.winners[0]} wins!`
-                  : "It's a draw!"
-              }\n\nReturn to lobby?`,
-            );
-            if (shouldReturn) {
-              handleLeaveGame();
-            }
-          }, 1000);
-        }
       }
     };
 
@@ -344,8 +328,6 @@ const useConnectFourPage = () => {
       },
     });
   };
-
-  // (handleLeaveGame moved above)
 
   return {
     games,

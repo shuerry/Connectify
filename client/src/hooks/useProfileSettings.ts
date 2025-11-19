@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -35,6 +36,7 @@ const useProfileSettings = () => {
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   const [showPassword, setShowPassword] = useState(false);
+  const [forceRenderKey, setForceRenderKey] = useState(0); // State to force re-render
 
   const canEditProfile =
     currentUser.username && userData?.username ? currentUser.username === userData.username : false;
@@ -127,33 +129,24 @@ const useProfileSettings = () => {
   const handleUpdateEmail = async () => {
     if (!username) return;
     try {
-      // now returns { msg } instead of a user
+      console.log('Attempting to update email with:', { username, newEmail }); // Debugging log
       await updateEmail(username, newEmail);
       //console.log("Passed updateEmail");
 
-      setUserData(u =>
-        u
-          ? {
-              ...u,
-              emailVerified: false,
-              emailVerification: {
-                ...(u.emailVerification ?? {}),
-                pendingEmail: newEmail,
-              },
-            }
-          : u,
-      );
+      setUserData(u => {
+        const updatedUser = u ? { ...u, emailVerified: false } : u;
+        console.log('Updated userData state:', updatedUser); // Debugging log
+        return updatedUser;
+      });
 
-      // close edit mode; DO NOT set userData from the response
       setEditEmailMode(false);
-
-      // show the right message for verification flows
       setSuccessMessage('Verification email sent');
       setErrorMessage(null);
 
-      // optional: reflect pending state locally
-      setUserData(u => (u ? { ...u, emailVerified: false } : u));
+      // Force a re-render
+      setForceRenderKey(prevKey => prevKey + 1);
     } catch (error) {
+      console.error('Error in handleUpdateEmail:', error); // Debugging log
       setErrorMessage('Failed to update email.');
       setSuccessMessage(null);
     }
@@ -214,6 +207,7 @@ const useProfileSettings = () => {
     handleUpdateEmail,
     handleDeleteUser,
     handleViewCollectionsPage,
+    forceRenderKey, // Expose the forceRenderKey state
   };
 };
 

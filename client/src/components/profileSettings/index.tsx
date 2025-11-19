@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import * as React from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -156,7 +157,12 @@ const ProfileSettings: React.FC = () => {
                     onChange={e => setNewEmail(e.target.value)}
                   />
 
-                  <button className='button button-primary' onClick={handleUpdateEmail}>
+                  <button
+                    className='button button-primary'
+                    onClick={() => {
+                      console.log('Save button clicked. Current newEmail:', newEmail); // Debugging log
+                      handleUpdateEmail();
+                    }}>
                     Save
                   </button>
 
