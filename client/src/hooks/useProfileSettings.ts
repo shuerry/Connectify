@@ -131,6 +131,7 @@ const useProfileSettings = () => {
     try {
       console.log('Attempting to update email with:', { username, newEmail }); // Debugging log
       await updateEmail(username, newEmail);
+      //console.log("Passed updateEmail");
 
       setUserData(u => {
         const updatedUser = u ? { ...u, emailVerified: false } : u;

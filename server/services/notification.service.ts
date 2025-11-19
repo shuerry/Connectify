@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer';
 import { ChatNotificationPayload, AnswerNotificationPayload } from '../types/types';
 import type { EmailVerificationPayload, PasswordResetPayload } from '../types/types';
 import NotificationModel from '../models/notification.model';
+import { Resend } from 'resend';
 
 type Maybe<T> = T | undefined;
 
@@ -157,6 +158,16 @@ export class NotificationService {
 </body>
 </html>`;
   }
+
+  resend = new Resend('re_RPMQHEZL_ARjGmzyqXQsiUr9Eu7ktf9Zy');
+
+  resendTest = async () =>
+    this.resend.emails.send({
+      from: 'onboarding@resend.dev',
+      to: 'ally72704@gmail.com',
+      subject: 'Hello World',
+      html: '<p>Congrats on sending your <strong>first email</strong>!</p>',
+    });
 
   async sendChatNotification(payload: ChatNotificationPayload) {
     const { toEmail, toName, fromName, messagePreview, groupName, isMention, chatId } = payload;

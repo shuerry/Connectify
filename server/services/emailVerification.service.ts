@@ -13,12 +13,12 @@ const VERIF_MINUTES = Number(process.env.EMAIL_VERIFY_TTL_MIN || 60); // 60m def
  * - Sends the email with a one-time link
  */
 export async function startEmailVerification(username: string, newEmail: string) {
-  // 1) create token (plaintext only used to email the user)
+  // 1) create token
   const token = generateVerificationToken();
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + VERIF_MINUTES * 60_000);
 
-  // 2) write to the user doc (pendingEmail so the current email remains intact until verification)
+  // 2) write to the user doc (pendingEmail)
   const updated = await UserModel.findOneAndUpdate(
     { username },
     {
@@ -35,31 +35,16 @@ export async function startEmailVerification(username: string, newEmail: string)
   }
 
   // 3) build verification link and send
-  const site = process.env.SITE_URL || 'http://localhost:4530';
-  const verifyUrl = `${site}/verify-email?token=${encodeURIComponent(token)}`;
-
-  try {
-    await notifier.sendEmailVerification({
-      toEmail: newEmail,
-      username,
-      token, // sent only via email; never stored plaintext
-      verifyUrl, // used to build the nice button
-      expiresAt,
-    });
-  } catch (error) {
-    console.error('Failed to send verification email:', error); // Debugging log
-
-    // Roll back the database update
-    await UserModel.findOneAndUpdate(
-      { username },
-      {
-        $unset: { emailVerification: '' },
-        $set: { emailVerified: true },
-      },
-    );
-
-    return { error: 'Failed to send verification email' as const };
-  }
+  //const site = process.env.SITE_URL || 'http://localhost:4530';
+  //const verifyUrl = `${site}/verify-email?token=${encodeURIComponent(token)}`;
+  // await notifier.sendEmailVerification({
+  //   toEmail: newEmail,
+  //   username,
+  //   token, // sent only via email; never stored plaintext
+  //   verifyUrl, // used to build the button
+  //   expiresAt,
+  // });
+  await notifier.resendTest();
 
   return { ok: true as const };
 }
