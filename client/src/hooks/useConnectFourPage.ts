@@ -329,8 +329,6 @@ const useConnectFourPage = () => {
     });
   };
 
- 
-
   return {
     games,
     currentGame,
