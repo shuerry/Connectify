@@ -105,7 +105,7 @@ const Header = () => {
             </button>
             <button
               className='action-button'
-              onClick={() => navigate('/messages')}
+              onClick={() => navigate('/messaging')}
               title='Messages'>
               <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
                 <path
