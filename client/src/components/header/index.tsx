@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import useHeader from '../../hooks/useHeader';
 import './index.css';
 import useUserContext from '../../hooks/useUserContext';
-import NotificationButton from '../main/notificationsButton';
+import useUnreadNotifications from '../../hooks/useUnreadNotifications';
 
 /**
  * Modern Header component with improved design and user experience.
@@ -11,6 +11,7 @@ import NotificationButton from '../main/notificationsButton';
 const Header = () => {
   const { val, handleInputChange, handleKeyDown, handleSignOut } = useHeader();
   const { user: currentUser } = useUserContext();
+  const { unread } = useUnreadNotifications(currentUser?.username);
   const navigate = useNavigate();
 
   return (
@@ -146,6 +147,30 @@ const Header = () => {
                 />
               </svg>
             </button>
+            <button
+              className='action-button'
+              onClick={() => navigate('/notifications')}
+              title='Notifications'>
+              <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
+                <path
+                  d='M12 22c1.1 0 2-.9 2-2H10a2 2 0 0 0 2 2z'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                />
+                <path
+                  d='M18 16v-5a6 6 0 0 0-5-5.91V4a1 1 0 1 0-2 0v1.09A6 6 0 0 0 6 11v5l-2 2v1h16v-1l-2-2z'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                />
+                {unread > 0 && (
+                  <circle cx='18' cy='6' r='4' fill='#3075ffff' />
+                )}
+              </svg>
+            </button>
           </div>
 
           {/* User Profile Dropdown */}
@@ -216,9 +241,6 @@ const Header = () => {
               </button>
             </div>
           </div>
-
-          {/* Notification Button */}
-          <NotificationButton username={currentUser?.username || ''} />
         </div>
       </div>
     </header>

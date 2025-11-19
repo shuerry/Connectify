@@ -1,7 +1,5 @@
 import './index.css';
-import useUserContext from '../../../hooks/useUserContext';
 import { PopulatedDatabaseChat } from '../../../types/types';
-import { toggleNotify } from '../../../services/chatService';
 import useNotifyStatus from '../../../hooks/useNotifyStatus';
 /**
  * Interface represents the props for the FollowComponent.
@@ -18,50 +16,47 @@ interface NotifComponentProps {
  * @param chat - The chat object containing notification information.
  */
 const NotifComponent = ({ chat }: NotifComponentProps) => {
-  const { user } = useUserContext();
-  const { notify } = useNotifyStatus({ chat });
-  /**
-   * Function to handle following a chat.
-   */
-  const handleNotify = async () => {
-    try {
-      if (chat._id) {
-        await toggleNotify(chat._id, user.username);
-      }
-    } catch (error) {
-      // Handle error
-    }
-  };
+  const { toggleLocalNotify, notify } = useNotifyStatus({ chat });
 
   // Kept the classnames so that I can reuse the CSS styles
   return (
     <div className='vote-container'>
       <button
-        aria-pressed={notify}
-        title={
-          notify ? 'You will be notified for new messages' : 'Enable notifications for this chat'
-        }
-        className={`vote-button ${notify ? 'vote-button-followed' : ''}`}
+        className='action-button'
         onClick={e => {
           e.stopPropagation();
-          handleNotify();
-        }}>
-        <svg viewBox='0 0 24 24' fill='none' aria-hidden='true' focusable='false'>
+          toggleLocalNotify();
+          console.log('Notify button clicked');
+        }}
+        title={
+          notify ? 'Disable notifications for this chat' : 'Enable notifications for this chat'
+        }>
+        <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
           <path
-            d='M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5'
+            d='M12 22c1.1 0 2-.9 2-2H10a2 2 0 0 0 2 2z'
             stroke='currentColor'
-            strokeWidth='1.5'
+            strokeWidth='2'
             strokeLinecap='round'
             strokeLinejoin='round'
           />
           <path
-            d='M13.73 21a2 2 0 01-3.46 0'
+            d='M18 16v-5a6 6 0 0 0-5-5.91V4a1 1 0 1 0-2 0v1.09A6 6 0 0 0 6 11v5l-2 2v1h16v-1l-2-2z'
             stroke='currentColor'
-            strokeWidth='1.5'
+            strokeWidth='2'
             strokeLinecap='round'
+            strokeLinejoin='round'
           />
+          {!notify && (
+            <line
+              x1="4"
+              y1="4"
+              x2="20"
+              y2="23"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />)}
         </svg>
-        <span className='vote-label'>{notify ? 'Notified' : 'Notify'}</span>
       </button>
     </div>
   );

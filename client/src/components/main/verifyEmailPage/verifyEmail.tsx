@@ -52,10 +52,6 @@ export default function VerifyEmail() {
               <button className='verify-button' onClick={() => navigate('/')}>
                 Go to Login
               </button>
-
-              <Link to='/' className='verify-link'>
-                Return to login page
-              </Link>
             </div>
           </div>
         )}

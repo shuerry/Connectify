@@ -1,42 +1,37 @@
 import { useEffect, useState } from 'react';
 import useUserContext from './useUserContext';
 import { PopulatedDatabaseChat } from '../types/types';
-
-/**
- * Custom hook to handle notification logic for a chat.
- * It manages the user notification status (notify, don't notify),
- * and handles real-time notification updates via socket events.
- *
- * @param chat - The chat object for which the notification is tracked.
- *
- * @returns notify - The user's notification status
- * @returns setNotify - The function to manually update user's notification status
- */
+import { toggleNotify } from '../services/chatService';
 
 const useNotifyStatus = ({ chat }: { chat: PopulatedDatabaseChat }) => {
   const { user } = useUserContext();
   const [notify, setNotify] = useState<boolean>(false);
 
   useEffect(() => {
-    /**
-     * Function to get the current notification status for the user.
-     *
-     * @returns The current notification status for the user in the chat.
-     */
     const getNotificationStatus = () => {
+      console.log('Checking notification status for user:', user?.username);
       if (!user?.username || !chat?.participants) {
+        console.log('No user or chat participants found');
         return false;
       }
       const status = (chat.participants as Record<string, boolean>)[user.username];
-
+      console.log('User notification status:', status);
       return status ?? false;
     };
 
     setNotify(getNotificationStatus());
   }, [chat, user?.username]);
 
+  const toggleLocalNotify = async () => {
+    if (!chat._id || !user?.username) return;
+
+    await toggleNotify(chat._id, user.username);
+    setNotify(prev => !prev);
+  };
+
   return {
     notify,
+    toggleLocalNotify,
   };
 };
 

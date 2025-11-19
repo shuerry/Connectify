@@ -52,7 +52,7 @@ export const addMessageToChat = async (
       chatId,
       { $push: { messages: messageId } },
       { new: true },
-    );
+    ).lean<DatabaseChat>();
 
     if (!updatedChat) {
       throw new Error('Chat not found');
@@ -89,16 +89,16 @@ export const addMessageToChat = async (
         kind: 'chat',
         title: `New message from ${senderUsername}`,
         preview: messagePreview,
-        link: `/chat/${chatId}`,
+        link: `/messaging/direct-message`,
         actorUsername: senderUsername,
         meta: { chatId, isMention: false },
       });
 
       // ---- EMAIL NOTIFICATIONS ----
       if (!recipientUser || !recipientUser.email || !recipientUser.emailVerified) {
-        // console.warn(
-        //   `Skipping email notify for "${username}" (no user or no email) in chat: ${chatId}`,
-        // );
+        console.warn(
+          `Skipping email notify for "${username}" (no user or no email) in chat: ${chatId}`,
+        );
         continue;
       }
 
@@ -116,7 +116,7 @@ export const addMessageToChat = async (
           isMention: false,
         });
       } catch (notifyErr) {
-        //console.error(`Failed to send chat notification to chat: ${chatId}:`, notifyErr);
+        console.error(`Failed to send chat notification to chat: ${chatId}:`, notifyErr);
       }
     }
 
