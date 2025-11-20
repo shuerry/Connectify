@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { PopulatedDatabaseQuestion } from '../types/types';
 import { ObjectId } from 'mongodb';
 import useUserContext from './useUserContext';
-import { reportQuestion } from '../services/questionService';
 
 /**
  * Custom hook to manage the state and behavior of the question view.
@@ -18,14 +17,9 @@ import { reportQuestion } from '../services/questionService';
  */
 const useQuestionView = () => {
   const navigate = useNavigate();
-  const { user } = useUserContext();
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<PopulatedDatabaseQuestion | null>(null);
-  const [isReportOpen, setReportOpen] = useState(false);
-  const [reportTarget, setReportTarget] = useState<PopulatedDatabaseQuestion | null>(null);
-  const [hiddenQuestionIds, setHiddenQuestionIds] = useState<Set<string>>(new Set());
   const [saveDropdownOpen, setSaveDropdownOpen] = useState<string | null>(null);
-  const [reportDropdownOpen, setReportDropdownOpen] = useState<string | null>(null);
 
   /**
    * Function to navigate to the home page with the specified tag as a search parameter.
@@ -54,41 +48,13 @@ const useQuestionView = () => {
     setSelectedQuestion(question);
   };
 
-  const canReport = (question: PopulatedDatabaseQuestion): boolean => {
-    if (!user || !user.username || !question) return false;
-    return user.username !== question.askedBy;
-  };
-
   const closeModal = () => {
     setSelectedQuestion(null);
     setModalOpen(false);
   };
 
-  const openReportModal = (question: PopulatedDatabaseQuestion) => {
-    const questionId = question._id.toString();
-    setReportDropdownOpen(reportDropdownOpen === questionId ? null : questionId);
-    setReportTarget(question);
-  };
-
-  const submitReport = async (reason: string) => {
-    if (!reportTarget) return;
-    await reportQuestion(String(reportTarget._id), user.username, reason);
-    setReportOpen(false);
-    setReportTarget(null);
-    setHiddenQuestionIds(prev => new Set(prev).add(String(reportTarget._id)));
-  };
-
-  const isHidden = (qid: string | undefined): boolean => {
-    if (!qid) return false;
-    return hiddenQuestionIds.has(String(qid));
-  };
-
   const closeSaveDropdown = () => {
     setSaveDropdownOpen(null);
-  };
-
-  const closeReportDropdown = () => {
-    setReportDropdownOpen(null);
   };
 
   return {
@@ -98,17 +64,8 @@ const useQuestionView = () => {
     handleAnswer,
     handleSaveClick,
     closeModal,
-    openReportModal,
-    isReportOpen,
-    reportTarget,
-    submitReport,
-    setReportOpen,
-    isHidden,
-    canReport,
     saveDropdownOpen,
     closeSaveDropdown,
-    reportDropdownOpen,
-    closeReportDropdown,
   };
 };
 

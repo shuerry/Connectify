@@ -8,6 +8,7 @@ import useQuestionView from '../../../../hooks/useQuestionView';
 import useVoteStatus from '../../../../hooks/useVoteStatus';
 import { upvoteQuestion, downvoteQuestion } from '../../../../services/questionService';
 import useUserContext from '../../../../hooks/useUserContext';
+import useReportQuestion from '../../../../hooks/useReportQuestion';
 
 /**
  * Interface representing the props for the Question component.
@@ -33,18 +34,19 @@ const QuestionView = ({ question }: QuestionProps) => {
     handleAnswer,
     handleSaveClick,
 
-    openReportModal,
-
-    reportTarget,
-    submitReport,
-
-    isHidden,
-    canReport,
     saveDropdownOpen,
     closeSaveDropdown,
+  } = useQuestionView();
+
+  const {
+    isHidden,
+    openReportModal,
+    reportTarget,
+    submitReport,
+    canReport,
     reportDropdownOpen,
     closeReportDropdown,
-  } = useQuestionView();
+  } = useReportQuestion();
 
   /**
    * Function to handle upvoting or downvoting a question.
