@@ -88,7 +88,7 @@ function startServer() {
 socket.on('connection', socket => {
   console.log('A user connected ->', socket.id);
 
-    socket.on('joinUserRoom', (username: string) => {
+  socket.on('joinUserRoom', (username: string) => {
     if (!username) return;
     socket.join(`user:${username}`);
     console.log(`Socket ${socket.id} joined user room user:${username}`);

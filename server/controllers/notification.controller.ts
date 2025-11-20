@@ -54,7 +54,7 @@ const notificationController = (socket: FakeSOSocket) => {
 
   // DELETE /api/notification/:id
   router.delete('/:id', async (req, res: Response) => {
-      const { username } = req.body as { username: string };
+    const { username } = req.body as { username: string };
 
     try {
       const r = await deleteNotification(req.params.id);

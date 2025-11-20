@@ -12,7 +12,6 @@ import AnswerModel from '../models/answers.model';
 import QuestionModel from '../models/questions.model';
 import { createNotification, NotificationService } from './notification.service';
 import UserModel from '../models/users.model';
-import NotificationModel from '../models/notification.model';
 
 const notifier = new NotificationService();
 
@@ -113,9 +112,7 @@ export const addAnswerToQuestion = async (
 
         if (notifDocs.length > 0) {
           try {
-            await Promise.all(
-              notifDocs.map(doc => createNotification(doc)),
-            );
+            await Promise.all(notifDocs.map(doc => createNotification(doc)));
           } catch (insertErr) {
             // console.warn('InsertMany notifications failed (answer):', insertErr);
           }

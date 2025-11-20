@@ -306,15 +306,15 @@ const chatController = (socket: FakeSOSocket) => {
       }
     });
 
-      conn.on('joinUserRoom', (username: string) => {
-    if (!username) return;
-    conn.join(`user:${username}`);
-  });
+    conn.on('joinUserRoom', (username: string) => {
+      if (!username) return;
+      conn.join(`user:${username}`);
+    });
 
-  conn.on('leaveUserRoom', (username: string) => {
-    if (!username) return;
-    conn.leave(`user:${username}`);
-  });
+    conn.on('leaveUserRoom', (username: string) => {
+      if (!username) return;
+      conn.leave(`user:${username}`);
+    });
 
     // Handle typing indicators for direct messages
     conn.on('typingStart', (data: { chatID?: string; username: string }) => {

@@ -131,7 +131,9 @@ describe('Chat service', () => {
         return asLeanQuery(null) as any;
       });
 
-      const notifCreateSpy = jest.spyOn(NotificationModel, 'create').mockResolvedValue({} as any);
+      const notifCreateSpy = jest.spyOn(NotificationModel, 'create').mockResolvedValue({
+        toObject: () => ({}) as any,
+      } as any);
       const sendEmailSpy = jest
         .spyOn(NotificationService.prototype, 'sendChatNotification')
         .mockResolvedValue(undefined as any);
@@ -186,7 +188,9 @@ describe('Chat service', () => {
       // create spies so "not called" assertions are valid
       const findByIdSpy = jest.spyOn(MessageModel, 'findById');
       const findOneSpy = jest.spyOn(UserModel, 'findOne');
-      const notifSpy = jest.spyOn(NotificationModel, 'create');
+      const notifSpy = jest.spyOn(NotificationModel, 'create').mockResolvedValue({
+        toObject: () => ({}) as any,
+      } as any);
       const emailSpy = jest.spyOn(NotificationService.prototype, 'sendChatNotification');
 
       const result = await addMessageToChat(chatIdString, messageIdString);
@@ -215,7 +219,10 @@ describe('Chat service', () => {
 
       // spies for "not called"
       const findOneSpy = jest.spyOn(UserModel, 'findOne');
-      const notifSpy = jest.spyOn(NotificationModel, 'create');
+      const notifSpy = jest.spyOn(NotificationModel, 'create').mockResolvedValue({
+        toObject: () => ({}) as any,
+      } as any);
+
       const emailSpy = jest.spyOn(NotificationService.prototype, 'sendChatNotification');
 
       const result = await addMessageToChat(chatIdString, messageIdString);
@@ -250,7 +257,10 @@ describe('Chat service', () => {
           asLeanQuery({ username: 'bob', email: null, emailVerified: false }) as any,
         );
 
-      const notifCreateSpy = jest.spyOn(NotificationModel, 'create').mockResolvedValue({} as any);
+      const notifCreateSpy = jest.spyOn(NotificationModel, 'create').mockResolvedValue({
+        toObject: () => ({}) as any,
+      } as any);
+
       const sendEmailSpy = jest
         .spyOn(NotificationService.prototype, 'sendChatNotification')
         .mockResolvedValue(undefined as any);
@@ -291,7 +301,9 @@ describe('Chat service', () => {
           asLeanQuery({ username: 'bob', email: 'bob@example.com', emailVerified: true }) as any,
         );
 
-      jest.spyOn(NotificationModel, 'create').mockResolvedValue({} as any);
+      jest.spyOn(NotificationModel, 'create').mockResolvedValue({
+        toObject: () => ({}) as any,
+      } as any);
 
       jest
         .spyOn(NotificationService.prototype, 'sendChatNotification')

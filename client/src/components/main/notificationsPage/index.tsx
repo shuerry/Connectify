@@ -34,7 +34,7 @@ export default function NotificationsPage({ username }: { username: string }) {
     load();
   }, [load]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (!socket || !username) return;
 
     const handleNotificationUpdate = () => {
@@ -46,7 +46,7 @@ export default function NotificationsPage({ username }: { username: string }) {
     return () => {
       socket.off('notificationUpdate', handleNotificationUpdate);
     };
-  }, [username, load]);
+  }, [socket, username, load]);
 
   const onMarkRead = async (id: string) => {
     const updated = await markNotificationRead(id, username);

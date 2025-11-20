@@ -14,7 +14,7 @@ const useUnreadNotifications = (username: string) => {
       const count = items.filter(n => !n.isRead).length;
       setUnread(count);
     } catch (err) {
-      console.error('Failed to load unread notifications', err);
+      //console.error('Failed to load unread notifications', err);
     }
   }, [username]);
 
@@ -36,7 +36,7 @@ const useUnreadNotifications = (username: string) => {
     return () => {
       socket.off('notificationUpdate', handleNotificationUpdate);
     };
-  }, [username, loadUnread]);
+  }, [socket, username, loadUnread]);
 
   return { unread };
 };

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PopulatedDatabaseQuestion } from '../types/types';
 import { ObjectId } from 'mongodb';
-import useUserContext from './useUserContext';
 
 /**
  * Custom hook to manage the state and behavior of the question view.

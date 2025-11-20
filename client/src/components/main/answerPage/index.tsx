@@ -18,14 +18,8 @@ import useReportQuestion from '../../../hooks/useReportQuestion';
  * It also includes the functionality to vote, ask a new question, post a new answer, and edit the question.
  */
 const AnswerPage = () => {
-  const {
-    questionID,
-    question,
-    reports,
-    handleNewComment,
-    handleNewAnswer,
-    handleQuestionUpdate,
-  } = useAnswerPage();
+  const { questionID, question, reports, handleNewComment, handleNewAnswer, handleQuestionUpdate } =
+    useAnswerPage();
   const {
     openReportModal,
     reportTarget,
@@ -34,7 +28,6 @@ const AnswerPage = () => {
     reportDropdownOpen,
     closeReportDropdown,
   } = useReportQuestion();
-
 
   const [isSaveModalOpen, setSaveModalOpen] = useState(false);
 
