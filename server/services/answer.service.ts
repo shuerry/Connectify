@@ -11,6 +11,7 @@ import {
 import AnswerModel from '../models/answers.model';
 import QuestionModel from '../models/questions.model';
 import { createNotification, NotificationService } from './notification.service';
+import CommentModel from '../models/comments.model';
 import UserModel from '../models/users.model';
 
 const notifier = new NotificationService();
@@ -145,5 +146,56 @@ export const addAnswerToQuestion = async (
     return result;
   } catch (error) {
     return { error: 'Error when adding answer to question' };
+  }
+};
+
+/**
+ * Deletes an answer if the requester is authorized.
+ * Authorization: answer author OR question author can delete the answer.
+ */
+export const deleteAnswer = async (
+  aid: string,
+  username: string,
+): Promise<{ msg: string; qid?: string } | { error: string }> => {
+  try {
+    const answer = await AnswerModel.findById(aid);
+
+    if (!answer) return { error: 'Answer not found' };
+
+    // Find question containing this answer
+    const question = await QuestionModel.findOne({ answers: answer._id });
+
+    const questionOwner = question?.askedBy;
+
+    // Authorization: answer author or question owner
+    if (answer.ansBy !== username && questionOwner !== username) {
+      return {
+        error: 'Unauthorized: You can only delete your own answers or answers on your question',
+      };
+    }
+
+    // Delete comments associated with the answer
+    try {
+      if (Array.isArray(answer.comments) && answer.comments.length > 0) {
+        await CommentModel.deleteMany({ _id: { $in: answer.comments } });
+      }
+    } catch (e) {
+      // ignore and continue
+    }
+
+    // Remove answer reference from question
+    if (question) {
+      await QuestionModel.findByIdAndUpdate(question._id, { $pull: { answers: answer._id } });
+    }
+
+    // Delete the answer
+    await AnswerModel.findByIdAndDelete(aid);
+
+    return {
+      msg: 'Answer deleted successfully',
+      qid: question ? question._id.toString() : undefined,
+    };
+  } catch (err) {
+    return { error: 'Error when deleting answer' };
   }
 };

@@ -1,4 +1,4 @@
-import express, { Response } from 'express';
+import express, { Response, Request } from 'express';
 import { ObjectId } from 'mongodb';
 import {
   AddCommentRequest,
@@ -6,7 +6,7 @@ import {
   PopulatedDatabaseQuestion,
   PopulatedDatabaseAnswer,
 } from '../types/types';
-import { addComment, saveComment } from '../services/comment.service';
+import { addComment, saveComment, deleteComment } from '../services/comment.service';
 import { populateDocument } from '../utils/database.util';
 
 const commentController = (socket: FakeSOSocket) => {
@@ -64,6 +64,46 @@ const commentController = (socket: FakeSOSocket) => {
   };
 
   router.post('/addComment', addCommentRoute);
+
+  const deleteCommentRoute = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { commentId } = req.params as { commentId: string };
+      const { username } = req.body as { username?: string };
+
+      if (!commentId) {
+        res.status(400).send('commentId is required');
+        return;
+      }
+
+      if (!username) {
+        res.status(400).send('Username is required');
+        return;
+      }
+
+      const result = await deleteComment(commentId, username);
+
+      if ('error' in result) {
+        if (result.error === 'Comment not found') {
+          res.status(404).send(result.error);
+        } else if (typeof result.error === 'string' && result.error.includes('Unauthorized')) {
+          res.status(403).send(result.error);
+        } else {
+          res.status(400).send(result.error);
+        }
+        return;
+      }
+
+      // Emit typed commentDelete so clients can update UI
+      const parentId =
+        'parentId' in result && result.parentId ? new ObjectId(result.parentId) : new ObjectId();
+      socket.emit('commentDelete', { parentId, cid: new ObjectId(commentId) });
+      res.json({ message: result.msg });
+    } catch (err: unknown) {
+      res.status(500).send(`Error when deleting comment: ${(err as Error).message}`);
+    }
+  };
+
+  router.delete('/deleteComment/:commentId', deleteCommentRoute);
 
   return router;
 };

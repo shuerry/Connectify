@@ -1,4 +1,4 @@
-import express, { Response } from 'express';
+import express, { Response, Request } from 'express';
 import { ObjectId } from 'mongodb';
 import {
   Question,
@@ -36,6 +36,7 @@ import {
   getUserDrafts,
   deleteDraft,
   publishDraft,
+  deleteQuestion,
 } from '../services/question.service';
 import { processTags } from '../services/tag.service';
 import { populateDocument } from '../utils/database.util';
@@ -637,6 +638,49 @@ const questionController = (socket: FakeSOSocket) => {
   };
 
   /**
+   * Deletes a question. Only the author may delete their question.
+   */
+  const deleteQuestionRoute = async (req: Request, res: Response): Promise<void> => {
+    const { qid } = req.params as { qid: string };
+    const { username } = req.body as { username?: string };
+
+    if (!ObjectId.isValid(qid)) {
+      res.status(400).send('Invalid question ID format');
+      return;
+    }
+
+    if (!username) {
+      res.status(400).send('Username is required');
+      return;
+    }
+
+    try {
+      const result = await deleteQuestion(qid, username);
+
+      if ('error' in result) {
+        if (result.error === 'Question not found') {
+          res.status(404).send(result.error);
+        } else if (typeof result.error === 'string' && result.error.includes('Unauthorized')) {
+          res.status(403).send(result.error);
+        } else {
+          res.status(400).send(result.error);
+        }
+        return;
+      }
+
+      // Emit a typed deletion event so clients can remove the question from UI
+      socket.emit('questionDelete', { qid: new ObjectId(qid) });
+      res.json({ message: 'Question deleted successfully' });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        res.status(500).send(`Error when deleting question: ${err.message}`);
+      } else {
+        res.status(500).send(`Error when deleting question`);
+      }
+    }
+  };
+
+  /**
    * Publishes a draft as a question.
    * If there is an error, the HTTP response's status is updated.
    *
@@ -711,6 +755,7 @@ const questionController = (socket: FakeSOSocket) => {
   router.get('/getUserDrafts', getUserDraftsRoute);
   router.delete('/deleteDraft/:draftId', deleteDraftRoute);
   router.post('/publishDraft/:draftId', publishDraftRoute);
+  router.delete('/deleteQuestion/:qid', deleteQuestionRoute);
 
   return router;
 };

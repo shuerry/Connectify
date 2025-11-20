@@ -136,6 +136,19 @@ export {
   followQuestion,
 };
 
+/**
+ * Deletes a question by id. Requires the username in the request body to verify ownership.
+ */
+const deleteQuestion = async (qid: string, username: string): Promise<{ message?: string }> => {
+  const res = await api.delete(`${QUESTION_API_URL}/deleteQuestion/${qid}`, { data: { username } });
+  if (res.status !== 200) {
+    throw new Error('Error when deleting question');
+  }
+  return res.data;
+};
+
+export { deleteQuestion };
+
 // Reporting helpers
 export const reportQuestion = async (
   qid: string,

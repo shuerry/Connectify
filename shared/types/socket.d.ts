@@ -223,6 +223,12 @@ export interface ServerToClientEvents {
   gameInvitation: (payload: GameInvitationPayload) => void;
   // Typing indicator events
   typingIndicator: (payload: TypingIndicatorPayload) => void;
+  // Notify clients that a question was deleted. Payload contains the question id.
+  questionDelete: (payload: { qid: ObjectId }) => void;
+  // Notify clients that an answer was deleted. Payload contains question and answer ids.
+  answerDelete: (payload: { qid: ObjectId; aid: ObjectId }) => void;
+  // Notify clients that a comment was deleted. Payload contains the parent id and comment id.
+  commentDelete: (payload: { parentId: ObjectId; cid: ObjectId }) => void;
   // Send notification update (for user-specific room)
   notificationUpdate: () => void;
 }

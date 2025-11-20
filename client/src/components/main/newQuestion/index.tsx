@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import useNewQuestion from '../../../hooks/useNewQuestion';
 import './index.css';
 import ProfanityFilterModal from './profanityFilterModal';
@@ -32,7 +32,12 @@ const NewQuestionPage = () => {
 
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [filterReason, setFilterReason] = useState('');
-  const { saveDraft: apiSaveDraft, updateDraft: apiUpdateDraft, getUserDrafts } = useDrafts();
+  const {
+    saveDraft: apiSaveDraft,
+    updateDraft: apiUpdateDraft,
+    getUserDrafts,
+    deleteDraft: apiDeleteDraft,
+  } = useDrafts();
   const { user } = useUserContext();
   const location = useLocation();
   const navigate = useNavigate();
@@ -68,6 +73,70 @@ const NewQuestionPage = () => {
       }
     })();
   }, [location.search, user, getUserDrafts, setTitle, setText, setTagNames, setCommunity]);
+
+  // Keep a ref to the latest form values so the unmount cleanup can access
+  // them without relying on stale closures. On unmount (navigating away),
+  // persist a server-side draft if a title exists and the user is logged in.
+  const latestForm = useRef({ title, text, tagNames, community, currentDraftId });
+
+  useEffect(() => {
+    latestForm.current = { title, text, tagNames, community, currentDraftId };
+  }, [title, text, tagNames, community, currentDraftId]);
+
+  useEffect(() => {
+    return () => {
+      const {
+        title: latestTitle,
+        text: latestText,
+        tagNames: latestTags,
+        community: latestCommunity,
+        currentDraftId: latestDraftId,
+      } = latestForm.current;
+
+      // Only persist to server-side drafts if there's a non-empty title and the user is logged in.
+      if (!latestTitle || latestTitle.trim() === '') return;
+      if (!user || !user.username) return;
+
+      const tagArr = (latestTags || '')
+        .trim()
+        .split(/\s+/)
+        .filter(t => t.length > 0)
+        .map(name => ({ name, description: `Tag for ${name}` }));
+
+      const payload = {
+        title: latestTitle.trim(),
+        text: (latestText || '').trim(),
+        tags: tagArr,
+        askedBy: user.username,
+        community: latestCommunity ? latestCommunity._id : null,
+      };
+
+      // Fire-and-forget: do not await in unmount cleanup. This will create a
+      // draft on the server so it appears under "My Drafts". If there is an
+      // existing draft id, try to update it; otherwise create a new draft.
+      (async () => {
+        try {
+          if (latestDraftId) {
+            // best-effort update
+
+            await apiUpdateDraft(latestDraftId, payload);
+          } else {
+            await apiSaveDraft(payload);
+          }
+
+          // remove local autosave after server persisted (best-effort)
+          try {
+            localStorage.removeItem(storageKey);
+          } catch (e) {
+            // ignore
+          }
+        } catch (e) {
+          // ignore failures on unmount
+        }
+      })();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className='reddit-new-question'>
@@ -334,7 +403,7 @@ const NewQuestionPage = () => {
               </button>
               <button
                 className='reddit-btn reddit-btn-primary'
-                onClick={() => {
+                onClick={async () => {
                   const textToCheck = `${title} ${text} ${tagNames}`;
                   const hits = filter.badWordsUsed(textToCheck);
                   if (hits.length > 0) {
@@ -344,7 +413,29 @@ const NewQuestionPage = () => {
                     setIsFilterModalOpen(true);
                     return;
                   }
-                  postQuestion();
+
+                  try {
+                    // Await posting the question. postQuestion navigates on success.
+                    await postQuestion();
+
+                    // After successful post, if there was a server-side draft, delete it.
+                    if (currentDraftId && user && user.username) {
+                      try {
+                        // best-effort delete; do not block navigation
+
+                        await apiDeleteDraft(currentDraftId, user.username);
+                        try {
+                          localStorage.removeItem(storageKey);
+                        } catch (e) {
+                          // ignore
+                        }
+                      } catch (e) {
+                        // ignore delete failures
+                      }
+                    }
+                  } catch (e) {
+                    // posting failed; errors are handled inside postQuestion
+                  }
                 }}>
                 <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
                   <path d='M2.01 21L23 12 2.01 3 2 10l15 2-15 2z' />

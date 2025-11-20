@@ -7,9 +7,69 @@ import {
   DatabaseQuestion,
   QuestionResponse,
 } from '../types/types';
-import AnswerModel from '../models/answers.model';
 import QuestionModel from '../models/questions.model';
 import CommentModel from '../models/comments.model';
+import AnswerModel from '../models/answers.model';
+
+/**
+ * Deletes a comment if the requester is authorized.
+ * Authorization rules:
+ * - The comment author may delete their own comment.
+ * - The question author may delete comments on their question.
+ * - The answer author may delete comments on their answer.
+ */
+export const deleteComment = async (
+  cid: string,
+  username: string,
+): Promise<{ msg: string; parentId?: string } | { error: string }> => {
+  try {
+    const comment = await CommentModel.findById(cid);
+
+    if (!comment) return { error: 'Comment not found' };
+
+    const commentOwner = comment.commentBy;
+
+    // Check if this comment is directly on a question
+    const questionWithComment = await QuestionModel.findOne({ comments: cid });
+    if (questionWithComment) {
+      if (commentOwner === username || questionWithComment.askedBy === username) {
+        // authorized
+        await CommentModel.findByIdAndDelete(cid);
+        await QuestionModel.findByIdAndUpdate(questionWithComment._id, {
+          $pull: { comments: cid },
+        });
+        return {
+          msg: 'Comment deleted successfully',
+          parentId: questionWithComment._id.toString(),
+        };
+      }
+      return { error: 'Unauthorized: Cannot delete this comment' };
+    }
+
+    // Otherwise, check if comment is on an answer
+    const answerWithComment = await AnswerModel.findOne({ comments: cid });
+    if (answerWithComment) {
+      // Find parent question to allow its author to delete as well
+      const parentQuestion = await QuestionModel.findOne({ answers: answerWithComment._id });
+
+      if (
+        commentOwner === username ||
+        answerWithComment.ansBy === username ||
+        parentQuestion?.askedBy === username
+      ) {
+        await CommentModel.findByIdAndDelete(cid);
+        await AnswerModel.findByIdAndUpdate(answerWithComment._id, { $pull: { comments: cid } });
+        return { msg: 'Comment deleted successfully', parentId: answerWithComment._id.toString() };
+      }
+
+      return { error: 'Unauthorized: Cannot delete this comment' };
+    }
+
+    return { error: 'Comment parent not found' };
+  } catch (err) {
+    return { error: 'Error when deleting comment' };
+  }
+};
 
 /**
  * Saves a new comment to the database.

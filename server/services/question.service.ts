@@ -781,3 +781,44 @@ export const publishDraft = async (
     return { error: 'Error when publishing draft' };
   }
 };
+
+/**
+ * Deletes a question and related resources (answers, versions, comments).
+ * Only the question author may delete their question.
+ */
+export const deleteQuestion = async (
+  qid: string,
+  username: string,
+): Promise<{ msg: string } | { error: string }> => {
+  try {
+    const question = await QuestionModel.findById(qid);
+
+    if (!question) {
+      return { error: 'Question not found' };
+    }
+
+    if (question.askedBy !== username) {
+      return { error: 'Unauthorized: You can only delete your own questions' };
+    }
+
+    // Delete answers referencing this question
+    await AnswerModel.deleteMany({ questionId: qid });
+
+    // Delete versions for this question
+    await QuestionVersionModel.deleteMany({ questionId: qid });
+
+    // Delete comments directly referenced on the question
+    try {
+      await CommentModel.deleteMany({ _id: { $in: question.comments } });
+    } catch (e) {
+      // ignore if comments deletion fails, proceed to delete question
+    }
+
+    // Finally delete the question
+    await QuestionModel.findByIdAndDelete(qid);
+
+    return { msg: 'Question deleted successfully' };
+  } catch (error) {
+    return { error: 'Error when deleting question' };
+  }
+};
