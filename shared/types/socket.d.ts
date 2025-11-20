@@ -6,7 +6,6 @@ import { SafeDatabaseUser } from './user';
 import { BaseMove, GameInstance, GameInstanceID, GameMove, GameState } from './game';
 import { DatabaseCommunity } from './community';
 import { PopulatedDatabaseCollection } from './collection';
-import { NotificationPayload } from './notification';
 
 /**
  * Payload for an answer update event.

@@ -25,8 +25,7 @@ export interface AnswerNotificationPayload {
     commentPreview?: string;
   };
 }
-
-export interface EmailVerificationPayload{
+export interface EmailVerificationPayload {
   toEmail: string;
   username: string;
   token: string;
