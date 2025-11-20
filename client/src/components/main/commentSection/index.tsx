@@ -25,7 +25,12 @@ interface CommentSectionProps {
  * @param comments: an array of Comment objects
  * @param handleAddComment: function to handle the addition of a new comment
  */
-const CommentSection = ({ comments, handleAddComment, parentOwners, parentId }: CommentSectionProps) => {
+const CommentSection = ({
+  comments,
+  handleAddComment,
+  parentOwners,
+  parentId,
+}: CommentSectionProps) => {
   const { user } = useUserContext();
   const [text, setText] = useState<string>('');
   const [textErr, setTextErr] = useState<string>('');
@@ -75,35 +80,44 @@ const CommentSection = ({ comments, handleAddComment, parentOwners, parentId }: 
                   </div>
                   <small className='comment-meta'>
                     {comment.commentBy}, {getMetaData(new Date(comment.commentDateTime))}
-                    {user && (user.username === comment.commentBy || (parentOwners && parentOwners.includes(user.username))) && (
-                      <button
-                        className='comment-delete-btn'
-                        title='Delete comment'
-                        onClick={e => {
-                          e.stopPropagation();
-                          const confirmed = window.confirm('Delete this comment?');
-                          if (!confirmed) return;
-                          (async () => {
-                            try {
-                              // lazy import to avoid circular deps
-                              const { deleteComment } = await import('../../../services/commentService');
-                              if (comment._id && user.username) {
-                                await deleteComment(String(comment._id), user.username);
-                                showToast('Comment deleted');
+                    {user &&
+                      (user.username === comment.commentBy ||
+                        (parentOwners && parentOwners.includes(user.username))) && (
+                        <button
+                          className='comment-delete-btn'
+                          title='Delete comment'
+                          onClick={e => {
+                            e.stopPropagation();
+                            const confirmed = window.confirm('Delete this comment?');
+                            if (!confirmed) return;
+                            (async () => {
+                              try {
+                                // lazy import to avoid circular deps
+                                const { deleteComment } = await import(
+                                  '../../../services/commentService'
+                                );
+                                if (comment._id && user.username) {
+                                  await deleteComment(String(comment._id), user.username);
+                                  showToast('Comment deleted');
+                                }
+                              } catch (err) {
+                                // eslint-disable-next-line no-console
+                                console.error('Error deleting comment', err);
+                                showToast('Unable to delete comment');
                               }
-                            } catch (err) {
-                              // eslint-disable-next-line no-console
-                              console.error('Error deleting comment', err);
-                              showToast('Unable to delete comment');
-                            }
-                          })();
-                        }}>
-                        <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden>
-                          <path d='M3 6h18v2H3V6zm2 3h14l-1.1 12.2c-.1 1.1-1 1.8-2.1 1.8H8.2c-1.1 0-2-.8-2.1-1.8L5 9zm5 2v8h2v-8H10zm4 0v8h2v-8h-2zM9 4V3h6v1h5v2H4V4h5z' />
-                        </svg>
-                        <span className='delete-label'>DELETE</span>
-                      </button>
-                    )}
+                            })();
+                          }}>
+                          <svg
+                            width='14'
+                            height='14'
+                            viewBox='0 0 24 24'
+                            fill='currentColor'
+                            aria-hidden>
+                            <path d='M3 6h18v2H3V6zm2 3h14l-1.1 12.2c-.1 1.1-1 1.8-2.1 1.8H8.2c-1.1 0-2-.8-2.1-1.8L5 9zm5 2v8h2v-8H10zm4 0v8h2v-8h-2zM9 4V3h6v1h5v2H4V4h5z' />
+                          </svg>
+                          <span className='delete-label'>DELETE</span>
+                        </button>
+                      )}
                   </small>
                 </li>
               ))
@@ -128,7 +142,11 @@ const CommentSection = ({ comments, handleAddComment, parentOwners, parentId }: 
           </div>
         </div>
       )}
-      {toastMsg && <div className='cf-toast' style={{ position: 'relative', top: 8 }}>{toastMsg}</div>}
+      {toastMsg && (
+        <div className='cf-toast' style={{ position: 'relative', top: 8 }}>
+          {toastMsg}
+        </div>
+      )}
     </div>
   );
 };

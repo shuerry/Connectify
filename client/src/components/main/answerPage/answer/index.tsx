@@ -35,7 +35,15 @@ interface AnswerProps {
  * @param comments An array of comments associated with the answer.
  * @param handleAddComment Function to handle adding a new comment.
  */
-const AnswerView = ({ text, ansBy, meta, comments, handleAddComment, answerId, questionAskedBy }: AnswerProps) => {
+const AnswerView = ({
+  text,
+  ansBy,
+  meta,
+  comments,
+  handleAddComment,
+  answerId,
+  questionAskedBy,
+}: AnswerProps) => {
   const { user } = useUserContext();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -46,53 +54,56 @@ const AnswerView = ({ text, ansBy, meta, comments, handleAddComment, answerId, q
   };
 
   return (
-  <div className='answer right_padding'>
-    <div id='answerText' className='answerText'>
-      {<Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>}
-    </div>
-    <div className='answerAuthor'>
-      <div className='answer_author'>{ansBy}</div>
-      <div className='answer_question_meta'>{meta}</div>
-      {/* Delete button for answer author or question author */}
-      {(answerId && (user.username === ansBy || user.username === questionAskedBy)) && (
-        <button
-          className='reddit-action-btn report-btn delete-btn'
-          title='Delete answer'
-          onClick={e => {
-            e.stopPropagation();
-            const confirmed = window.confirm('Delete this answer? This action cannot be undone.');
-            if (!confirmed) return;
-            (async () => {
-              try {
-                const { deleteAnswer } = await import('../../../../services/answerService');
-                if (answerId && user.username) {
-                  await deleteAnswer(answerId, user.username);
-                  showToast('Answer deleted');
+    <div className='answer right_padding'>
+      <div id='answerText' className='answerText'>
+        {<Markdown remarkPlugins={[remarkGfm]}>{text}</Markdown>}
+      </div>
+      <div className='answerAuthor'>
+        <div className='answer_author'>{ansBy}</div>
+        <div className='answer_question_meta'>{meta}</div>
+        {/* Delete button for answer author or question author */}
+        {answerId && (user.username === ansBy || user.username === questionAskedBy) && (
+          <button
+            className='reddit-action-btn report-btn delete-btn'
+            title='Delete answer'
+            onClick={e => {
+              e.stopPropagation();
+              const confirmed = window.confirm('Delete this answer? This action cannot be undone.');
+              if (!confirmed) return;
+              (async () => {
+                try {
+                  const { deleteAnswer } = await import('../../../../services/answerService');
+                  if (answerId && user.username) {
+                    await deleteAnswer(answerId, user.username);
+                    showToast('Answer deleted');
+                  }
+                } catch (err) {
+                  // eslint-disable-next-line no-console
+                  console.error('Error deleting answer', err);
+                  showToast('Unable to delete answer');
                 }
-              } catch (err) {
-                // eslint-disable-next-line no-console
-                console.error('Error deleting answer', err);
-                showToast('Unable to delete answer');
-              }
-            })();
-          }}>
-          <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden>
-            <path d='M3 6h18v2H3V6zm2 3h14l-1.1 12.2c-.1 1.1-1 1.8-2.1 1.8H8.2c-1.1 0-2-.8-2.1-1.8L5 9zm5 2v8h2v-8H10zm4 0v8h2v-8h-2zM9 4V3h6v1h5v2H4V4h5z' />
-          </svg>
-          <span className='delete-label'>DELETE</span>
-        </button>
+              })();
+            }}>
+            <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor' aria-hidden>
+              <path d='M3 6h18v2H3V6zm2 3h14l-1.1 12.2c-.1 1.1-1 1.8-2.1 1.8H8.2c-1.1 0-2-.8-2.1-1.8L5 9zm5 2v8h2v-8H10zm4 0v8h2v-8h-2zM9 4V3h6v1h5v2H4V4h5z' />
+            </svg>
+            <span className='delete-label'>DELETE</span>
+          </button>
+        )}
+      </div>
+      <CommentSection
+        comments={comments}
+        handleAddComment={handleAddComment}
+        parentOwners={[ansBy, questionAskedBy ?? '']}
+        parentId={answerId}
+      />
+      {toastMsg && (
+        <div className='cf-toast' style={{ position: 'relative', top: 8 }}>
+          {toastMsg}
+        </div>
       )}
     </div>
-    <CommentSection
-      comments={comments}
-      handleAddComment={handleAddComment}
-      parentOwners={[ansBy, questionAskedBy ?? '']}
-      parentId={answerId}
-    />
-    {toastMsg && <div className='cf-toast' style={{ position: 'relative', top: 8 }}>{toastMsg}</div>}
-  </div>
-    );
-  };
+  );
+};
 
-  export default AnswerView;
-  
+export default AnswerView;

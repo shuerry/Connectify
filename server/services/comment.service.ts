@@ -35,8 +35,13 @@ export const deleteComment = async (
       if (commentOwner === username || questionWithComment.askedBy === username) {
         // authorized
         await CommentModel.findByIdAndDelete(cid);
-        await QuestionModel.findByIdAndUpdate(questionWithComment._id, { $pull: { comments: cid } });
-        return { msg: 'Comment deleted successfully', parentId: questionWithComment._id.toString() };
+        await QuestionModel.findByIdAndUpdate(questionWithComment._id, {
+          $pull: { comments: cid },
+        });
+        return {
+          msg: 'Comment deleted successfully',
+          parentId: questionWithComment._id.toString(),
+        };
       }
       return { error: 'Unauthorized: Cannot delete this comment' };
     }

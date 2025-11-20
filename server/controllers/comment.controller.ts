@@ -9,7 +9,6 @@ import {
 import { addComment, saveComment, deleteComment } from '../services/comment.service';
 import { populateDocument } from '../utils/database.util';
 
-
 const commentController = (socket: FakeSOSocket) => {
   const router = express.Router();
 
@@ -95,7 +94,8 @@ const commentController = (socket: FakeSOSocket) => {
       }
 
       // Emit typed commentDelete so clients can update UI
-      const parentId = 'parentId' in result && result.parentId ? new ObjectId(result.parentId) : new ObjectId();
+      const parentId =
+        'parentId' in result && result.parentId ? new ObjectId(result.parentId) : new ObjectId();
       socket.emit('commentDelete', { parentId, cid: new ObjectId(commentId) });
       res.json({ message: result.msg });
     } catch (err: unknown) {

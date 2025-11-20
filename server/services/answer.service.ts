@@ -170,7 +170,9 @@ export const deleteAnswer = async (
 
     // Authorization: answer author or question owner
     if (answer.ansBy !== username && questionOwner !== username) {
-      return { error: 'Unauthorized: You can only delete your own answers or answers on your question' };
+      return {
+        error: 'Unauthorized: You can only delete your own answers or answers on your question',
+      };
     }
 
     // Delete comments associated with the answer
@@ -190,7 +192,10 @@ export const deleteAnswer = async (
     // Delete the answer
     await AnswerModel.findByIdAndDelete(aid);
 
-    return { msg: 'Answer deleted successfully', qid: question ? question._id.toString() : undefined };
+    return {
+      msg: 'Answer deleted successfully',
+      qid: question ? question._id.toString() : undefined,
+    };
   } catch (err) {
     return { error: 'Error when deleting answer' };
   }

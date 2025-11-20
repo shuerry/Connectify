@@ -30,7 +30,9 @@ describe('deleteComment service', () => {
 
     expect(res).toHaveProperty('msg');
     expect(CommentModel.findByIdAndDelete).toHaveBeenCalledWith('cid');
-    expect(QuestionModel.findByIdAndUpdate).toHaveBeenCalledWith('qid', { $pull: { comments: 'cid' } });
+    expect(QuestionModel.findByIdAndUpdate).toHaveBeenCalledWith('qid', {
+      $pull: { comments: 'cid' },
+    });
     expect((res as { parentId?: string }).parentId).toBe('qid');
   });
 
@@ -50,7 +52,9 @@ describe('deleteComment service', () => {
 
     expect(res).toHaveProperty('msg');
     expect(CommentModel.findByIdAndDelete).toHaveBeenCalledWith('cid');
-    expect(AnswerModel.findByIdAndUpdate).toHaveBeenCalledWith('aid', { $pull: { comments: 'cid' } });
+    expect(AnswerModel.findByIdAndUpdate).toHaveBeenCalledWith('aid', {
+      $pull: { comments: 'cid' },
+    });
     expect((res as { parentId?: string }).parentId).toBe('aid');
   });
 });

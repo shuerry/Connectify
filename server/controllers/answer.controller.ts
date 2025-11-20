@@ -1,9 +1,8 @@
-import express, { Response } from 'express';
+import express, { Response, Request } from 'express';
 import { ObjectId } from 'mongodb';
-import { Answer, AddAnswerRequest, FakeSOSocket, PopulatedDatabaseAnswer, } from '../types/types';
+import { Answer, AddAnswerRequest, FakeSOSocket, PopulatedDatabaseAnswer } from '../types/types';
 import { addAnswerToQuestion, saveAnswer, deleteAnswer } from '../services/answer.service';
 import { populateDocument } from '../utils/database.util';
-import { Request } from 'express';
 
 const answerController = (socket: FakeSOSocket) => {
   const router = express.Router();

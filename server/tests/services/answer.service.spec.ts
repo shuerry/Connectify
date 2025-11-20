@@ -1,6 +1,3 @@
-// Minimal sanity tests for answer service to avoid duplicate-identifier issues.
-import { describe, test, expect } from '@jest/globals';
-
 describe('answer.service sanity', () => {
   test('sanity check - true is true', () => {
     expect(true).toBe(true);
@@ -113,7 +110,6 @@ describe('Answer model', () => {
     });
   });
 });
-
 
 describe('Answer model', () => {
   beforeEach(() => {

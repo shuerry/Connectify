@@ -22,9 +22,14 @@ const addAnswer = async (qid: string, ans: Answer): Promise<PopulatedDatabaseAns
 
 export default addAnswer;
 
-export const deleteAnswer = async (answerId: string, username: string): Promise<{ message?: string } | null> => {
+export const deleteAnswer = async (
+  answerId: string,
+  username: string,
+): Promise<{ message?: string } | null> => {
   try {
-    const res = await api.delete(`${ANSWER_API_URL}/deleteAnswer/${answerId}`, { data: { username } });
+    const res = await api.delete(`${ANSWER_API_URL}/deleteAnswer/${answerId}`, {
+      data: { username },
+    });
     return res.status === 200 ? res.data : null;
   } catch (e) {
     return null;

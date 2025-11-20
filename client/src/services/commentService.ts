@@ -44,7 +44,9 @@ export default addComment;
 
 export const deleteComment = async (commentId: string, username: string) => {
   try {
-    const res = await api.delete(`${COMMENT_API_URL}/deleteComment/${commentId}`, { data: { username } });
+    const res = await api.delete(`${COMMENT_API_URL}/deleteComment/${commentId}`, {
+      data: { username },
+    });
     return res.status === 200 ? res.data : null;
   } catch (e) {
     return null;
