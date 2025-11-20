@@ -5,6 +5,8 @@ import { PopulatedDatabaseQuestion } from '../../../../types/types';
 import SaveDropdown from '../../collections/saveDropdown';
 import ReportDropdown from '../../collections/reportDropdown';
 import useQuestionView from '../../../../hooks/useQuestionView';
+import { useNavigate } from 'react-router-dom';
+import { deleteQuestion } from '../../../../services/questionService';
 import useVoteStatus from '../../../../hooks/useVoteStatus';
 import { upvoteQuestion, downvoteQuestion } from '../../../../services/questionService';
 import useUserContext from '../../../../hooks/useUserContext';
@@ -28,6 +30,7 @@ interface QuestionProps {
 const QuestionView = ({ question }: QuestionProps) => {
   const { user } = useUserContext();
   const { count, voted } = useVoteStatus({ question });
+  const navigate = useNavigate();
   const {
     clickTag,
     handleAnswer,
@@ -185,6 +188,38 @@ const QuestionView = ({ question }: QuestionProps) => {
                   <path d='M14.4 6L14 4H5v17h2v-7h5.6l .4 2h7V6z' />
                 </svg>
                 Report
+              </button>
+            )}
+            {/* Show Delete for the author */}
+            {user && user.username === question.askedBy && (
+              <button
+                className='reddit-action-btn report-btn delete-btn'
+                onClick={e => {
+                  e.stopPropagation();
+                  const confirmed = window.confirm('Delete this question? This action cannot be undone.');
+                  if (!confirmed) return;
+                  (async () => {
+                    try {
+                      if (question._id && user.username) {
+                        await deleteQuestion(String(question._id), user.username);
+                        // If we're on the question page, send user home; otherwise reload to update lists
+                        if (window.location.pathname.startsWith('/question/')) {
+                          navigate('/home');
+                        } else {
+                          window.location.reload();
+                        }
+                      }
+                    } catch (err) {
+                      // eslint-disable-next-line no-console
+                      console.error('Error deleting question', err);
+                      alert('Unable to delete question');
+                    }
+                  })();
+                }}>
+                <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+                  <path d='M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z M19,4H15.5L14.79,3H9.21L8.5,4H5V6H19V4Z' />
+                </svg>
+                Delete
               </button>
             )}
           </div>
