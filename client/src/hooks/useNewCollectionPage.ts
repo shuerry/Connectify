@@ -50,7 +50,15 @@ const useNewCollectionPage = () => {
         navigate(`/collections/${user.username}/${collection._id}`);
       }
     } catch (err) {
-      setError('Error while creating collection: ' + (err as Error).message);
+      if (collectionDescription.length == 0) {
+        setError('Collection description cannot be empty.');
+        return;
+      } else if (collectionName.length == 0) {
+        setError('Collection name cannot be empty.');
+        return;
+      } else {
+        setError('Error while creating collection: ' + (err as Error).message);
+      }
     }
   };
 
