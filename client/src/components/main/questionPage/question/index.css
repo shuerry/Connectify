@@ -279,36 +279,6 @@
   }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .reddit-question-card {
-    background: var(--gray-800);
-    border-color: var(--gray-700);
-  }
-  
-  .reddit-question-card:hover {
-    background: var(--gray-750);
-    border-color: var(--primary-400);
-  }
-  
-  .vote-sidebar {
-    background: var(--gray-750);
-    border-color: var(--gray-700);
-  }
-  
-  .vote-btn:hover {
-    background: var(--gray-600);
-  }
-  
-  .reddit-actions {
-    border-color: var(--gray-700);
-  }
-  
-  .reddit-action-btn:hover {
-    background: var(--gray-700);
-  }
-}
-
 .question-meta {
   display: flex;
   align-items: center;
@@ -456,42 +426,6 @@
 
 .form-textarea::placeholder {
   color: var(--gray-400);
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .question-card {
-    background: var(--dark-card-bg, #1f2937);
-    border-color: var(--dark-border, #374151);
-  }
-  
-  .question-actions {
-    background-color: var(--dark-secondary-bg, #111827);
-    border-color: var(--dark-border, #374151);
-  }
-  
-  .modal-container {
-    background: var(--dark-card-bg, #1f2937);
-  }
-  
-  .modal-header,
-  .modal-footer {
-    border-color: var(--dark-border, #374151);
-  }
-  
-  .modal-footer {
-    background-color: var(--dark-secondary-bg, #111827);
-  }
-  
-  .form-textarea {
-    background: var(--dark-input-bg, #374151);
-    border-color: var(--dark-border, #4b5563);
-    color: var(--dark-text, #f9fafb);
-  }
-  
-  .form-textarea:focus {
-    border-color: var(--primary-400);
-  }
 }
 
 /* Responsive Design */
