@@ -25,12 +25,7 @@ interface CommentSectionProps {
  * @param comments: an array of Comment objects
  * @param handleAddComment: function to handle the addition of a new comment
  */
-const CommentSection = ({
-  comments,
-  handleAddComment,
-  parentOwners,
-  parentId,
-}: CommentSectionProps) => {
+const CommentSection = ({ comments, handleAddComment, parentOwners }: CommentSectionProps) => {
   const { user } = useUserContext();
   const [text, setText] = useState<string>('');
   const [textErr, setTextErr] = useState<string>('');
