@@ -219,12 +219,56 @@ const useAnswerPage = () => {
     socket.on('viewsUpdate', handleViewsUpdate);
     socket.on('commentUpdate', handleCommentUpdate);
     socket.on('voteUpdate', handleVoteUpdate);
+    /** Handle deletions so page updates in-place */
+    const handleAnswerDelete = ({ qid, aid }: { qid: ObjectId; aid: ObjectId }) => {
+      if (String(qid) === questionID) {
+        setQuestion(prevQuestion =>
+          prevQuestion
+            ? {
+                ...prevQuestion,
+                answers: prevQuestion.answers.filter(a => String(a._id) !== String(aid)),
+              }
+            : prevQuestion,
+        );
+      }
+    };
+
+    const handleCommentDelete = ({ parentId, cid }: { parentId: ObjectId; cid: ObjectId }) => {
+      // If the deleted comment is on the question itself
+      if (String(parentId) === questionID) {
+        setQuestion(prev =>
+          prev
+            ? { ...prev, comments: prev.comments.filter(c => String(c._id) !== String(cid)) }
+            : prev,
+        );
+        return;
+      }
+
+      // Otherwise the parent is an answer - remove from that answer's comments
+      setQuestion(prev =>
+        prev
+          ? {
+              ...prev,
+              answers: prev.answers.map(ans =>
+                String(ans._id) === String(parentId)
+                  ? { ...ans, comments: ans.comments.filter(c => String(c._id) !== String(cid)) }
+                  : ans,
+              ),
+            }
+          : prev,
+      );
+    };
+
+    socket.on('answerDelete', handleAnswerDelete);
+    socket.on('commentDelete', handleCommentDelete);
 
     return () => {
       socket.off('answerUpdate', handleAnswerUpdate);
       socket.off('viewsUpdate', handleViewsUpdate);
       socket.off('commentUpdate', handleCommentUpdate);
       socket.off('voteUpdate', handleVoteUpdate);
+      socket.off('answerDelete', handleAnswerDelete);
+      socket.off('commentDelete', handleCommentDelete);
     };
   }, [questionID, socket]);
 

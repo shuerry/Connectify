@@ -802,10 +802,10 @@ export const deleteQuestion = async (
     }
 
     // Delete answers referencing this question
-    await AnswerModel.deleteMany({ questionId: new ObjectId(qid) });
+    await AnswerModel.deleteMany({ questionId: qid });
 
     // Delete versions for this question
-    await QuestionVersionModel.deleteMany({ questionId: new ObjectId(qid) });
+    await QuestionVersionModel.deleteMany({ questionId: qid });
 
     // Delete comments directly referenced on the question
     try {

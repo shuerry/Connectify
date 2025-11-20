@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ObjectId } from 'mongodb';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   CommunityUpdatePayload,
@@ -76,10 +77,17 @@ const useCommunityPage = () => {
 
     socket.on('communityUpdate', handleCommunityUpdate);
     socket.on('questionUpdate', handleQuestionUpdate);
+    // Handle question deletions so community lists update immediately
+    const handleQuestionDelete = ({ qid }: { qid: ObjectId }) => {
+      setCommunityQuestions(prev => prev.filter(q => String(q._id) !== String(qid)));
+    };
+
+    socket.on('questionDelete', handleQuestionDelete);
 
     return () => {
       socket.off('communityUpdate', handleCommunityUpdate);
       socket.off('questionUpdate', handleQuestionUpdate);
+      socket.off('questionDelete', handleQuestionDelete);
     };
   }, [communityID, socket]);
 

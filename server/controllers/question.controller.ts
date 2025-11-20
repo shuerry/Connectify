@@ -668,8 +668,8 @@ const questionController = (socket: FakeSOSocket) => {
         return;
       }
 
-      // Emit a delete event so clients can remove the question from UI
-      (socket as any).emit('questionDelete', { qid });
+      // Emit a typed deletion event so clients can remove the question from UI
+      socket.emit('questionDelete', { qid: new ObjectId(qid) });
       res.json({ message: 'Question deleted successfully' });
     } catch (err: unknown) {
       if (err instanceof Error) {

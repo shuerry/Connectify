@@ -118,6 +118,8 @@ const AnswerPage = () => {
             handleAddComment={(comment: Comment) =>
               handleNewComment(comment, 'question', questionID)
             }
+            parentOwners={[question.askedBy]}
+            parentId={questionID}
           />
         </div>
       </div>
@@ -140,6 +142,8 @@ const AnswerPage = () => {
               handleAddComment={(comment: Comment) =>
                 handleNewComment(comment, 'answer', String(a._id))
               }
+              answerId={String(a._id)}
+              questionAskedBy={question.askedBy}
             />
           </div>
         ))}

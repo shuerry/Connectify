@@ -218,6 +218,39 @@
   color: var(--red-600);
 }
 
+/* Delete button style used by question and answer delete buttons */
+.reddit-action-btn.delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: #ff3b5e;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.reddit-action-btn.delete-btn svg {
+  background: rgba(255, 59, 94, 0.08);
+  padding: 10px;
+  border-radius: 10px;
+  color: #ff3b5e;
+  width: 22px;
+  height: 22px;
+}
+
+.reddit-action-btn.delete-btn:hover {
+  background: rgba(255, 59, 94, 0.04);
+}
+
+.delete-label {
+  font-size: 0.85rem;
+  color: #ff3b5e;
+}
+
 /* Dropdown Containers */
 .save-dropdown-container {
   position: relative;

@@ -6,9 +6,13 @@ import SaveDropdown from '../../collections/saveDropdown';
 import ReportDropdown from '../../collections/reportDropdown';
 import useQuestionView from '../../../../hooks/useQuestionView';
 import { useNavigate } from 'react-router-dom';
-import { deleteQuestion } from '../../../../services/questionService';
+import {
+  deleteQuestion,
+  upvoteQuestion,
+  downvoteQuestion,
+} from '../../../../services/questionService';
 import useVoteStatus from '../../../../hooks/useVoteStatus';
-import { upvoteQuestion, downvoteQuestion } from '../../../../services/questionService';
+
 import useUserContext from '../../../../hooks/useUserContext';
 
 /**
@@ -196,7 +200,9 @@ const QuestionView = ({ question }: QuestionProps) => {
                 className='reddit-action-btn report-btn delete-btn'
                 onClick={e => {
                   e.stopPropagation();
-                  const confirmed = window.confirm('Delete this question? This action cannot be undone.');
+                  const confirmed = window.confirm(
+                    'Delete this question? This action cannot be undone.',
+                  );
                   if (!confirmed) return;
                   (async () => {
                     try {
@@ -210,7 +216,6 @@ const QuestionView = ({ question }: QuestionProps) => {
                         }
                       }
                     } catch (err) {
-                      // eslint-disable-next-line no-console
                       console.error('Error deleting question', err);
                       alert('Unable to delete question');
                     }

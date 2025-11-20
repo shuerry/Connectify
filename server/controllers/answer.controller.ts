@@ -1,8 +1,9 @@
 import express, { Response } from 'express';
 import { ObjectId } from 'mongodb';
-import { Answer, AddAnswerRequest, FakeSOSocket, PopulatedDatabaseAnswer } from '../types/types';
-import { addAnswerToQuestion, saveAnswer } from '../services/answer.service';
+import { Answer, AddAnswerRequest, FakeSOSocket, PopulatedDatabaseAnswer, } from '../types/types';
+import { addAnswerToQuestion, saveAnswer, deleteAnswer } from '../services/answer.service';
 import { populateDocument } from '../utils/database.util';
+import { Request } from 'express';
 
 const answerController = (socket: FakeSOSocket) => {
   const router = express.Router();
@@ -52,6 +53,45 @@ const answerController = (socket: FakeSOSocket) => {
 
   // add appropriate HTTP verbs and their endpoints to the router.
   router.post('/addAnswer', addAnswer);
+
+  const deleteAnswerRoute = async (req: Request, res: Response): Promise<void> => {
+    const { answerId } = req.params as { answerId: string };
+    const { username } = req.body as { username?: string };
+
+    if (!answerId) {
+      res.status(400).send('answerId is required');
+      return;
+    }
+
+    if (!username) {
+      res.status(400).send('Username is required');
+      return;
+    }
+
+    try {
+      const result = await deleteAnswer(answerId, username);
+
+      if ('error' in result) {
+        if (result.error === 'Answer not found') {
+          res.status(404).send(result.error);
+        } else if (typeof result.error === 'string' && result.error.includes('Unauthorized')) {
+          res.status(403).send(result.error);
+        } else {
+          res.status(400).send(result.error);
+        }
+        return;
+      }
+
+      // emit typed answerDelete with question id returned from service when available
+      const qid = 'qid' in result && result.qid ? new ObjectId(result.qid) : undefined;
+      socket.emit('answerDelete', { qid: qid ?? new ObjectId(), aid: new ObjectId(answerId) });
+      res.json({ message: result.msg });
+    } catch (err: unknown) {
+      res.status(500).send(`Error when deleting answer: ${(err as Error).message}`);
+    }
+  };
+
+  router.delete('/deleteAnswer/:answerId', deleteAnswerRoute);
 
   return router;
 };

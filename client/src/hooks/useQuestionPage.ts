@@ -1,5 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { ObjectId } from 'mongodb';
 import useUserContext from './useUserContext';
 import { AnswerUpdatePayload, OrderType, PopulatedDatabaseQuestion } from '../types/types';
 import { getQuestionsByFilter } from '../services/questionService';
@@ -79,7 +80,9 @@ const useQuestionPage = () => {
      */
     const handleAnswerUpdate = ({ qid, answer }: AnswerUpdatePayload) => {
       setQlist(prevQlist =>
-        prevQlist.map(q => (q._id === qid ? { ...q, answers: [...q.answers, answer] } : q)),
+        prevQlist.map(q =>
+          String(q._id) === String(qid) ? { ...q, answers: [...q.answers, answer] } : q,
+        ),
       );
     };
 
@@ -97,11 +100,30 @@ const useQuestionPage = () => {
     socket.on('questionUpdate', handleQuestionUpdate);
     socket.on('answerUpdate', handleAnswerUpdate);
     socket.on('viewsUpdate', handleViewsUpdate);
+    /** Handle deletions of questions and answers so lists update in-place */
+    const handleQuestionDelete = ({ qid }: { qid: ObjectId }) => {
+      setQlist(prevQlist => prevQlist.filter(q => String(q._id) !== String(qid)));
+    };
+
+    const handleAnswerDelete = ({ qid, aid }: { qid: ObjectId; aid: ObjectId }) => {
+      setQlist(prevQlist =>
+        prevQlist.map(q =>
+          String(q._id) === String(qid)
+            ? { ...q, answers: q.answers.filter(a => String(a._id) !== String(aid)) }
+            : q,
+        ),
+      );
+    };
+
+    socket.on('questionDelete', handleQuestionDelete);
+    socket.on('answerDelete', handleAnswerDelete);
 
     return () => {
       socket.off('questionUpdate', handleQuestionUpdate);
       socket.off('answerUpdate', handleAnswerUpdate);
       socket.off('viewsUpdate', handleViewsUpdate);
+      socket.off('questionDelete', handleQuestionDelete);
+      socket.off('answerDelete', handleAnswerDelete);
     };
   }, [questionOrder, search, socket, user.username]);
 
