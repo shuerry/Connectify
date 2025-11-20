@@ -6,6 +6,7 @@ import { saveMessage } from './message.service';
 import { NotificationService } from './notification.service';
 import MessageModel from '../models/messages.model';
 import NotificationModel from '../models/notification.model';
+import { createNotification } from './notification.service';
 
 /**
  * Saves a new chat, storing any messages provided as part of the argument.
@@ -84,15 +85,15 @@ export const addMessageToChat = async (
       const recipientUser = await UserModel.findOne({ username }).lean();
 
       // --- CREATE DB NOTIFICATION ---
-      await NotificationModel.create({
-        recipient: username,
-        kind: 'chat',
-        title: `New message from ${senderUsername}`,
-        preview: messagePreview,
-        link: `/messaging/direct-message`,
-        actorUsername: senderUsername,
-        meta: { chatId, isMention: false },
-      });
+  await createNotification({
+    recipient: username,
+    kind: 'chat',
+    title: `New message from ${senderUsername}`,
+    preview: messagePreview,
+    link: `/messaging/direct-message`,
+    actorUsername: senderUsername,
+    meta: { chatId, isMention: false },
+  });
 
       // ---- EMAIL NOTIFICATIONS ----
       if (!recipientUser || !recipientUser.email || !recipientUser.emailVerified) {

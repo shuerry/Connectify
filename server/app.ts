@@ -88,6 +88,18 @@ function startServer() {
 socket.on('connection', socket => {
   console.log('A user connected ->', socket.id);
 
+    socket.on('joinUserRoom', (username: string) => {
+    if (!username) return;
+    socket.join(`user:${username}`);
+    console.log(`Socket ${socket.id} joined user room user:${username}`);
+  });
+
+  socket.on('leaveUserRoom', (username: string) => {
+    if (!username) return;
+    socket.leave(`user:${username}`);
+    console.log(`Socket ${socket.id} left user room user:${username}`);
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected');
   });

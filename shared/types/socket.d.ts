@@ -6,6 +6,7 @@ import { SafeDatabaseUser } from './user';
 import { BaseMove, GameInstance, GameInstanceID, GameMove, GameState } from './game';
 import { DatabaseCommunity } from './community';
 import { PopulatedDatabaseCollection } from './collection';
+import { NotificationPayload } from './notification';
 
 /**
  * Payload for an answer update event.
@@ -115,6 +116,10 @@ export interface CollectionUpdatePayload {
   collection: PopulatedDatabaseCollection;
 }
 
+export interface NotificationUpdatePayload {
+  type: 'chat' | 'answer';
+}
+
 /**
  * Payload for a player disconnect event during a game.
  * - `disconnectedPlayer`: The player ID who disconnected.
@@ -175,6 +180,7 @@ export interface ClientToServerEvents {
   }) => void;
   // Join user-specific room for notifications
   joinUserRoom: (username: string) => void;
+  leaveUserRoom: (username: string) => void;
   // Typing indicator events
   typingStart: (data: { chatID?: string; username: string }) => void;
   typingStop: (data: { chatID?: string; username: string }) => void;
@@ -194,6 +200,7 @@ export interface ClientToServerEvents {
  * - `chatUpdate`: Server sends updated chat.
  * - `communityUpdate`: Server sends updated community.
  * - `collectionUpdate`: Server sends updated collection.
+ * - `notificationUpdate`: Server sends notification update for user-specific room.
  */
 export interface ServerToClientEvents {
   questionUpdate: (question: PopulatedDatabaseQuestion) => void;
@@ -217,5 +224,5 @@ export interface ServerToClientEvents {
   // Typing indicator events
   typingIndicator: (payload: TypingIndicatorPayload) => void;
   // Send notification update (for user-specific room)
-  // TODO: add an event for notifications
+  notificationUpdate: () => void;
 }

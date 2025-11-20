@@ -24,8 +24,8 @@ export const getNotifications = async (username: string, limit = 20, cursor?: st
   return res.data as { items: UINotification[]; nextCursor?: string };
 };
 
-export const markNotificationRead = async (id: string) => {
-  const res = await api.post(`${NOTIF_API_URL}/markRead`, { id });
+export const markNotificationRead = async (id: string, username: string) => {
+  const res = await api.post(`${NOTIF_API_URL}/markRead`, { id, username });
   if (res.status !== 200) throw new Error('Error when marking notification read');
   return res.data as UINotification;
 };
@@ -36,8 +36,8 @@ export const markAllNotificationsRead = async (username: string) => {
   return res.data as { ok: true };
 };
 
-export const deleteNotification = async (id: string) => {
-  const res = await api.delete(`${NOTIF_API_URL}/${id}`);
+export const deleteNotification = async (id: string, username: string) => {
+  const res = await api.delete(`${NOTIF_API_URL}/${id}`, { data: { username } });
   if (res.status !== 200) throw new Error('Error when deleting notification');
   return res.data as { ok: true };
 };

@@ -8,8 +8,10 @@ import {
   UINotification,
 } from '../../../services/notificationService';
 import './index.css';
+import useUserContext from '../../../hooks/useUserContext';
 
 export default function NotificationsPage({ username }: { username: string }) {
+  const { socket } = useUserContext();
   const [items, setItems] = useState<UINotification[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
@@ -32,8 +34,22 @@ export default function NotificationsPage({ username }: { username: string }) {
     load();
   }, [load]);
 
+    useEffect(() => {
+    if (!socket || !username) return;
+
+    const handleNotificationUpdate = () => {
+      load();
+    };
+
+    socket.on('notificationUpdate', handleNotificationUpdate);
+
+    return () => {
+      socket.off('notificationUpdate', handleNotificationUpdate);
+    };
+  }, [username, load]);
+
   const onMarkRead = async (id: string) => {
-    const updated = await markNotificationRead(id);
+    const updated = await markNotificationRead(id, username);
     setItems(prev => prev.map(n => (n._id === id ? { ...n, ...updated } : n)));
   };
 
@@ -43,7 +59,7 @@ export default function NotificationsPage({ username }: { username: string }) {
   };
 
   const onDelete = async (id: string) => {
-    await deleteNotification(id);
+    await deleteNotification(id, username);
     setItems(prev => prev.filter(n => n._id !== id));
   };
 

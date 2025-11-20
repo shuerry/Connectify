@@ -10,7 +10,7 @@ import {
 } from '../types/types';
 import AnswerModel from '../models/answers.model';
 import QuestionModel from '../models/questions.model';
-import { NotificationService } from './notification.service';
+import { createNotification, NotificationService } from './notification.service';
 import UserModel from '../models/users.model';
 import NotificationModel from '../models/notification.model';
 
@@ -102,7 +102,7 @@ export const addAnswerToQuestion = async (
               u && u.username && u.username !== ans.ansBy,
           )
           .map((u: { username?: string; email?: string; emailVerified?: boolean }) => ({
-            recipient: u.username,
+            recipient: u.username as string,
             kind: 'answer' as const,
             title: `New answer on: ${result.title}`,
             preview: truncate(ans.text),
@@ -113,7 +113,9 @@ export const addAnswerToQuestion = async (
 
         if (notifDocs.length > 0) {
           try {
-            await NotificationModel.insertMany(notifDocs, { ordered: false });
+            await Promise.all(
+              notifDocs.map(doc => createNotification(doc)),
+            );
           } catch (insertErr) {
             // console.warn('InsertMany notifications failed (answer):', insertErr);
           }
