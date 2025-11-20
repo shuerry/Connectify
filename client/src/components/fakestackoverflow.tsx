@@ -1,4 +1,4 @@
-import { JSX, useState } from 'react';
+import { JSX, useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './layout';
 import Login from './auth/login';
@@ -82,6 +82,18 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
     }
     return null;
   });
+
+  useEffect(() => {
+    if (!socket || !user?.username) return;
+
+    // join on mount / login
+    socket.emit('joinUserRoom', user.username);
+
+    // leave on unmount / logout or username change
+    return () => {
+      socket.emit('leaveUserRoom', user.username);
+    };
+  }, [socket, user?.username]);
 
   // Logout function to clear user and remembered session
   const logout = () => {

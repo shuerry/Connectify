@@ -1,28 +1,42 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getNotifications } from '../services/notificationService';
+import useUserContext from './useUserContext';
 
 const useUnreadNotifications = (username: string) => {
+  const { socket } = useUserContext();
   const [unread, setUnread] = useState<number>(0);
+
+  const loadUnread = useCallback(async () => {
+    if (!username) return;
+
+    try {
+      const { items } = await getNotifications(username, 50);
+      const count = items.filter(n => !n.isRead).length;
+      setUnread(count);
+    } catch (err) {
+      //console.error('Failed to load unread notifications', err);
+    }
+  }, [username]);
 
   useEffect(() => {
     if (!username) return;
 
-    const load = async () => {
-      try {
-        const { items } = await getNotifications(username, 50);
-        const count = items.filter(n => !n.isRead).length;
-        setUnread(count);
-      } catch (err) {
-        throw new Error('Failed to load unread notifications');
-      }
+    // initial load
+    loadUnread();
+
+    if (!socket) return;
+
+    const handleNotificationUpdate = () => {
+      // re-fetch unread count whenever server signals an update
+      loadUnread();
     };
 
-    load();
+    socket.on('notificationUpdate', handleNotificationUpdate);
 
-    // Optional: poll every 30 seconds (can remove if using sockets)
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
-  }, [username]);
+    return () => {
+      socket.off('notificationUpdate', handleNotificationUpdate);
+    };
+  }, [socket, username, loadUnread]);
 
   return { unread };
 };

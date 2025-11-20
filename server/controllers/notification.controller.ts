@@ -5,11 +5,13 @@ import {
   markRead,
   markAllRead,
   deleteNotification,
+  setNotificationSocket,
 } from '../services/notification.service';
 
 // TODO: Rewrite to match the structure of other controllers
 
 const notificationController = (socket: FakeSOSocket) => {
+  setNotificationSocket(socket);
   const router = express.Router();
 
   // GET /api/notification/:username?limit=20&cursor=ISO
@@ -27,10 +29,11 @@ const notificationController = (socket: FakeSOSocket) => {
 
   // POST /api/notification/markRead
   router.post('/markRead', async (req, res: Response) => {
-    const { id } = req.body as { id: string };
+    const { id, username } = req.body as { id: string; username: string };
     try {
       const n = await markRead(id);
       res.json(n);
+      socket.to(`user:${username}`).emit('notificationUpdate');
     } catch {
       res.status(500).send('Error when marking notification read');
     }
@@ -42,6 +45,8 @@ const notificationController = (socket: FakeSOSocket) => {
     try {
       const r = await markAllRead(username);
       res.json(r);
+
+      socket.to(`user:${username}`).emit('notificationUpdate');
     } catch {
       res.status(500).send('Error when marking all read');
     }
@@ -49,9 +54,12 @@ const notificationController = (socket: FakeSOSocket) => {
 
   // DELETE /api/notification/:id
   router.delete('/:id', async (req, res: Response) => {
+    const { username } = req.body as { username: string };
+
     try {
       const r = await deleteNotification(req.params.id);
       res.json(r);
+      socket.to(`user:${username}`).emit('notificationUpdate');
     } catch {
       res.status(500).send('Error when deleting notification');
     }

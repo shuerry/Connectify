@@ -1,9 +1,22 @@
 /* eslint-disable no-console */
 import nodemailer from 'nodemailer';
 import { ChatNotificationPayload, AnswerNotificationPayload } from '../types/types';
-import type { EmailVerificationPayload, PasswordResetPayload } from '../types/types';
+import type { EmailVerificationPayload, FakeSOSocket, PasswordResetPayload } from '../types/types';
 import NotificationModel from '../models/notification.model';
 import { Resend } from 'resend';
+
+// --- SOCKET WIRING ---
+let socketRef: FakeSOSocket | null = null;
+
+export const setNotificationSocket = (io: FakeSOSocket) => {
+  socketRef = io;
+};
+
+const emitNotificationUpdate = (recipient: string) => {
+  if (!socketRef) return;
+  const room = `user:${recipient}`;
+  socketRef.to(room).emit('notificationUpdate');
+};
 
 type Maybe<T> = T | undefined;
 
@@ -314,6 +327,7 @@ export const createNotification = async (payload: {
   meta?: Record<string, unknown>;
 }) => {
   const n = await NotificationModel.create(payload);
+  emitNotificationUpdate(payload.recipient);
   return n.toObject();
 };
 

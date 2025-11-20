@@ -10,25 +10,24 @@ import CommentSection from '../commentSection';
 import useAnswerPage from '../../../hooks/useAnswerPage';
 import FollowButton from '../followButton';
 import SaveToCollectionModal from '../collections/saveToCollectionModal';
+import ReportDropdown from '../collections/reportDropdown';
+import useReportQuestion from '../../../hooks/useReportQuestion';
 
 /**
  * AnswerPage component that displays the full content of a question along with its answers.
  * It also includes the functionality to vote, ask a new question, post a new answer, and edit the question.
  */
 const AnswerPage = () => {
+  const { questionID, question, reports, handleNewComment, handleNewAnswer, handleQuestionUpdate } =
+    useAnswerPage();
   const {
-    questionID,
-    question,
-    reports,
-    handleNewComment,
-    handleNewAnswer,
-    handleQuestionUpdate,
-    canReport,
     openReportModal,
+    reportTarget,
     submitReport,
-    isReportOpen,
-    setReportOpen,
-  } = useAnswerPage();
+    canReport,
+    reportDropdownOpen,
+    closeReportDropdown,
+  } = useReportQuestion();
 
   const [isSaveModalOpen, setSaveModalOpen] = useState(false);
 
@@ -98,12 +97,26 @@ const AnswerPage = () => {
               <span>Save</span>
             </button>
 
-            {canReport() && (
+            {/* {canReport() && (
               <button className='reddit-action-btn report-btn' onClick={openReportModal}>
                 <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
                   <path d='M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z' />
                 </svg>
                 <span>Report</span>
+              </button>
+            )} */}
+
+            {canReport(question) && (
+              <button
+                className='reddit-action-btn report-btn'
+                onClick={e => {
+                  e.stopPropagation();
+                  openReportModal(question);
+                }}>
+                <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+                  <path d='M14.4 6L14 4H5v17h2v-7h5.6l .4 2h7V6z' />
+                </svg>
+                Report
               </button>
             )}
 
@@ -160,43 +173,13 @@ const AnswerPage = () => {
       </div>
 
       {/* Report Modal */}
-      {isReportOpen && (
-        <div className='modal-backdrop' onClick={() => setReportOpen(false)}>
-          <div className='modal-container' onClick={e => e.stopPropagation()}>
-            <div className='modal-header'>
-              <h2 className='modal-title'>Report Post</h2>
-              <button className='modal-close' onClick={() => setReportOpen(false)}>
-                <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
-                  <path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z' />
-                </svg>
-              </button>
-            </div>
-            <div className='modal-body'>
-              <textarea
-                placeholder='Please describe the reason for reporting this post...'
-                className='form-textarea'
-                rows={5}
-                onClick={e => e.stopPropagation()}
-                id='report-reason-input'
-              />
-            </div>
-            <div className='modal-footer'>
-              <button className='btn btn-secondary' onClick={() => setReportOpen(false)}>
-                Cancel
-              </button>
-              <button
-                className='btn btn-danger'
-                onClick={e => {
-                  e.stopPropagation();
-                  const val = (
-                    document.getElementById('report-reason-input') as HTMLTextAreaElement
-                  ).value.trim();
-                  if (val) submitReport(val);
-                }}>
-                Submit Report
-              </button>
-            </div>
-          </div>
+      {canReport(question) && reportDropdownOpen === question._id.toString() && reportTarget && (
+        <div className='report-dropdown-overlay'>
+          <ReportDropdown
+            question={reportTarget}
+            onClose={closeReportDropdown}
+            onSubmit={submitReport}
+          />
         </div>
       )}
 
