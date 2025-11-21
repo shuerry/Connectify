@@ -40,7 +40,7 @@ const QuestionPage = () => {
               We couldn't find any questions matching your search. Try adjusting your search terms
               or browse all questions.
             </p>
-            <button className='btn btn-primary' onClick={() =>navigate('/home') }>
+            <button className='btn btn-primary' onClick={() => navigate('/home')}>
               Browse All Questions
             </button>
           </div>

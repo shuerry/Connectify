@@ -42,7 +42,7 @@ const Header = () => {
               </svg>
             </div>
             <span className='logo-text'>
-              Stack<span className='logo-accent'>Flow</span>
+              Connect<span className='logo-accent'>ify</span>
             </span>
           </button>
         </div>

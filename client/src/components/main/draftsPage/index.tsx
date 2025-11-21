@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PopulatedDatabaseDraft } from '@fake-stack-overflow/shared';
 import useDrafts from '../../../hooks/useDrafts';
 import './index.css';
+import AskQuestionButton from '../askQuestionButton';
 
 interface DraftsPageProps {
   userContext: {
@@ -103,9 +104,7 @@ const DraftsPage: React.FC<DraftsPageProps> = ({ userContext }) => {
         <div className='no-drafts'>
           <h2>No drafts yet</h2>
           <p>Start writing a question and save it as a draft to see it here.</p>
-          <button onClick={() => navigate('/new/question')} className='ask-question-button'>
-            Ask a Question
-          </button>
+          <AskQuestionButton />
         </div>
       ) : (
         <div className='drafts-list'>

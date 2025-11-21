@@ -12,11 +12,17 @@ const TagPage = () => {
 
   return (
     <>
-      <div className='space_between right_padding'>
-        <div className='bold_title'>{tlist.length} Tags</div>
-        <div className='bold_title'>All Tags</div>
-        <AskQuestionButton />
+      <div className='tags-header right_padding'>
+        <div className='tags-header-left'>
+          <h1 className='tags-title'>All Tags</h1>
+          <p className='tags-subtitle'>{tlist.length} tags • Browse topics and technologies</p>
+        </div>
+
+        <div className='tags-header-right'>
+          <AskQuestionButton />
+        </div>
       </div>
+
       <div className='tag_list right_padding'>
         {tlist.map(t => (
           <TagView key={t.name} t={t} clickTag={clickTag} />
