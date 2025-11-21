@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { FakeSOSocket } from './types/types';
-import { BrowserRouter as Router } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import FakeStackOverflow from './components/fakestackoverflow';
 
@@ -88,11 +87,7 @@ const App = () => {
     };
   }, [socket]);
 
-  return (
-    <Router>
-      <FakeStackOverflow socket={socket} />
-    </Router>
-  );
+  return <FakeStackOverflow socket={socket} />;
 };
 
 export default App;
