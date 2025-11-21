@@ -2,7 +2,7 @@ import './index.css';
 import QuestionHeader from './header';
 import QuestionView from './question';
 import useQuestionPage from '../../../hooks/useQuestionPage';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * QuestionPage component renders a page displaying a list of questions
