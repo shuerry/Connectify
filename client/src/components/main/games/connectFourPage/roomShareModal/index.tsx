@@ -1,10 +1,10 @@
-/* eslint-disable no-console */
 import { useState, useEffect } from 'react';
 import './index.css';
 import { ConnectFourGameState, GameInstance } from '../../../../../types/types';
 import { sendGameInvitation } from '../../../../../services/messageService';
 import { getRelations } from '../../../../../services/userService';
 import useUserContext from '../../../../../hooks/useUserContext';
+import logger from '../../../../../utils/logger';
 
 interface RoomShareModalProps {
   onClose: () => void;
@@ -56,17 +56,17 @@ const RoomShareModal = ({ onClose, gameInstance }: RoomShareModalProps) => {
       setIsSending(true);
       setError('');
 
-      console.log('Sending invitations from:', user.username);
-      console.log('Selected friends:', selectedFriends);
-      console.log('Game instance:', gameInstance);
+      logger.info('Sending invitations from:', user.username);
+      logger.info('Selected friends:', selectedFriends);
+      logger.info('Game instance:', gameInstance);
 
       const roomSettings = gameInstance.state.roomSettings;
       let sentCount = 0;
 
       for (const friendUsername of selectedFriends) {
         try {
-          console.log(`Sending invitation to: ${friendUsername}`);
-          console.log('Invitation data:', {
+          logger.info(`Sending invitation to: ${friendUsername}`);
+          logger.info('Invitation data:', {
             from: user.username,
             to: friendUsername,
             gameID: gameInstance.gameID,
@@ -83,10 +83,10 @@ const RoomShareModal = ({ onClose, gameInstance }: RoomShareModalProps) => {
             'Connect Four',
             roomSettings.roomCode,
           );
-          console.log(`Successfully sent invitation to ${friendUsername}`);
+          logger.info(`Successfully sent invitation to ${friendUsername}`);
           sentCount = +1;
         } catch (inviteError) {
-          console.error(`Failed to send invitation to ${friendUsername}:`, inviteError);
+          logger.error(`Failed to send invitation to ${friendUsername}:`, inviteError);
           // Show specific error if available
           if (inviteError instanceof Error) {
             setError(`Failed to send invitation to ${friendUsername}: ${inviteError.message}`);

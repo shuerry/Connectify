@@ -26,6 +26,7 @@ import collectionController from './controllers/collection.controller';
 import communityController from './controllers/community.controller';
 import reportController from './controllers/report.controller';
 import notificationController from './controllers/notification.controller';
+import { info, warn, error } from './utils/logger';
 
 const MONGO_URL = `${process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017'}/fake_so`;
 const PORT = parseInt(process.env.PORT || '8000');
@@ -75,33 +76,35 @@ const socket: FakeSOSocket = new Server(server, {
 });
 
 function connectDatabase() {
-  return mongoose.connect(MONGO_URL).catch(err => console.log('MongoDB connection error: ', err));
+  return mongoose.connect(MONGO_URL).catch(err => {
+    error('MongoDB connection error: ', err);
+  });
 }
 
 function startServer() {
   connectDatabase();
   server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    info(`Server is running on port ${PORT}`);
   });
 }
 
 socket.on('connection', socket => {
-  console.log('A user connected ->', socket.id);
+  info('A user connected ->', socket.id);
 
   socket.on('joinUserRoom', (username: string) => {
     if (!username) return;
     socket.join(`user:${username}`);
-    console.log(`Socket ${socket.id} joined user room user:${username}`);
+    info(`Socket ${socket.id} joined user room user:${username}`);
   });
 
   socket.on('leaveUserRoom', (username: string) => {
     if (!username) return;
     socket.leave(`user:${username}`);
-    console.log(`Socket ${socket.id} left user room user:${username}`);
+    info(`Socket ${socket.id} left user room user:${username}`);
   });
 
   socket.on('disconnect', () => {
-    console.log('User disconnected');
+    info('User disconnected');
   });
 });
 
@@ -110,7 +113,7 @@ process.on('SIGINT', async () => {
   socket.close();
 
   server.close(() => {
-    console.log('Server closed.');
+    info('Server closed.');
     process.exit(0);
   });
 });
@@ -118,7 +121,7 @@ process.on('SIGINT', async () => {
 app.use(express.json());
 
 // Log allowed origins for debugging
-console.log('Allowed CORS origins:', ALLOWED_CLIENT_ORIGINS);
+info('Allowed CORS origins:', ALLOWED_CLIENT_ORIGINS);
 
 // Minimal CORS for REST API (avoids adding a dependency). Uses same allowed origins as Socket.IO
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -143,7 +146,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
   // Debug logging when origin present but not allowed
   if (requestOrigin && !isAllowed) {
-    console.warn(`CORS: request origin not allowed: ${requestOrigin}`);
+    warn(`CORS: request origin not allowed: ${requestOrigin}`);
   }
 
   if (isAllowed && requestOrigin) {
@@ -183,22 +186,21 @@ try {
       },
     }),
   );
-
-  // Custom Error Handler for express-openapi-validator errors
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  // Error Handler for express-openapi-validator errors
+  app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
     // Format error response for validation errors
-    if (err.status && err.errors) {
-      res.status(err.status).json({
+    if (typeof err === 'object' && err !== null && 'status' in err && 'errors' in err) {
+      const errorObj = err as { status: number; errors: unknown };
+      res.status(errorObj.status).json({
         message: 'Request Validation Failed',
-        errors: err.errors,
+        errors: errorObj.errors,
       });
     } else {
       next(err); // Pass through other errors
     }
   });
 } catch (e) {
-  console.error('Failed to load or initialize OpenAPI Validator:', e);
+  error('Failed to load or initialize OpenAPI Validator:', e);
 }
 
 app.use('/api/question', questionController(socket));
@@ -216,7 +218,7 @@ app.use('/api/notification', notificationController(socket));
 
 const openApiDocument = yaml.parse(fs.readFileSync('./openapi.yaml', 'utf8'));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
-console.log('Swagger UI is available at /api/docs');
+info('Swagger UI is available at /api/docs');
 
 // Export the app instance
 export { app, server, startServer };

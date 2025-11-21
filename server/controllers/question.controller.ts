@@ -40,6 +40,7 @@ import {
 } from '../services/question.service';
 import { processTags } from '../services/tag.service';
 import { populateDocument } from '../utils/database.util';
+import { error as logError } from '../utils/logger';
 
 const questionController = (socket: FakeSOSocket) => {
   const router = express.Router();
@@ -473,8 +474,7 @@ const questionController = (socket: FakeSOSocket) => {
 
       if ('error' in result) {
         // service returned an error object; log it and forward
-        // eslint-disable-next-line no-console
-        console.error('saveDraft service error:', result.error);
+        logError('saveDraft service error:', result.error);
         res.status(400).send(result.error);
         return;
       }

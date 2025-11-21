@@ -13,6 +13,7 @@ import {
 import findGames from '../services/game.service';
 import GameManager from '../services/games/gameManager';
 import ConnectFourGame from '../services/games/connectFour';
+import logger from '../utils/logger';
 
 /**
  * Express controller for handling game-related requests,
@@ -38,8 +39,7 @@ const gameController = (socket: FakeSOSocket) => {
         })
         .map(g => g.getPublicRoomInfo());
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error getting Connect Four rooms:', error);
+      logger.error('Error getting Connect Four rooms:', error);
       return [];
     }
   };
@@ -49,15 +49,13 @@ const gameController = (socket: FakeSOSocket) => {
     try {
       const rooms = getPublicConnectFourRooms();
       const clientCount = socket.sockets.sockets.size;
-      // eslint-disable-next-line no-console
-      console.log(
+      logger.info(
         `Broadcasting ${rooms.length} Connect Four rooms to ${clientCount} connected clients`,
       );
       // Use sockets.emit to broadcast to ALL connected sockets
       socket.sockets.emit('connectFourRoomsUpdate', rooms);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error broadcasting Connect Four rooms:', error);
+      logger.error('Error broadcasting Connect Four rooms:', error);
     }
   };
 
@@ -186,12 +184,10 @@ const gameController = (socket: FakeSOSocket) => {
 
       // Emit to all players in the game room
       const socketsInRoom = socket.sockets.adapter.rooms.get(gameID)?.size || 0;
-      // eslint-disable-next-line no-console
-      console.log(
+      logger.info(
         `Player ${playerID} joined game ${gameID}. Broadcasting to ${socketsInRoom} sockets in room.`,
       );
-      // eslint-disable-next-line no-console
-      console.log(`Game state after join:`, {
+      logger.info(`Game state after join:`, {
         gameID,
         status: game.state.status,
         ...(game.gameType === 'Connect Four' && {
@@ -411,15 +407,13 @@ const gameController = (socket: FakeSOSocket) => {
     conn.emit('connectFourRoomsUpdate', getPublicConnectFourRooms());
     conn.on('joinGame', (gameID: string) => {
       conn.join(gameID);
-      // eslint-disable-next-line no-console
-      console.log(`Socket ${conn.id} joined game room ${gameID}`);
+      logger.info(`Socket ${conn.id} joined game room ${gameID}`);
 
       // Send current game state to the joining player
       const game = GameManager.getInstance().getGame(gameID as GameInstanceID);
       if (game) {
         conn.emit('gameUpdate', { gameInstance: game.toModel() });
-        // eslint-disable-next-line no-console
-        console.log(`Sent game state to socket ${conn.id} for game ${gameID}`);
+        logger.info(`Sent game state to socket ${conn.id} for game ${gameID}`);
       }
     });
 
@@ -525,8 +519,7 @@ const gameController = (socket: FakeSOSocket) => {
     // client requests the latest list of public Connect Four rooms
     conn.on('requestConnectFourRooms', () => {
       const rooms = getPublicConnectFourRooms();
-      // eslint-disable-next-line no-console
-      console.log(`Client ${conn.id} requested Connect Four rooms, sending ${rooms.length} rooms`);
+      logger.info(`Client ${conn.id} requested Connect Four rooms, sending ${rooms.length} rooms`);
       conn.emit('connectFourRoomsUpdate', rooms);
     });
   });

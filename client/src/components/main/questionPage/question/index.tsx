@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import './index.css';
 import { getMetaData } from '../../../../tool';
 import { PopulatedDatabaseQuestion } from '../../../../types/types';
@@ -15,6 +14,7 @@ import useVoteStatus from '../../../../hooks/useVoteStatus';
 
 import useUserContext from '../../../../hooks/useUserContext';
 import useReportQuestion from '../../../../hooks/useReportQuestion';
+import logger from '../../../../utils/logger';
 
 /**
  * Interface representing the props for the Question component.
@@ -68,7 +68,7 @@ const QuestionView = ({ question }: QuestionProps) => {
         }
       }
     } catch (error) {
-      console.error(`Error during ${type}:`, error);
+      logger.error(`Error during ${type}:`, error);
     }
   };
 
@@ -218,7 +218,7 @@ const QuestionView = ({ question }: QuestionProps) => {
                         }
                       }
                     } catch (err) {
-                      console.error('Error deleting question', err);
+                      logger.error('Error deleting question', err);
                       alert('Unable to delete question');
                     }
                   })();

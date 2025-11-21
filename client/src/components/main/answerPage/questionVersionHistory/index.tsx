@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -30,19 +30,18 @@ const QuestionVersionHistory = ({ question, onVersionRollback }: QuestionVersion
   // Check if current user is the author
   const canViewHistory = user.username === question.askedBy;
 
-  const loadVersions = async () => {
+  const loadVersions = useCallback(async () => {
     const loadedVersions = await getVersions(question._id.toString(), user.username);
     if (loadedVersions) {
       setVersions(loadedVersions);
     }
-  };
+  }, [getVersions, question._id, user.username]);
 
   useEffect(() => {
     if (isOpen && canViewHistory && versions.length === 0) {
       loadVersions();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, canViewHistory]);
+  }, [isOpen, canViewHistory, loadVersions, versions.length]);
 
   const handleToggleHistory = () => {
     setIsOpen(!isOpen);

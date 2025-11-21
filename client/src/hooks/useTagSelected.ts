@@ -22,8 +22,9 @@ const useTagSelected = (t: TagData) => {
         const res = await getTagByName(t.name);
         setTag(res || { name: 'Error', description: 'Error' });
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.log(e);
+        // Log error via logger
+        const { error: logError } = await import('../utils/logger');
+        logError(e);
       }
     };
     fetchData();

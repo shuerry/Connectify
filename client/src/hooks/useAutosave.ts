@@ -1,4 +1,5 @@
 import { useEffect, Dispatch, SetStateAction } from 'react';
+import logger from '../utils/logger';
 import { DatabaseCommunity } from '../types/types';
 
 type Setters = {
@@ -49,8 +50,7 @@ const useAutosave = (
       }
     } catch (e) {
       // ignore
-      // eslint-disable-next-line no-console
-      console.warn('Failed to restore autosave', e);
+      logger.warn('Failed to restore autosave', e);
     }
     // We only want to run this on mount (and when communityList becomes available)
   }, [
@@ -82,8 +82,7 @@ const useAutosave = (
         localStorage.setItem(key, JSON.stringify(payload));
       } catch (e) {
         // ignore quota errors
-        // eslint-disable-next-line no-console
-        console.warn('Failed to autosave', e);
+        logger.warn('Failed to autosave', e);
       }
     }, 800);
 

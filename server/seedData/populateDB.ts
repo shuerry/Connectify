@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+import { info as logInfo, error as logError } from '../utils/logger';
 import mongoose from 'mongoose';
 import 'dotenv/config';
 
@@ -13,10 +13,27 @@ import answersResolver from './resolvers/answer';
 import questionsResolver from './resolvers/question';
 import identityResolver from './resolvers/identity';
 
-import { type InsertedDocs } from '../types/populate';
+import type {
+  InsertedDocs,
+  ReferenceResolver,
+  AnswerImport,
+  QuestionImport,
+  CollectionImport,
+} from '../types/populate';
 
 import { collectionDependencies } from './collectionDependencies';
+import {
+  DatabaseUser,
+  DatabaseComment,
+  DatabaseAnswer,
+  DatabaseQuestion,
+  DatabaseTag,
+  DatabaseMessage,
+  DatabaseCommunity,
+  DatabaseCollection,
+} from '../types/types';
 import { computeImportOrder, loadJSON, processCollection } from './utils';
+import type { User, Comment, Tag, Message, Community } from '../types/types';
 import CommunityModel from '../models/community.model';
 import CollectionModel from '../models/collection.model';
 import collectionsResolver from './resolvers/collection';
@@ -24,42 +41,12 @@ import collectionsResolver from './resolvers/collection';
 // Compute the import order based on dependencies
 const IMPORT_ORDER = computeImportOrder(collectionDependencies);
 
-const collectionMapping = {
-  user: {
-    model: UserModel,
-    resolver: identityResolver,
-  },
-  comment: {
-    model: CommentModel,
-    resolver: identityResolver,
-  },
-  answer: {
-    model: AnswerModel,
-    resolver: answersResolver,
-  },
-  question: {
-    model: QuestionModel,
-    resolver: questionsResolver,
-  },
-  tag: {
-    model: TagModel,
-    resolver: identityResolver,
-  },
-  message: {
-    model: MessageModel,
-    resolver: identityResolver,
-  },
-  community: {
-    model: CommunityModel,
-    resolver: identityResolver,
-  },
-  collection: {
-    model: CollectionModel,
-    resolver: collectionsResolver,
-  },
-};
+// collectionMapping removed: use explicit per-collection calls below for full type safety.
 
-console.log('Using computed import order:', IMPORT_ORDER);
+// (No helper) We'll handle each collection explicitly in the switch below so TypeScript
+// can correctly infer the generics per collection without union-model issues.
+
+logInfo('Using computed import order:', IMPORT_ORDER);
 
 /**
  * Main function to populate the database with sample data.
@@ -80,7 +67,7 @@ async function main(args: string[]) {
 
   await mongoose.connect(`${mongoURL}/fake_so`);
 
-  console.log('Connected to MongoDB');
+  logInfo('Connected to MongoDB');
 
   const insertedDocs: InsertedDocs = {};
 
@@ -98,22 +85,98 @@ async function main(args: string[]) {
 
   // Loop through collections and handle each with command design pattern
   for (const collectionName of IMPORT_ORDER) {
-    console.log(`Processing ${collectionName}...`);
+    logInfo(`Processing ${collectionName}...`);
 
     insertedDocs[collectionName] = new Map();
     const docs = docsMap.get(collectionName) || {};
 
-    const { model, resolver } = collectionMapping[collectionName];
-
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    await processCollection<any, any, any>(model, resolver, docs, insertedDocs, collectionName);
+    switch (collectionName) {
+      case 'user':
+        await processCollection<User, DatabaseUser, Omit<DatabaseUser, '_id'>>(
+          UserModel,
+          identityResolver as ReferenceResolver<User, Omit<DatabaseUser, '_id'>>,
+          docs as Record<string, User>,
+          insertedDocs,
+          collectionName,
+        );
+        break;
+      case 'comment':
+        await processCollection<Comment, DatabaseComment, Omit<DatabaseComment, '_id'>>(
+          CommentModel,
+          identityResolver as ReferenceResolver<Comment, Omit<DatabaseComment, '_id'>>,
+          docs as Record<string, Comment>,
+          insertedDocs,
+          collectionName,
+        );
+        break;
+      case 'answer':
+        await processCollection<AnswerImport, DatabaseAnswer, Omit<DatabaseAnswer, '_id'>>(
+          AnswerModel,
+          answersResolver,
+          docs as Record<string, AnswerImport>,
+          insertedDocs,
+          collectionName,
+        );
+        break;
+      case 'question':
+        await processCollection<QuestionImport, DatabaseQuestion, Omit<DatabaseQuestion, '_id'>>(
+          QuestionModel,
+          questionsResolver,
+          docs as Record<string, QuestionImport>,
+          insertedDocs,
+          collectionName,
+        );
+        break;
+      case 'tag':
+        await processCollection<Tag, DatabaseTag, Omit<DatabaseTag, '_id'>>(
+          TagModel,
+          identityResolver as ReferenceResolver<Tag, Omit<DatabaseTag, '_id'>>,
+          docs as Record<string, Tag>,
+          insertedDocs,
+          collectionName,
+        );
+        break;
+      case 'message':
+        await processCollection<Message, DatabaseMessage, Omit<DatabaseMessage, '_id'>>(
+          MessageModel,
+          identityResolver as ReferenceResolver<Message, Omit<DatabaseMessage, '_id'>>,
+          docs as Record<string, Message>,
+          insertedDocs,
+          collectionName,
+        );
+        break;
+      case 'community':
+        await processCollection<Community, DatabaseCommunity, Omit<DatabaseCommunity, '_id'>>(
+          CommunityModel,
+          identityResolver as ReferenceResolver<Community, Omit<DatabaseCommunity, '_id'>>,
+          docs as Record<string, Community>,
+          insertedDocs,
+          collectionName,
+        );
+        break;
+      case 'collection':
+        await processCollection<
+          CollectionImport,
+          DatabaseCollection,
+          Omit<DatabaseCollection, '_id'>
+        >(
+          CollectionModel,
+          collectionsResolver,
+          docs as Record<string, CollectionImport>,
+          insertedDocs,
+          collectionName,
+        );
+        break;
+      default:
+        throw new Error(`Unknown collection: ${collectionName}`);
+    }
   }
 
   await mongoose.disconnect();
-  console.log('\nPopulation complete. Disconnected from MongoDB.');
+  logInfo('\nPopulation complete. Disconnected from MongoDB.');
 }
 
 main(process.argv.slice(2)).catch(err => {
-  console.error('Error populating database:', err);
+  logError('Error populating database:', err);
   process.exit(1);
 });

@@ -1,7 +1,6 @@
-/* eslint no-console: "off" */
-
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import { error as logError, info as logInfo } from '../utils/logger';
 
 dotenv.config();
 
@@ -14,7 +13,7 @@ mongoose.connect(`${MONGO_URL}/fake_so`);
 
 const db = mongoose.connection;
 
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.on('error', (err: unknown) => logError('MongoDB connection error:', err));
 
 /**
  * Clears all collections from the connected MongoDB database.
@@ -28,21 +27,21 @@ const clearDatabase = async (): Promise<void> => {
       // Clear each collection
       await db.dropDatabase();
 
-      console.log('Database cleared');
+      logInfo('Database cleared');
       if (db) db.close();
     });
   } catch (err) {
-    console.log(`ERROR: ${err}`);
+    logError(`ERROR: ${err}`);
     if (db) db.close();
   }
 };
 
 clearDatabase()
   .then(() => {
-    console.log('Processing complete');
+    logInfo('Processing complete');
   })
   .catch(err => {
-    console.log(`ERROR: ${err}`);
+    logError(`ERROR: ${err}`);
   });
 
-console.log('Processing ...');
+logInfo('Processing ...');

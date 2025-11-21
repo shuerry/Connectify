@@ -81,8 +81,8 @@ const AnswerView = ({
                       showToast('Answer deleted');
                     }
                   } catch (err) {
-                    // eslint-disable-next-line no-console
-                    console.error('Error deleting answer', err);
+                    const { error: logError } = await import('../../../../utils/logger');
+                    logError('Error deleting answer', err);
                     showToast('Unable to delete answer');
                   }
                 })();

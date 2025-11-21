@@ -5,6 +5,7 @@ import { getMetaData } from '../../../tool';
 import { Comment, DatabaseComment } from '../../../types/types';
 import './index.css';
 import useUserContext from '../../../hooks/useUserContext';
+import logger from '../../../utils/logger';
 
 /**
  * Interface representing the props for the Comment Section component.
@@ -96,8 +97,7 @@ const CommentSection = ({ comments, handleAddComment, parentOwners }: CommentSec
                                   showToast('Comment deleted');
                                 }
                               } catch (err) {
-                                // eslint-disable-next-line no-console
-                                console.error('Error deleting comment', err);
+                                logger.error('Error deleting comment', err);
                                 showToast('Unable to delete comment');
                               }
                             })();

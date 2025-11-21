@@ -6,6 +6,7 @@ import filter from 'leo-profanity';
 import useDrafts from '../../../hooks/useDrafts';
 import useUserContext from '../../../hooks/useUserContext';
 import useAutosave from '../../../hooks/useAutosave';
+import logger from '../../../utils/logger';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 /**
@@ -135,8 +136,7 @@ const NewQuestionPage = () => {
         }
       })();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [apiSaveDraft, apiUpdateDraft, storageKey, user]);
 
   return (
     <div className='reddit-new-question'>
@@ -376,8 +376,7 @@ const NewQuestionPage = () => {
                         localStorage.removeItem(storageKey);
                       } catch (e) {
                         // ignore localStorage errors
-                        // eslint-disable-next-line no-console
-                        console.warn('Failed to remove autosave key', e);
+                        logger.warn('Failed to remove autosave key', e);
                       }
                       alert('Draft updated');
                     } else {
@@ -387,8 +386,7 @@ const NewQuestionPage = () => {
                         localStorage.removeItem(storageKey);
                       } catch (e) {
                         // ignore localStorage errors
-                        // eslint-disable-next-line no-console
-                        console.warn('Failed to remove autosave key', e);
+                        logger.warn('Failed to remove autosave key', e);
                       }
                       alert('Draft saved');
                     }

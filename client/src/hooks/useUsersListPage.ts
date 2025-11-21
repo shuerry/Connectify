@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import useUserContext from './useUserContext';
 import { SafeDatabaseUser, UserUpdatePayload } from '../types/types';
 import { getUsers } from '../services/userService';
+import logger from '../utils/logger';
 
 /**
  * Custom hook for managing the users list page state, filtering, and real-time updates.
@@ -25,8 +26,7 @@ const useUsersListPage = () => {
         const res = await getUsers();
         setUserList(res || []);
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.log(error);
+        logger.error(error);
       }
     };
 

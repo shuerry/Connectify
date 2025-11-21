@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FakeSOSocket } from './types/types';
 import { io } from 'socket.io-client';
 import FakeStackOverflow from './components/fakestackoverflow';
+import logger from './utils/logger';
 
 // ensures that the socket connections work properly in production as well.
 // In production, use the group member's server deployment; in development, use localhost
@@ -12,8 +13,7 @@ const SERVER_URL: string =
     : 'https://cs4530-f25-509-backend-0k7a.onrender.com');
 
 // Debug logging to verify connection URL
-// eslint-disable-next-line no-console
-console.log('Socket.IO Configuration:', {
+logger.info('Socket.IO Configuration:', {
   VITE_SERVER_URL: import.meta.env.VITE_SERVER_URL,
   isDev: import.meta.env.DEV,
   windowOrigin: typeof window !== 'undefined' ? window.location.origin : 'N/A',
@@ -41,8 +41,7 @@ const App = () => {
 
       // Enhanced connection debugging
       newSocket.on('connect', () => {
-        // eslint-disable-next-line no-console
-        console.log(` Socket connected successfully!`, {
+        logger.info(` Socket connected successfully!`, {
           socketId: newSocket.id,
           serverUrl: SERVER_URL,
           transport: newSocket.io.engine.transport.name,
@@ -51,16 +50,14 @@ const App = () => {
       });
 
       newSocket.on('disconnect', reason => {
-        // eslint-disable-next-line no-console
-        console.log(` Socket disconnected: ${reason}`, {
+        logger.info(` Socket disconnected: ${reason}`, {
           serverUrl: SERVER_URL,
           timestamp: new Date().toISOString(),
         });
       });
 
       newSocket.on('connect_error', error => {
-        // eslint-disable-next-line no-console
-        console.error(' Socket connection error:', {
+        logger.error(' Socket connection error:', {
           error: error.message,
           serverUrl: SERVER_URL,
           timestamp: new Date().toISOString(),
@@ -68,13 +65,11 @@ const App = () => {
       });
 
       newSocket.on('reconnect', attemptNumber => {
-        // eslint-disable-next-line no-console
-        console.log(` Socket reconnected after ${attemptNumber} attempts`);
+        logger.info(` Socket reconnected after ${attemptNumber} attempts`);
       });
 
       newSocket.on('reconnect_error', error => {
-        // eslint-disable-next-line no-console
-        console.error(' Socket reconnection failed:', error.message);
+        logger.error(' Socket reconnection failed:', error.message);
       });
 
       setSocket(newSocket);

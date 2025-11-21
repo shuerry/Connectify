@@ -8,6 +8,7 @@ import {
   PopulatedDatabaseAnswer,
 } from '../types/types';
 import useUserContext from './useUserContext';
+import logger from '../utils/logger';
 import addComment from '../services/commentService';
 import { getQuestionById, getQuestionReports, reportQuestion } from '../services/questionService';
 
@@ -99,8 +100,7 @@ const useAnswerPage = () => {
 
       await addComment(targetId, targetType, comment);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error adding comment:', error);
+      logger.error('Error adding comment:', error);
     }
   };
 
@@ -119,13 +119,11 @@ const useAnswerPage = () => {
           setReports([]);
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching question:', error);
+        logger.error('Error fetching question:', error);
       }
     };
 
-    // eslint-disable-next-line no-console
-    fetchData().catch(e => console.log(e));
+    fetchData().catch(e => logger.error(e));
   }, [questionID, user.username]);
 
   useEffect(() => {

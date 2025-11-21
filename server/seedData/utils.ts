@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
 import { CollectionDocTypes, CollectionName } from './collectionDependencies';
 import { InsertedDocs, ReferenceResolver } from '../types/populate';
+import { info as logInfo } from '../utils/logger';
 
 /**
  * Computes the import order by performing a topological sort on collection dependencies.
@@ -89,8 +90,7 @@ export async function processCollection<T, D, R = T>(
     insertedDocs[collectionName].set(key, doc._id);
   });
 
-  // eslint-disable-next-line no-console
-  console.log(`Inserted ${inserted.length} documents into ${collectionName}`);
+  logInfo(`Inserted ${inserted.length} documents into ${collectionName}`);
 }
 
 /**

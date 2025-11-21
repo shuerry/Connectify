@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/prefer-default-export
 export const orderTypeDisplayName = {
   newest: 'Newest',
   unanswered: 'Unanswered',
@@ -6,3 +5,5 @@ export const orderTypeDisplayName = {
   mostViewed: 'Most Viewed',
   trending: 'Trending',
 } as const;
+
+export default orderTypeDisplayName;

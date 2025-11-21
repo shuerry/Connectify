@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { downvoteQuestion, upvoteQuestion } from '../../../services/questionService';
 import './index.css';
 import useUserContext from '../../../hooks/useUserContext';
@@ -31,16 +30,18 @@ const VoteComponent = ({ question }: VoteComponentProps) => {
   const handleVote = async (type: string) => {
     try {
       if (question._id && user.username) {
-        console.log(`Attempting to ${type} question:`, question._id);
+        const { info: logInfo } = await import('../../../utils/logger');
+        logInfo(`Attempting to ${type} question:`, question._id);
         if (type === 'upvote') {
           await upvoteQuestion(question._id, user.username);
         } else if (type === 'downvote') {
           await downvoteQuestion(question._id, user.username);
         }
-        console.log(`${type} completed successfully`);
+        logInfo(`${type} completed successfully`);
       }
     } catch (error) {
-      console.error(`Error during ${type}:`, error);
+      const { error: logError } = await import('../../../utils/logger');
+      logError(`Error during ${type}:`, error);
     }
   };
 

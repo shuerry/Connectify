@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -14,6 +13,7 @@ import {
   joinConnectFourRoomByCode,
 } from '../services/gamesService';
 import useUserContext from './useUserContext';
+import logger from '../utils/logger';
 
 /**
  * Hook for managing Connect Four game page state and logic
@@ -38,7 +38,7 @@ const useConnectFourPage = () => {
         localStorage.setItem(gameKey, JSON.stringify(game));
         localStorage.setItem(spectatorKey, JSON.stringify(spectator));
       } catch (error) {
-        console.error('Failed to save game state:', error);
+        logger.error('Failed to save game state:', error);
       }
     },
     [user?.username],
@@ -58,7 +58,7 @@ const useConnectFourPage = () => {
         return { game, spectator };
       }
     } catch (error) {
-      console.error('Failed to load game state:', error);
+      logger.error('Failed to load game state:', error);
     }
     return null;
   }, [user?.username]);
@@ -71,7 +71,7 @@ const useConnectFourPage = () => {
       localStorage.removeItem(gameKey);
       localStorage.removeItem(spectatorKey);
     } catch (error) {
-      console.error('Failed to clear game state:', error);
+      logger.error('Failed to clear game state:', error);
     }
   }, [user?.username]);
 
@@ -138,7 +138,7 @@ const useConnectFourPage = () => {
           }
         }
       } catch (error) {
-        console.error('Error checking pending invitation:', error);
+        logger.error('Error checking pending invitation:', error);
       }
     };
 
@@ -262,7 +262,7 @@ const useConnectFourPage = () => {
       saveGameState(response.game, false);
       socket.emit('joinGame', response.gameID);
     } catch (err) {
-      console.error('Error creating room:', err);
+      logger.error('Error creating room:', err);
       alert('Failed to create room. Please try again.');
     }
   };
@@ -288,7 +288,7 @@ const useConnectFourPage = () => {
         isSpectator: asSpectator,
       });
     } catch (err) {
-      console.error('Error joining room:', err);
+      logger.error('Error joining room:', err);
       alert('Failed to join room. It may be full, private, or no longer available.');
     }
   };
@@ -309,7 +309,7 @@ const useConnectFourPage = () => {
         isSpectator: false,
       });
     } catch (err) {
-      console.error('Error joining by code:', err);
+      logger.error('Error joining by code:', err);
       alert('Failed to join room. Please check the code and try again.');
     }
   };

@@ -1,5 +1,5 @@
-/* eslint-disable no-console */
 import express, { Request, Response, Router } from 'express';
+import { info as logInfo, error as logError } from '../utils/logger';
 import {
   UserRequest,
   User,
@@ -213,17 +213,17 @@ const userController = (socket: FakeSOSocket) => {
    */
   const updateEmail = async (req: UpdateEmailRequest, res: Response): Promise<void> => {
     try {
-      console.log('Received updateEmail request:', req.body); // Debugging log
+      logInfo('Received updateEmail request:', req.body);
 
       const { username, email } = req.body;
       const r = await startEmailVerification(username, email);
 
-      console.log('Result from startEmailVerification:', r); // Debugging log
+      logInfo('Result from startEmailVerification:', r);
 
       if ('error' in r) throw new Error(r.error);
       res.status(200).json({ msg: 'Verification email sent. Please check your inbox.' });
     } catch (error) {
-      console.error('Error in updateEmail:', error); // Debugging log
+      logError('Error in updateEmail:', error);
       res.status(500).send(`Error when updating user email: ${error}`);
     }
   };

@@ -1,6 +1,6 @@
-/* eslint-disable no-console */
 import api from './config';
 import { DatabaseMessage, Message } from '../types/types';
+import logger from '../utils/logger';
 
 const MESSAGE_API_URL = `/api/message`;
 
@@ -113,8 +113,8 @@ const sendGameInvitation = async (
   roomCode?: string,
 ): Promise<DatabaseMessage> => {
   try {
-    console.log('API call to:', `${MESSAGE_API_URL}/sendGameInvitation`);
-    console.log('Request payload:', {
+    logger.info('API call to:', `${MESSAGE_API_URL}/sendGameInvitation`);
+    logger.info('Request payload:', {
       fromUsername,
       toUsername,
       gameID,
@@ -132,22 +132,22 @@ const sendGameInvitation = async (
       roomCode,
     });
 
-    console.log('Response status:', res.status);
-    console.log('Response data:', res.data);
+    logger.info('Response status:', res.status);
+    logger.info('Response data:', res.data);
 
     if (res.status !== 200) {
       throw new Error(`Server returned status ${res.status}: ${res.statusText}`);
     }
     return res.data;
   } catch (error: unknown) {
-    console.error('sendGameInvitation API error:', error);
+    logger.error('sendGameInvitation API error:', error);
     if (error && typeof error === 'object' && 'response' in error) {
       const axiosError = error as { response: { status: number; data: unknown } };
-      console.error('Error response:', axiosError.response.status, axiosError.response.data);
+      logger.error('Error response:', axiosError.response.status, axiosError.response.data);
       throw new Error(`Server error: ${axiosError.response.status} - ${axiosError.response.data}`);
     } else if (error && typeof error === 'object' && 'request' in error) {
       const networkError = error as { request: unknown };
-      console.error('Network error:', networkError.request);
+      logger.error('Network error:', networkError.request);
       throw new Error('Network error: Could not connect to server');
     } else {
       throw new Error(`Request error: ${error instanceof Error ? error.message : 'Unknown error'}`);

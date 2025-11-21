@@ -1,9 +1,9 @@
-/* eslint-disable no-console */
 import nodemailer from 'nodemailer';
 import { ChatNotificationPayload, AnswerNotificationPayload } from '../types/types';
 import type { EmailVerificationPayload, FakeSOSocket, PasswordResetPayload } from '../types/types';
 import NotificationModel from '../models/notification.model';
 import { Resend } from 'resend';
+import logger from '../utils/logger';
 
 // --- SOCKET WIRING ---
 let socketRef: FakeSOSocket | null = null;
@@ -47,9 +47,9 @@ export class NotificationService {
   }
 
   private async _sendMail(to: string[], subject: string, html: string, text?: string) {
-    console.log('Preparing to send email to:', to);
+    logger.info('Preparing to send email to:', to);
     if (!this._transporter) {
-      console.log('Mock email: ', { to, subject, text, html });
+      logger.info('Mock email: ', { to, subject, text, html });
       return { ok: true, mock: true };
     }
 
@@ -60,7 +60,7 @@ export class NotificationService {
       text,
       html,
     });
-    console.log('Email sent: ', info.messageId);
+    logger.info('Email sent: ', info.messageId);
     return { ok: true, info };
   }
 

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -10,6 +9,7 @@ import {
 } from '../services/userService';
 import { SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
+import logger from '../utils/logger';
 
 /**
  * A custom hook to encapsulate all logic/state for the ProfileSettings component.
@@ -129,13 +129,13 @@ const useProfileSettings = () => {
   const handleUpdateEmail = async () => {
     if (!username) return;
     try {
-      console.log('Attempting to update email with:', { username, newEmail }); // Debugging log
+      logger.info('Attempting to update email with:', { username, newEmail }); // Debugging log
       await updateEmail(username, newEmail);
-      //console.log("Passed updateEmail");
+      logger.info('Passed updateEmail');
 
       setUserData(u => {
         const updatedUser = u ? { ...u, emailVerified: false } : u;
-        console.log('Updated userData state:', updatedUser); // Debugging log
+        logger.info('Updated userData state:', updatedUser); // Debugging log
         return updatedUser;
       });
 
@@ -146,7 +146,7 @@ const useProfileSettings = () => {
       // Force a re-render
       setForceRenderKey(prevKey => prevKey + 1);
     } catch (error) {
-      console.error('Error in handleUpdateEmail:', error); // Debugging log
+      logger.error('Error in handleUpdateEmail:', error); // Debugging log
       setErrorMessage('Failed to update email.');
       setSuccessMessage(null);
     }

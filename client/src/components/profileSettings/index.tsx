@@ -1,9 +1,9 @@
-/* eslint-disable no-console */
 import * as React from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import './index.css';
 import useProfileSettings from '../../hooks/useProfileSettings';
+import logger from '../../utils/logger';
 
 const ProfileSettings: React.FC = () => {
   const {
@@ -110,11 +110,6 @@ const ProfileSettings: React.FC = () => {
             <div className='bio-section'>
               {!editEmailMode && (
                 <>
-                  {/* Display logic:
-          - If verified → show email normally
-          - If unverified and pendingEmail exists → show pending in gray
-          - If unverified and no pendingEmail → show email normally but warn
-      */}
                   {userData.emailVerified ? (
                     <p>{userData.email}</p>
                   ) : userData.emailVerification?.pendingEmail ? (
@@ -160,7 +155,7 @@ const ProfileSettings: React.FC = () => {
                   <button
                     className='button button-primary'
                     onClick={() => {
-                      console.log('Save button clicked. Current newEmail:', newEmail); // Debugging log
+                      logger.info('Save button clicked. Current newEmail:', newEmail);
                       handleUpdateEmail();
                     }}>
                     Save

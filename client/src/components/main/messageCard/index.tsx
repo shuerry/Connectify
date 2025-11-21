@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +6,7 @@ import { DatabaseMessage } from '../../../types/types';
 import { getMetaData } from '../../../tool';
 import useUserContext from '../../../hooks/useUserContext';
 import { respondToFriendRequest, respondToGameInvitation } from '../../../services/messageService';
+import logger from '../../../utils/logger';
 
 /**
  * MessageCard component displays a single message with its sender and timestamp.
@@ -78,13 +78,13 @@ const MessageCard = ({
               }),
             );
           } catch (storageError) {
-            console.error('Failed to save invitation details:', storageError);
+            logger.error('Failed to save invitation details:', storageError);
           }
 
           // Navigate to Connect Four page using React Router
           navigate('/games/connectfour');
         } catch (error) {
-          console.error('Error handling game invitation:', error);
+          logger.error('Error handling game invitation:', error);
           // Fallback: just navigate to Connect Four page
           navigate('/games/connectfour');
         }
@@ -94,7 +94,7 @@ const MessageCard = ({
         onMessageUpdate();
       }
     } catch (error) {
-      console.error('Error responding to game invitation:', error);
+      logger.error('Error responding to game invitation:', error);
     }
   };
 

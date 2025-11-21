@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import './index.css';
 import useUserContext from '../../../../../../hooks/useUserContext';
+import logger from '../../../../../../utils/logger';
 
 interface Friend {
   username: string;
@@ -44,13 +45,11 @@ const FriendsSelector = ({ selectedFriends, onFriendsChange }: FriendsSelectorPr
           }));
           setFriends(friendsWithStatus);
         } else {
-          // eslint-disable-next-line no-console
-          console.error('Failed to fetch friends:', response.statusText);
+          logger.error('Failed to fetch friends:', response.statusText);
           setFriends([]); // Set empty array on error
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching friends:', error);
+        logger.error('Error fetching friends:', error);
       } finally {
         setLoading(false);
       }

@@ -1,8 +1,8 @@
-/* eslint-disable no-console */
 import { useState, useEffect } from 'react';
 import './index.css';
 import { GameInstance, ConnectFourGameState } from '../../../../../types/types';
 import { getRelations } from '../../../../../services/userService';
+import logger from '../../../../../utils/logger';
 
 interface ConnectFourLobbyProps {
   games: GameInstance<ConnectFourGameState>[];
@@ -36,7 +36,7 @@ const ConnectFourLobby = ({
         const relations = await getRelations(currentUser);
         setFriends(relations.friends || []);
       } catch (error) {
-        console.error('Failed to load friends:', error);
+        logger.error('Failed to load friends:', error);
         setFriends([]);
       }
     };

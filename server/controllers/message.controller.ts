@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import express, { Response, Request } from 'express';
 import { FakeSOSocket, AddMessageRequest, PopulatedDatabaseChat } from '../types/types';
 import {
@@ -11,6 +10,7 @@ import {
 } from '../services/message.service';
 import { getChatsByParticipants, saveChat, addMessageToChat } from '../services/chat.service';
 import { populateDocument } from '../utils/database.util';
+import logger from '../utils/logger';
 
 const messageController = (socket: FakeSOSocket) => {
   const router = express.Router();
@@ -89,7 +89,7 @@ const messageController = (socket: FakeSOSocket) => {
           // Add the friend request message to the existing chat
           const updatedChat = await addMessageToChat(chat._id.toString(), msgFromDb._id.toString());
           if ('error' in updatedChat) {
-            console.error('Error adding friend request to chat:', updatedChat.error);
+            logger.error('Error adding friend request to chat:', updatedChat.error);
           } else {
             chat = updatedChat;
             // Emit chatUpdate for existing chat
@@ -111,7 +111,7 @@ const messageController = (socket: FakeSOSocket) => {
           });
 
           if ('error' in newChat) {
-            console.error('Error creating chat for friend request:', newChat.error);
+            logger.error('Error creating chat for friend request:', newChat.error);
           } else {
             // Add the friend request message to the chat
             const updatedChat = await addMessageToChat(
@@ -119,7 +119,7 @@ const messageController = (socket: FakeSOSocket) => {
               msgFromDb._id.toString(),
             );
             if ('error' in updatedChat) {
-              console.error('Error adding friend request to new chat:', updatedChat.error);
+              logger.error('Error adding friend request to new chat:', updatedChat.error);
               chat = newChat;
             } else {
               chat = updatedChat;
@@ -183,9 +183,9 @@ const messageController = (socket: FakeSOSocket) => {
    */
   const sendGameInvitationRoute = async (req: Request, res: Response): Promise<void> => {
     try {
-      console.log('Received game invitation request:', req.body);
+      logger.info('Received game invitation request:', req.body);
       const { fromUsername, toUsername, gameID, roomName, gameType, roomCode } = req.body;
-      console.log('Calling sendGameInvitation service...');
+      logger.info('Calling sendGameInvitation service...');
       const result = await sendGameInvitation(
         fromUsername,
         toUsername,
@@ -194,18 +194,18 @@ const messageController = (socket: FakeSOSocket) => {
         gameType,
         roomCode,
       );
-      console.log('Service result:', result);
+      logger.info('Service result:', result);
 
       if ('error' in result) {
-        console.log('Service returned error:', result.error);
+        logger.error('Service returned error:', result.error);
         throw new Error(result.error);
       }
 
-      console.log('Emitting messageUpdate and sending response');
+      logger.info('Emitting messageUpdate and sending response');
       socket.emit('messageUpdate', { msg: result });
       res.json(result);
     } catch (err: unknown) {
-      console.error('Controller error:', err);
+      logger.error('Controller error:', err);
       res.status(500).send(`Error when sending game invitation: ${(err as Error).message}`);
     }
   };

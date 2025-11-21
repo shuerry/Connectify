@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTagsWithQuestionNumber } from '../services/tagsService';
 import { TagData } from '../types/types';
+import logger from '../utils/logger';
 
 /**
  * Custom hook for managing the tag page's state and navigation.
@@ -31,8 +32,7 @@ const useTagPage = () => {
         const res = await getTagsWithQuestionNumber();
         setTlist(res || []);
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.log(e);
+        logger.error(e);
       }
     };
 

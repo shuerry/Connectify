@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ObjectId } from 'mongodb';
 import useUserContext from './useUserContext';
 import { AnswerUpdatePayload, OrderType, PopulatedDatabaseQuestion } from '../types/types';
+import logger from '../utils/logger';
 import { getQuestionsByFilter } from '../services/questionService';
 
 /**
@@ -45,8 +46,7 @@ const useQuestionPage = () => {
         const res = await getQuestionsByFilter(questionOrder, searchString, user.username);
         setQlist(res || []);
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.log(error);
+        logger.error(error);
       }
     };
 

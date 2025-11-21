@@ -24,6 +24,7 @@ import CommentModel from '../models/comments.model';
 import { parseKeyword, parseTags } from '../utils/parse.util';
 import { getRelations, getUsersWhoBlocked, getUserByUsername } from './user.service';
 import UserModel from '../models/users.model';
+import { error as logError } from '../utils/logger';
 import { checkTagInQuestion } from './tag.service';
 import {
   sortQuestionsByActive,
@@ -645,8 +646,7 @@ export const saveDraft = async (
       return { error: 'Failed to populate draft after saving' };
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('saveDraft error:', error);
+    logError('saveDraft error:', error);
     return { error: 'Error when saving draft' };
   }
 };
@@ -682,13 +682,11 @@ export const updateDraft = async (
         .populate('community');
       return populated ?? updatedDraft.toObject();
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('updateDraft error:', e);
+      logError('updateDraft error:', e);
       return updatedDraft.toObject();
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('updateDraft error:', error);
+    logError('updateDraft error:', error);
     return { error: 'Error when updating draft' };
   }
 };

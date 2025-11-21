@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import logger from '../utils/logger';
 
 /**
  * Function to handle successful responses
@@ -9,8 +10,7 @@ const handleRes = (res: AxiosResponse) => res;
  * Function to handle errors
  */
 const handleErr = (err: AxiosError) => {
-  // eslint-disable-next-line no-console
-  console.log(err);
+  logger.error(err);
   return Promise.reject(err);
 };
 

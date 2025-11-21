@@ -414,8 +414,7 @@ class ConnectFourGame extends Game<ConnectFourGameState, ConnectFourMove> {
    * Gets public room info (without sensitive data like room code).
    */
   public getPublicRoomInfo() {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { roomCode, ...publicSettings } = this.state.roomSettings;
+    const publicSettings = { ...this.state.roomSettings };
     return {
       ...this.toModel(),
       state: {
