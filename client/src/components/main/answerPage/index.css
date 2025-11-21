@@ -101,68 +101,80 @@
 
 /* Answers Section */
 .reddit-answers-section {
-  background: #FFFFFF;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #e5e7eb;
 }
 
+/* Header above answers */
 .reddit-answers-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid #EDEFF1;
-  background: #F8F9FA;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #f9fafb, #eef2ff);
 }
 
 .reddit-answers-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
-  color: #1A1A1B;
+  color: #111827;
 }
 
+/* Each answer wrapper */
 .reddit-answer-container {
-  border-bottom: 1px solid #EDEFF1;
+  padding: 18px 24px;
+  border-bottom: 3px solid #f3f4f6;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.15s ease;
 }
 
 .reddit-answer-container:last-of-type {
   border-bottom: none;
 }
 
+.reddit-answer-container:hover {
+  background: #f9fafb;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
 /* Answer Form Trigger */
 .reddit-answer-form-trigger {
-  padding: 20px;
-  background: #F8F9FA;
-  border-top: 1px solid #EDEFF1;
+  padding: 20px 24px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
   text-align: center;
 }
 
 .reddit-answer-button {
-  background: #0079D3;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: white;
   border: none;
-  border-radius: 20px;
-  padding: 8px 24px;
+  border-radius: 999px;
+  padding: 10px 26px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
 }
 
 .reddit-answer-button:hover {
-  background: #0060A8;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 121, 211, 0.3);
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.45);
 }
 
 .reddit-answer-button:active {
   transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 121, 211, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
 
 /* Report Modal Styles */

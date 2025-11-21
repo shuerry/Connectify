@@ -1,18 +1,77 @@
-/* All the CSS related to answers Page*/
+/* Answer card layout */
 .answer {
   display: flex;
-  flex-direction: row;
-  border-bottom: #000000 1px dashed;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.answerText {
-  width: 75%;
+.answer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.answerAuthor {
-  margin-left: 5%;
+/* Left cluster (author + meta) */
+.answer-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
+/* Right cluster: delete button */
+.answer-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.delete-btn {
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: none;
+}
+
+.delete-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+.delete-label {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+/* Author name */
 .answer_author {
-  color: green;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Time / metadata */
+.answer_question_meta {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Middle: answer body */
+.answerText {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #1f2937;
+  text-align: left;
+}
+
+/* Bottom row: comments + delete */
+.answer-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+/* Comments stretch left / center */
+.answer-comments {
+  flex: 1;
 }
