@@ -34,16 +34,15 @@ export async function startEmailVerification(username: string, newEmail: string)
   }
 
   // 3) build verification link and send
-  //const site = process.env.SITE_URL || 'http://localhost:4530';
-  //const verifyUrl = `${site}/verify-email?token=${encodeURIComponent(token)}`;
-  // await notifier.sendEmailVerification({
-  //   toEmail: newEmail,
-  //   username,
-  //   token, // sent only via email; never stored plaintext
-  //   verifyUrl, // used to build the button
-  //   expiresAt,
-  // });
-  await notifier.resendTest();
+  const site = process.env.SITE_URL || 'http://localhost:4530';
+  const verifyUrl = `${site}/verify-email?token=${encodeURIComponent(token)}`;
+  await notifier.sendEmailVerification({
+    toEmail: newEmail,
+    username,
+    token, // sent only via email; never stored plaintext
+    verifyUrl, // used to build the button
+    expiresAt,
+  });
 
   return { ok: true as const };
 }
