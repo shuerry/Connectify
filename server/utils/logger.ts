@@ -1,5 +1,4 @@
 // Lightweight logger that avoids using `console` so projects with strict
-// `no-console` ESLint rules can log without `eslint-disable` comments.
 export function formatArgs(args: unknown[]) {
   return args
     .map(a => {
