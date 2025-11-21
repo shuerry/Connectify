@@ -149,7 +149,10 @@ export const filterQuestionsBySearch = (
     }
 
     if (searchTags.length === 0) {
-      return checkKeywordInQuestion(question, searchKeyword);
+            return (
+        checkKeywordInQuestion(question, searchKeyword) ||
+        checkTagInQuestion(question, searchKeyword)
+      );
     }
 
     return (

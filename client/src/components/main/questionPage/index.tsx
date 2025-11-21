@@ -2,6 +2,7 @@ import './index.css';
 import QuestionHeader from './header';
 import QuestionView from './question';
 import useQuestionPage from '../../../hooks/useQuestionPage';
+import { useNavigate } from 'react-router';
 
 /**
  * QuestionPage component renders a page displaying a list of questions
@@ -9,6 +10,7 @@ import useQuestionPage from '../../../hooks/useQuestionPage';
  * It includes a header with order buttons and a button to ask a new question.
  */
 const QuestionPage = () => {
+  const navigate = useNavigate();
   const { titleText, qlist, setQuestionOrder } = useQuestionPage();
 
   return (
@@ -38,7 +40,7 @@ const QuestionPage = () => {
               We couldn't find any questions matching your search. Try adjusting your search terms
               or browse all questions.
             </p>
-            <button className='btn btn-primary' onClick={() => window.location.reload()}>
+            <button className='btn btn-primary' onClick={() =>navigate('/home') }>
               Browse All Questions
             </button>
           </div>

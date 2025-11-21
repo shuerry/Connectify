@@ -17,11 +17,13 @@ const useQuestionPage = () => {
 
   const [searchParams] = useSearchParams();
   const [titleText, setTitleText] = useState<string>('All Questions');
-  const [search, setSearch] = useState<string>('');
   const [questionOrder, setQuestionOrder] = useState<OrderType>('newest');
   const [qlist, setQlist] = useState<PopulatedDatabaseQuestion[]>([]);
 
   useEffect(() => {
+    /**
+     * Derive title and search string from URL params on every change.
+     */
     let pageTitle = 'All Questions';
     let searchString = '';
 
@@ -37,16 +39,10 @@ const useQuestionPage = () => {
     }
 
     setTitleText(pageTitle);
-    setSearch(searchString);
-  }, [searchParams]);
 
-  useEffect(() => {
-    /**
-     * Function to fetch questions based on the filter and update the question list.
-     */
     const fetchData = async () => {
       try {
-        const res = await getQuestionsByFilter(questionOrder, search, user.username);
+        const res = await getQuestionsByFilter(questionOrder, searchString, user.username);
         setQlist(res || []);
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -54,17 +50,11 @@ const useQuestionPage = () => {
       }
     };
 
-    /**
-     * Function to handle question updates from the socket.
-     *
-     * @param question - the updated question object.
-     */
     const handleQuestionUpdate = (question: PopulatedDatabaseQuestion) => {
       setQlist(prevQlist => {
         const questionExists = prevQlist.some(q => q._id === question._id);
 
         if (questionExists) {
-          // Update the existing question
           return prevQlist.map(q => (q._id === question._id ? question : q));
         }
 
@@ -72,12 +62,6 @@ const useQuestionPage = () => {
       });
     };
 
-    /**
-     * Function to handle answer updates from the socket.
-     *
-     * @param qid - The question ID.
-     * @param answer - The answer object.
-     */
     const handleAnswerUpdate = ({ qid, answer }: AnswerUpdatePayload) => {
       setQlist(prevQlist =>
         prevQlist.map(q =>
@@ -86,21 +70,10 @@ const useQuestionPage = () => {
       );
     };
 
-    /**
-     * Function to handle views updates from the socket.
-     *
-     * @param question - The updated question object.
-     */
     const handleViewsUpdate = (question: PopulatedDatabaseQuestion) => {
       setQlist(prevQlist => prevQlist.map(q => (q._id === question._id ? question : q)));
     };
 
-    fetchData();
-
-    socket.on('questionUpdate', handleQuestionUpdate);
-    socket.on('answerUpdate', handleAnswerUpdate);
-    socket.on('viewsUpdate', handleViewsUpdate);
-    /** Handle deletions of questions and answers so lists update in-place */
     const handleQuestionDelete = ({ qid }: { qid: ObjectId }) => {
       setQlist(prevQlist => prevQlist.filter(q => String(q._id) !== String(qid)));
     };
@@ -115,6 +88,11 @@ const useQuestionPage = () => {
       );
     };
 
+    fetchData();
+
+    socket.on('questionUpdate', handleQuestionUpdate);
+    socket.on('answerUpdate', handleAnswerUpdate);
+    socket.on('viewsUpdate', handleViewsUpdate);
     socket.on('questionDelete', handleQuestionDelete);
     socket.on('answerDelete', handleAnswerDelete);
 
@@ -125,7 +103,7 @@ const useQuestionPage = () => {
       socket.off('questionDelete', handleQuestionDelete);
       socket.off('answerDelete', handleAnswerDelete);
     };
-  }, [questionOrder, search, socket, user.username]);
+  }, [searchParams, questionOrder, socket, user.username]);
 
   return { titleText, qlist, setQuestionOrder };
 };
