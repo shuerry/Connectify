@@ -6,3 +6,22 @@
   cursor: pointer;
   transition: background-color 0.3s;
 }
+
+.chats-list-card--unread {
+  background-color: #e0f2fe;
+}
+
+.chats-list-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chats-list-card__unread-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background-color: #3b82f6;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}

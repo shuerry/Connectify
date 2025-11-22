@@ -1,9 +1,8 @@
-import nodemailer from 'nodemailer';
 import { ChatNotificationPayload, AnswerNotificationPayload } from '../types/types';
 import type { EmailVerificationPayload, FakeSOSocket, PasswordResetPayload } from '../types/types';
 import NotificationModel from '../models/notification.model';
-import { Resend } from 'resend';
 import logger from '../utils/logger';
+import sgMail from '@sendgrid/mail';
 
 // --- SOCKET WIRING ---
 let socketRef: FakeSOSocket | null = null;
@@ -18,50 +17,33 @@ const emitNotificationUpdate = (recipient: string) => {
   socketRef.to(room).emit('notificationUpdate');
 };
 
-type Maybe<T> = T | undefined;
+sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
 
 export class NotificationService {
-  private _transporter: Maybe<nodemailer.Transporter>;
   private _fromEmail: string;
   private _siteUrl: string;
 
   constructor() {
-    const host = process.env.SMTP_HOST;
-    const port = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587;
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
     this._fromEmail = process.env.FROM_EMAIL || '';
     this._siteUrl = process.env.SITE_URL || 'http://localhost:4530';
-
-    if (host && port && user && pass) {
-      this._transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure: port === 465,
-        auth: { user, pass },
-      });
-    } else {
-      this._transporter = undefined;
-      //console.warn('SMTP not configured, emails will be logged to console.');
-    }
   }
 
   private async _sendMail(to: string[], subject: string, html: string, text?: string) {
-    logger.info('Preparing to send email to:', to);
-    if (!this._transporter) {
-      logger.info('Mock email: ', { to, subject, text, html });
-      return { ok: true, mock: true };
-    }
-
-    const info = await this._transporter.sendMail({
+    const msg = {
+      to: to,
       from: this._fromEmail,
-      to,
-      subject,
-      text,
-      html,
-    });
-    logger.info('Email sent: ', info.messageId);
-    return { ok: true, info };
+      subject: subject,
+      text: text,
+      html: html,
+    };
+    sgMail
+      .send(msg)
+      .then(() => {
+        logger.info('Email sent');
+      })
+      .catch((error: Error) => {
+        logger.error(error);
+      });
   }
 
   // HTML helpers
@@ -171,16 +153,6 @@ export class NotificationService {
 </body>
 </html>`;
   }
-
-  resend = new Resend('re_RPMQHEZL_ARjGmzyqXQsiUr9Eu7ktf9Zy');
-
-  resendTest = async () =>
-    this.resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: 'ally72704@gmail.com',
-      subject: 'Hello World',
-      html: '<p>Congrats on sending your <strong>first email</strong>!</p>',
-    });
 
   async sendChatNotification(payload: ChatNotificationPayload) {
     const { toEmail, toName, fromName, messagePreview, groupName, isMention, chatId } = payload;
