@@ -37,10 +37,10 @@ describe('User model', () => {
       expect(savedUser.dateJoined).toEqual(user.dateJoined);
     });
 
-    it('should throw an error if error when saving to database', async () => {
+    it('should return error if error when saving to database', async () => {
       jest
         .spyOn(UserModel, 'create')
-        .mockRejectedValueOnce(() => new Error('Error saving document'));
+        .mockRejectedValueOnce(new Error('Error saving document'));
 
       const saveError = await saveUser(user);
 
@@ -76,7 +76,7 @@ describe('getUserByUsername', () => {
     expect(retrievedUser.dateJoined).toEqual(user.dateJoined);
   });
 
-  it('should throw an error if the user is not found', async () => {
+  it('should return error if the user is not found', async () => {
     jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce(null);
 
     const getUserError = await getUserByUsername(user.username);
@@ -94,7 +94,7 @@ describe('getUserByUsername', () => {
     expect('error' in getUserError).toBe(true);
   });
 
-  it('should throw an error if there is an error while searching the database', async () => {
+  it('should return error if there is an error while searching the database', async () => {
     jest.spyOn(UserModel, 'findOne').mockReturnValue({
       select: jest.fn().mockRejectedValue(new Error('Error finding document')),
     } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
@@ -121,7 +121,7 @@ describe('getUsersList', () => {
     expect(retrievedUsers[0].dateJoined).toEqual(safeUser.dateJoined);
   });
 
-  it('should throw an error if the users cannot be found', async () => {
+  it('should return error if the users cannot be found', async () => {
     jest.spyOn(UserModel, 'find').mockReturnValue({
       select: jest.fn().mockResolvedValue(null),
     } as unknown as Query<SafeDatabaseUser[], typeof UserModel>);
@@ -131,7 +131,7 @@ describe('getUsersList', () => {
     expect('error' in getUsersError).toBe(true);
   });
 
-  it('should throw an error if there is an error while searching the database', async () => {
+  it('should return error if there is an error while searching the database', async () => {
     jest.spyOn(UserModel, 'find').mockReturnValue({
       select: jest.fn().mockRejectedValue(new Error('Error finding documents')),
     } as unknown as Query<SafeDatabaseUser[], typeof UserModel>);
@@ -167,7 +167,7 @@ describe('loginUser', () => {
     expect(loggedInUser.dateJoined).toEqual(user.dateJoined);
   });
 
-  it('should return the user if the password fails', async () => {
+  it('should return error if the password is wrong', async () => {
     jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce(null);
 
     const credentials: UserCredentials = {
@@ -180,7 +180,7 @@ describe('loginUser', () => {
     expect('error' in loginError).toBe(true);
   });
 
-  it('should return the user is not found', async () => {
+  it('should return error if the user is not found', async () => {
     jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce(null);
 
     const credentials: UserCredentials = {
@@ -196,6 +196,21 @@ describe('loginUser', () => {
   it('should return error when findOne returns null with select in loginUser', async () => {
     jest.spyOn(UserModel, 'findOne').mockReturnValue({
       select: jest.fn().mockResolvedValue(null),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const credentials: UserCredentials = {
+      username: user.username,
+      password: user.password,
+    };
+
+    const loginError = await loginUser(credentials);
+
+    expect('error' in loginError).toBe(true);
+  });
+
+  it('should return error when select rejects in loginUser', async () => {
+    jest.spyOn(UserModel, 'findOne').mockReturnValue({
+      select: jest.fn().mockRejectedValue(new Error('Error authenticating')),
     } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
 
     const credentials: UserCredentials = {
@@ -228,7 +243,7 @@ describe('deleteUserByUsername', () => {
     expect(deletedUser.dateJoined).toEqual(user.dateJoined);
   });
 
-  it('should throw an error if the username is not found', async () => {
+  it('should return error if the username is not found', async () => {
     jest.spyOn(UserModel, 'findOneAndDelete').mockResolvedValue(null);
 
     const deletedError = await deleteUserByUsername(user.username);
@@ -246,7 +261,7 @@ describe('deleteUserByUsername', () => {
     expect('error' in deletedError).toBe(true);
   });
 
-  it('should throw an error if a database error while deleting', async () => {
+  it('should return error if a database error occurs while deleting', async () => {
     jest.spyOn(UserModel, 'findOneAndDelete').mockReturnValue({
       select: jest.fn().mockRejectedValue(new Error('Error deleting document')),
     } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
@@ -293,7 +308,7 @@ describe('updateUser', () => {
     expect(result.dateJoined).toEqual(updatedUser.dateJoined);
   });
 
-  it('should throw an error if the username is not found', async () => {
+  it('should return error if the username is not found', async () => {
     jest.spyOn(UserModel, 'findOneAndUpdate').mockResolvedValueOnce(null);
 
     const updatedError = await updateUser(user.username, updates);
@@ -311,7 +326,7 @@ describe('updateUser', () => {
     expect('error' in updatedError).toBe(true);
   });
 
-  it('should throw an error if a database error while deleting', async () => {
+  it('should return error if a database error occurs while updating', async () => {
     jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
       select: jest.fn().mockRejectedValue(new Error('Error updating document')),
     } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
@@ -335,7 +350,6 @@ describe('updateUser', () => {
 
     const result = await updateUser(user.username, biographyUpdates);
 
-    // Check that the result is a SafeUser and the biography got updated
     if ('username' in result) {
       expect(result.biography).toEqual(newBio);
     } else {
@@ -344,7 +358,6 @@ describe('updateUser', () => {
   });
 
   it('should return an error if biography update fails because user not found', async () => {
-    // Simulate user not found
     jest.spyOn(UserModel, 'findOneAndUpdate').mockResolvedValueOnce(null);
 
     const newBio = 'No user found test';
@@ -411,7 +424,6 @@ describe('removeFriend', () => {
       friends: [],
     };
 
-    // Mock the first findOneAndUpdate call (removing from user's list)
     jest
       .spyOn(UserModel, 'findOneAndUpdate')
       .mockImplementationOnce((filter?: any) => {
@@ -420,7 +432,6 @@ describe('removeFriend', () => {
         query.select = jest.fn().mockReturnValue(Promise.resolve(updatedUser));
         return query;
       })
-      // Mock the second findOneAndUpdate call (removing from friend's list)
       .mockImplementationOnce((filter?: any) => {
         expect(filter.username).toBeDefined();
         const query: any = {};
@@ -428,7 +439,6 @@ describe('removeFriend', () => {
         return query;
       });
 
-    // Mock the findOne call (getting updated user)
     jest.spyOn(UserModel, 'findOne').mockImplementation((filter?: any) => {
       expect(filter.username).toBeDefined();
       const query: any = {};
@@ -473,7 +483,7 @@ describe('blockUser', () => {
     const updatedUser = {
       ...safeUser,
       blockedUsers: [targetUsername],
-      friends: [], // Should be removed from friends if present
+      friends: [],
     };
 
     jest.spyOn(UserModel, 'findOneAndUpdate').mockImplementation((filter?: any) => {

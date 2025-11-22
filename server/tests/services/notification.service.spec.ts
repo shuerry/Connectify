@@ -1,0 +1,466 @@
+// tests/services/notification.service.spec.ts
+
+// IMPORTANT: do NOT import the service or @sendgrid/mail at top level.
+// We want to control module loading order with jest.resetModules + require().
+
+jest.mock('@sendgrid/mail', () => {
+  const setApiKey = jest.fn();
+  const send = jest.fn();
+  return {
+    __esModule: true,
+    default: { setApiKey, send },
+  };
+});
+
+jest.mock('../../models/notification.model', () => ({
+  __esModule: true,
+  default: {
+    create: jest.fn(),
+    find: jest.fn(),
+    findByIdAndUpdate: jest.fn(),
+    updateMany: jest.fn(),
+    findByIdAndDelete: jest.fn(),
+  },
+}));
+
+jest.mock('../../utils/logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+// Service exports
+let NotificationService: any;
+let setNotificationSocket: any;
+let createNotification: any;
+let listNotifications: any;
+let markRead: any;
+let markAllRead: any;
+let deleteNotification: any;
+
+// Mocks (same instances the service uses)
+let mockedSgMail: { setApiKey: jest.Mock; send: jest.Mock };
+let mockedNotificationModel: {
+  create: jest.Mock;
+  find: jest.Mock;
+  findByIdAndUpdate: jest.Mock;
+  updateMany: jest.Mock;
+  findByIdAndDelete: jest.Mock;
+};
+let mockedLogger: { info: jest.Mock; error: jest.Mock };
+
+beforeAll(() => {
+  // Ensure env is set before the service module runs.
+  process.env.SENDGRID_API_KEY = 'test-sendgrid-key';
+  process.env.FROM_EMAIL = 'no-reply@example.com';
+  process.env.SITE_URL = 'https://example.com';
+
+  // Clear Jest module registry so the service is loaded fresh with our mocks.
+  jest.resetModules();
+
+  // Require mocks AFTER resetModules so we get the same instances as the service.
+  const mailMod = require('@sendgrid/mail');
+  mockedSgMail = mailMod.default;
+
+  const modelMod = require('../../models/notification.model');
+  mockedNotificationModel = modelMod.default;
+
+  const loggerMod = require('../../utils/logger');
+  mockedLogger = loggerMod.default;
+
+  // Now load the service module. At this point, sgMail is mocked and
+  // sgMail.setApiKey(process.env.SENDGRID_API_KEY || '') is called on mockedSgMail.
+  const serviceMod = require('../../services/notification.service');
+
+  NotificationService = serviceMod.NotificationService;
+  setNotificationSocket = serviceMod.setNotificationSocket;
+  createNotification = serviceMod.createNotification;
+  listNotifications = serviceMod.listNotifications;
+  markRead = serviceMod.markRead;
+  markAllRead = serviceMod.markAllRead;
+  deleteNotification = serviceMod.deleteNotification;
+});
+
+beforeEach(() => {
+  jest.clearAllMocks();
+
+  // Default sgMail.send behavior: return a thenable that invokes the success handler.
+  mockedSgMail.send.mockImplementation(() => ({
+    then: (onFulfilled?: () => void) => {
+      if (onFulfilled) onFulfilled();
+      return {
+        catch: jest.fn(),
+      };
+    },
+  }));
+});
+
+describe('NotificationService internals', () => {
+  let service: any;
+
+  beforeEach(() => {
+    service = new NotificationService();
+  });
+
+  describe('_sendMail', () => {
+    it('sends mail and logs success', async () => {
+      const thenSpy = jest.fn().mockImplementation((onFulfilled: () => void) => {
+        onFulfilled();
+        return { catch: jest.fn() };
+      });
+      mockedSgMail.send.mockReturnValue({ then: thenSpy } as any);
+
+      await (service as any)._sendMail(
+        ['user@example.com'],
+        'Subject',
+        '<p>HTML</p>',
+        'Text',
+      );
+
+      expect(mockedSgMail.send).toHaveBeenCalledWith({
+        to: ['user@example.com'],
+        from: 'no-reply@example.com',
+        subject: 'Subject',
+        text: 'Text',
+        html: '<p>HTML</p>',
+      });
+      expect(mockedLogger.info).toHaveBeenCalledWith('Email sent');
+      expect(mockedLogger.error).not.toHaveBeenCalled();
+    });
+
+    it('logs error when sgMail.send rejects', async () => {
+      const error = new Error('boom');
+      const catchSpy = jest.fn().mockImplementation((onRejected: (err: Error) => void) => {
+        onRejected(error);
+      });
+
+      mockedSgMail.send.mockReturnValue({
+        then: () => ({ catch: catchSpy }),
+      } as any);
+
+      await (service as any)._sendMail(['user@example.com'], 'Subject', '<p>HTML</p>');
+
+      expect(mockedLogger.error).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe('_escape', () => {
+    it('escapes &, <, >, " and handles undefined input', () => {
+      const escaped = (service as any)._escape('&<>"');
+      expect(escaped).toBe('&amp;&lt;&gt;&quot;');
+
+      const escapedDefault = (service as any)._escape();
+      expect(escapedDefault).toBe('');
+    });
+  });
+
+  describe('_layout', () => {
+    it('builds full layout with button and custom footer', () => {
+      const html = (service as any)._layout({
+        title: 'Title <Test>',
+        intro: 'Intro',
+        body: 'Body',
+        ctaLabel: 'Click me',
+        ctaHref: 'https://example.com/path?x=1&y=2',
+        footerNote: 'Custom footer',
+      });
+
+      expect(html).toContain('&lt;Test&gt;'); // escaped title
+      expect(html).toContain('Click me'); // button label
+      expect(html).toContain('Custom footer'); // footer note
+      expect(html).toContain('background:#3b82f6'); // button styling present
+    });
+
+    it('builds layout without button and uses default footer', () => {
+      const html = (service as any)._layout({
+        title: 'No button',
+      });
+
+      expect(html).not.toContain('background:#3b82f6'); // no button
+      expect(html).toContain('Sent by https://example.com'); // default footer
+    });
+  });
+
+  describe('sendChatNotification', () => {
+    it('sends mention notification with group and chatId', async () => {
+      await service.sendChatNotification({
+        toEmail: ['user@example.com'],
+        toName: 'Alice',
+        fromName: 'Bob',
+        messagePreview: 'Hello there',
+        groupName: 'General',
+        isMention: true,
+        chatId: '123',
+      });
+
+      expect(mockedSgMail.send).toHaveBeenCalledTimes(1);
+      const msg = mockedSgMail.send.mock.calls[0][0];
+
+      expect(msg.to).toEqual(['user@example.com']);
+      expect(msg.subject).toContain('Bob mentioned you');
+      expect(msg.subject).toContain('General');
+      expect(msg.html).toContain('Open chat');
+      expect(msg.html).toContain('/chat/123');
+      expect(msg.text).toContain('Bob wrote: Hello there');
+      expect(msg.text).toContain('https://example.com/chat/123');
+    });
+
+    it('sends non-mention notification without groupName or chatId', async () => {
+      await service.sendChatNotification({
+        toEmail: ['user2@example.com'],
+        toName: undefined,
+        fromName: undefined,
+        messagePreview: 'Hi',
+        groupName: undefined,
+        isMention: false,
+        chatId: undefined,
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.subject).toContain('New chat message');
+      expect(msg.subject).not.toContain('in ');
+      expect(msg.text).toContain('Hi');
+      expect(msg.text).toContain('https://example.com'); // falls back to site URL
+    });
+  });
+
+  describe('sendAnswerNotification', () => {
+    it('sends answer notification with title and author', async () => {
+      await service.sendAnswerNotification({
+        toEmail: ['user@example.com'],
+        authorName: 'Carol',
+        questionTitle: 'Why?',
+        answerPreview: 'Because...',
+        questionId: 'q1',
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.subject).toContain('New answer — Why?');
+      expect(msg.html).toContain('Carol');
+      expect(msg.html).toContain('Because...');
+      expect(msg.html).toContain('/question/q1');
+      expect(msg.text).toContain('Carol posted an answer: Because...');
+    });
+
+    it('handles missing author and question title', async () => {
+      await service.sendAnswerNotification({
+        toEmail: ['user2@example.com'],
+        authorName: undefined,
+        questionTitle: undefined,
+        answerPreview: 'Some answer',
+        questionId: 'q2',
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.subject).toBe('New answer');
+      expect(msg.text).toContain('New answer: Some answer');
+    });
+  });
+
+  describe('sendEmailVerification', () => {
+    it('uses explicit verifyUrl and no expiry', async () => {
+      await service.sendEmailVerification({
+        toEmail: 'single@example.com',
+        username: 'alice',
+        token: 'ignored',
+        verifyUrl: 'https://verify.example.com/foo',
+        expiresAt: undefined,
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.to).toEqual(['single@example.com']); // string -> [string]
+      expect(msg.subject).toBe('Verify your email address');
+      expect(msg.text).toContain('alice');
+      expect(msg.text).toContain('https://verify.example.com/foo');
+      expect(msg.text).not.toContain('expires on');
+    });
+
+    it('builds verifyUrl from token and includes expiry', async () => {
+      const expiresAt = new Date().toISOString();
+
+      await service.sendEmailVerification({
+        toEmail: ['a@example.com', 'b@example.com'],
+        username: undefined,
+        token: 'token-123',
+        verifyUrl: undefined,
+        expiresAt,
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.to).toEqual(['a@example.com', 'b@example.com']); // already array
+      expect(msg.text).toContain('token-123');
+      expect(msg.text).toContain('expires on');
+    });
+  });
+
+  describe('sendPasswordReset', () => {
+    it('includes expiry when provided', async () => {
+      const expiresAt = new Date().toISOString();
+
+      await service.sendPasswordReset({
+        toEmail: 'reset@example.com',
+        username: 'bob',
+        resetUrl: 'https://example.com/reset/abc',
+        expiresAt,
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.to).toEqual(['reset@example.com']);
+      expect(msg.subject).toBe('Reset your password');
+      expect(msg.text).toContain('bob');
+      expect(msg.text).toContain('https://example.com/reset/abc');
+      expect(msg.text).toContain('expires on');
+    });
+
+    it('omits expiry text when not provided', async () => {
+      await service.sendPasswordReset({
+        toEmail: 'reset2@example.com',
+        username: 'charlie',
+        resetUrl: 'https://example.com/reset/def',
+        expiresAt: undefined,
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.text).toContain('Reset your password, charlie');
+      expect(msg.text).toContain('https://example.com/reset/def');
+      expect(msg.text).not.toContain('expires on');
+    });
+  });
+});
+
+describe('socket wiring + exported CRUD helpers', () => {
+  it('setNotificationSocket sets socket and createNotification emits when socket is set', async () => {
+    const payload = {
+      recipient: 'alice',
+      kind: 'chat' as const,
+      title: 'Hello',
+      preview: 'Preview',
+      link: '/link',
+      actorUsername: 'bob',
+      meta: { foo: 'bar' },
+    };
+
+    const docObj = { id: '1', recipient: 'alice' };
+    const doc = { toObject: jest.fn(() => docObj) };
+    mockedNotificationModel.create.mockResolvedValue(doc);
+
+    const emit = jest.fn();
+    const to = jest.fn().mockReturnValue({ emit });
+
+    setNotificationSocket({ to } as any);
+
+    const result = await createNotification(payload);
+
+    expect(mockedNotificationModel.create).toHaveBeenCalledWith(payload);
+    expect(doc.toObject).toHaveBeenCalled();
+    expect(result).toEqual(docObj);
+    expect(to).toHaveBeenCalledWith('user:alice');
+    expect(emit).toHaveBeenCalledWith('notificationUpdate');
+  });
+
+  it('createNotification does not throw when socket is not set', async () => {
+    const payload = {
+      recipient: 'bob',
+      kind: 'system' as const,
+    };
+
+    const docObj = { id: '2', recipient: 'bob' };
+    const doc = { toObject: jest.fn(() => docObj) };
+    mockedNotificationModel.create.mockResolvedValue(doc);
+
+    // Intentionally NOT calling setNotificationSocket here
+    const result = await createNotification(payload as any);
+
+    expect(mockedNotificationModel.create).toHaveBeenCalledWith(payload);
+    expect(result).toEqual(docObj);
+  });
+
+  describe('listNotifications', () => {
+    it('lists notifications without cursor', async () => {
+      const docs = [
+        { toObject: jest.fn(() => ({ id: '1' })) },
+        { toObject: jest.fn(() => ({ id: '2' })) },
+      ];
+
+      const limitMock = jest.fn().mockResolvedValue(docs);
+      const sortMock = jest.fn().mockReturnValue({ limit: limitMock });
+      mockedNotificationModel.find.mockReturnValue({ sort: sortMock });
+
+      const result = await listNotifications('alice', 10);
+
+      expect(mockedNotificationModel.find).toHaveBeenCalledWith({
+        recipient: 'alice',
+      });
+      expect(sortMock).toHaveBeenCalledWith({ createdAt: -1 });
+      expect(limitMock).toHaveBeenCalledWith(10);
+      expect(result).toEqual([{ id: '1' }, { id: '2' }]);
+    });
+
+    it('lists notifications with cursor', async () => {
+      const cursor = '2023-01-01T00:00:00.000Z';
+      const docs = [{ toObject: jest.fn(() => ({ id: '3' })) }];
+
+      const limitMock = jest.fn().mockResolvedValue(docs);
+      const sortMock = jest.fn().mockReturnValue({ limit: limitMock });
+      mockedNotificationModel.find.mockReturnValue({ sort: sortMock });
+
+      const result = await listNotifications('bob', 5, cursor);
+
+      const query = mockedNotificationModel.find.mock.calls[0][0];
+      expect(query.recipient).toBe('bob');
+      expect(query.createdAt.$lt).toBeInstanceOf(Date);
+      expect(query.createdAt.$lt.toISOString()).toBe(cursor);
+
+      expect(result).toEqual([{ id: '3' }]);
+    });
+  });
+
+  describe('markRead', () => {
+    it('marks a notification as read and returns updated doc', async () => {
+      const updated = { _id: 'n1', isRead: true };
+      mockedNotificationModel.findByIdAndUpdate.mockResolvedValue(updated);
+
+      const result = await markRead('n1');
+
+      expect(mockedNotificationModel.findByIdAndUpdate).toHaveBeenCalledTimes(1);
+      const [id, update, options] = mockedNotificationModel.findByIdAndUpdate.mock.calls[0];
+
+      expect(id).toBe('n1');
+      expect(update.isRead).toBe(true);
+      expect(update.readAt).toBeInstanceOf(Date);
+      expect(options).toEqual({ new: true });
+
+      expect(result).toBe(updated); // correct return type: updated doc
+    });
+  });
+
+  describe('markAllRead', () => {
+    it('marks all notifications as read for a user and returns { ok: true }', async () => {
+      mockedNotificationModel.updateMany.mockResolvedValue({ modifiedCount: 3 });
+
+      const result = await markAllRead('carol');
+
+      expect(mockedNotificationModel.updateMany).toHaveBeenCalledTimes(1);
+      const [filter, update] = mockedNotificationModel.updateMany.mock.calls[0];
+
+      expect(filter).toEqual({ recipient: 'carol', isRead: false });
+      expect(update.isRead).toBe(true);
+      expect(update.readAt).toBeInstanceOf(Date);
+
+      expect(result).toEqual({ ok: true });
+    });
+  });
+
+  describe('deleteNotification', () => {
+    it('deletes a notification and returns { ok: true }', async () => {
+      mockedNotificationModel.findByIdAndDelete.mockResolvedValue({});
+
+      const result = await deleteNotification('del-1');
+
+      expect(mockedNotificationModel.findByIdAndDelete).toHaveBeenCalledWith('del-1');
+      expect(result).toEqual({ ok: true });
+    });
+  });
+});

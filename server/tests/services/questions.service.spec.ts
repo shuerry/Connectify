@@ -13,6 +13,10 @@ import {
 import * as userService from '../../services/user.service';
 import { DatabaseQuestion, PopulatedDatabaseQuestion } from '../../types/types';
 import { tag1, tag2, ans1, ans2, ans3, ans4, POPULATED_QUESTIONS } from '../mockData.models';
+import AnswerModel from '../../models/answers.model';
+import QuestionVersionModel from '../../models/questionVersions.model';
+import CommentModel from '../../models/comments.model';
+import { deleteQuestion } from '../../services/question.service';
 
 describe('Question model', () => {
   beforeEach(() => {
@@ -232,52 +236,6 @@ describe('Question model', () => {
     afterEach(() => {
       jest.restoreAllMocks();
     });
-    // test('fetchAndIncrementQuestionViewsById should return question and add the user to the list of views if new', async () => {
-    //   const question = POPULATED_QUESTIONS.filter(
-    //     q => q._id && q._id.toString() === '65e9b5a995b6c7045a30d823',
-    //   )[0];
-
-    //   jest.spyOn(QuestionModel, 'findOneAndUpdate').mockReturnValue({
-    //     populate: jest
-    //       .fn()
-    //       .mockResolvedValue({ ...question, views: ['question1_user', ...question.views] }),
-    //   } as unknown as Query<PopulatedDatabaseQuestion[], typeof QuestionModel>);
-
-    //   const result = (await fetchAndIncrementQuestionViewsById(
-    //     '65e9b5a995b6c7045a30d823',
-    //     'question1_user',
-    //   )) as PopulatedDatabaseQuestion;
-
-    //   expect(result.views.length).toEqual(2);
-    //   expect(result.views).toEqual(['question1_user', 'question2_user']);
-    //   expect(result._id.toString()).toEqual('65e9b5a995b6c7045a30d823');
-    //   expect(result.title).toEqual(question.title);
-    //   expect(result.text).toEqual(question.text);
-    //   expect(result.answers).toEqual(question.answers);
-    //   expect(result.askDateTime).toEqual(question.askDateTime);
-    // });
-
-    // test('fetchAndIncrementQuestionViewsById should return question and not add the user to the list of views if already viewed by them', async () => {
-    //   const question = QUESTIONS.filter(
-    //     q => q._id && q._id.toString() === '65e9b5a995b6c7045a30d823',
-    //   )[0];
-    //   jest.spyOn(QuestionModel, 'findOneAndUpdate').mockReturnValue({
-    //     populate: jest.fn().mockResolvedValue(question),
-    //   } as unknown as Query<PopulatedDatabaseQuestion[], typeof QuestionModel>);
-
-    //   const result = (await fetchAndIncrementQuestionViewsById(
-    //     '65e9b5a995b6c7045a30d823',
-    //     'question2_user',
-    //   )) as PopulatedDatabaseQuestion;
-
-    //   expect(result.views.length).toEqual(1);
-    //   expect(result.views).toEqual(['question2_user']);
-    //   expect(result._id.toString()).toEqual('65e9b5a995b6c7045a30d823');
-    //   expect(result.title).toEqual(question.title);
-    //   expect(result.text).toEqual(question.text);
-    //   expect(result.answers).toEqual(question.answers);
-    //   expect(result.askDateTime).toEqual(question.askDateTime);
-    // });
 
     test('fetchAndIncrementQuestionViewsById should return an error if id does not exist', async () => {
       jest.spyOn(QuestionModel, 'findOneAndUpdate').mockReturnValue({
@@ -823,4 +781,48 @@ describe('Question model', () => {
       expect(result).toEqual({ error: 'Error when updating question' });
     });
   });
+  
+  describe('deleteQuestion service', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+  
+    it('returns error when question not found', async () => {
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce(null as any);
+  
+      const res = await deleteQuestion('nonexistentId', 'user1');
+  
+      expect(res).toHaveProperty('error');
+      expect((res as { error: string }).error).toMatch(/Question not found/);
+    });
+  
+    it('returns error when user is not the author', async () => {
+      const mockQuestion = { _id: 'qid', askedBy: 'ownerUser', comments: [] } as any;
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce(mockQuestion);
+  
+      const res = await deleteQuestion('qid', 'otherUser');
+  
+      expect(res).toHaveProperty('error');
+      expect((res as { error: string }).error).toMatch(/Unauthorized/);
+    });
+  
+    it('deletes related docs and the question when authorized', async () => {
+      const mockQuestion = { _id: 'qid', askedBy: 'ownerUser', comments: ['c1', 'c2'] } as any;
+  
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce(mockQuestion);
+      jest.spyOn(AnswerModel, 'deleteMany').mockResolvedValueOnce({} as any);
+      jest.spyOn(QuestionVersionModel, 'deleteMany').mockResolvedValueOnce({} as any);
+      jest.spyOn(CommentModel, 'deleteMany').mockResolvedValueOnce({} as any);
+      jest.spyOn(QuestionModel, 'findByIdAndDelete').mockResolvedValueOnce({} as any);
+  
+      const res = await deleteQuestion('qid', 'ownerUser');
+  
+      expect(res).toHaveProperty('msg');
+      expect(AnswerModel.deleteMany).toHaveBeenCalled();
+      expect(QuestionVersionModel.deleteMany).toHaveBeenCalled();
+      expect(CommentModel.deleteMany).toHaveBeenCalled();
+      expect(QuestionModel.findByIdAndDelete).toHaveBeenCalledWith('qid');
+    });
+  });
+  
 });

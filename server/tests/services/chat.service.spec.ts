@@ -8,6 +8,7 @@ import {
   getChat,
   addParticipantToChat,
   getChatsByParticipants,
+  toggleNotify,
 } from '../../services/chat.service';
 import { Chat, DatabaseChat } from '../../types/types';
 import { user } from '../mockData.models';
@@ -84,10 +85,10 @@ describe('Chat service', () => {
   });
 
   describe('addMessageToChat', () => {
-    const chatId = new mongoose.Types.ObjectId(); // DB shape: ObjectId
-    const messageId = new mongoose.Types.ObjectId(); // DB shape: ObjectId
+    const chatId = new mongoose.Types.ObjectId();
+    const messageId = new mongoose.Types.ObjectId();
 
-    const chatIdString = chatId.toString(); // function inputs: strings
+    const chatIdString = chatId.toString();
     const messageIdString = messageId.toString();
 
     beforeEach(() => {
@@ -96,7 +97,6 @@ describe('Chat service', () => {
     });
 
     it('happy path: pushes message, creates DB notifications for enabled non-sender participants, and emails verified recipients', async () => {
-      // Updated chat returned by findByIdAndUpdate().lean() (lean result)
       const updatedChat: DatabaseChat = {
         _id: chatId,
         participants: {
@@ -109,21 +109,16 @@ describe('Chat service', () => {
         updatedAt: new Date(),
       };
 
-      // Sender message (lean result)
       const messageDoc = {
         _id: messageId,
         msgFrom: 'alice',
         msg: 'hello world',
       };
 
-      // Recipient lookup (lean results)
       const bobUser = { username: 'bob', email: 'bob@example.com', emailVerified: true };
 
-      // ---- Spies/mocks ----
-      // ChatModel.findByIdAndUpdate(...).lean() -> updatedChat
       jest.spyOn(ChatModel, 'findByIdAndUpdate').mockReturnValue(asLeanQuery(updatedChat) as any);
 
-      // MessageModel.findById(...).lean() -> messageDoc
       jest.spyOn(MessageModel, 'findById').mockReturnValue(asLeanQuery(messageDoc) as any);
 
       const findOneSpy = jest.spyOn(UserModel, 'findOne').mockImplementation((cond: any) => {
@@ -140,41 +135,36 @@ describe('Chat service', () => {
 
       const result = await addMessageToChat(chatIdString, messageIdString);
 
-      // Returned updated chat (ObjectIds inside)
       expect('error' in (result as any)).toBe(false);
       expect(result).toEqual(updatedChat);
 
-      // Calls use STRING ids (function inputs)
       expect(ChatModel.findByIdAndUpdate).toHaveBeenCalledWith(
         chatIdString,
         { $push: { messages: messageIdString } },
         { new: true },
       );
       expect(MessageModel.findById).toHaveBeenCalledWith(messageIdString);
-      expect(findOneSpy).toHaveBeenCalledTimes(1); // only bob
+      expect(findOneSpy).toHaveBeenCalledTimes(1);
       expect(findOneSpy).toHaveBeenCalledWith({ username: 'bob' });
 
-      // DB notification created only for bob
       expect(notifCreateSpy).toHaveBeenCalledTimes(1);
       expect(notifCreateSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           recipient: 'bob',
           kind: 'chat',
           title: expect.stringContaining('alice'),
-          // 🔁 link changed in new implementation:
           link: `/messaging/direct-message`,
           actorUsername: 'alice',
           meta: { chatId: chatIdString, isMention: false },
         }),
       );
 
-      // Email notification sent to bob
       expect(sendEmailSpy).toHaveBeenCalledTimes(1);
       expect(sendEmailSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           toEmail: ['bob@example.com'],
           fromName: 'alice',
-          chatId: chatIdString, // string id
+          chatId: chatIdString,
           isMention: false,
           messagePreview: 'hello world',
         }),
@@ -182,10 +172,8 @@ describe('Chat service', () => {
     });
 
     it('returns {error} when chat is not found', async () => {
-      // ChatModel.findByIdAndUpdate(...).lean() -> null
       jest.spyOn(ChatModel, 'findByIdAndUpdate').mockReturnValue(asLeanQuery(null) as any);
 
-      // create spies so "not called" assertions are valid
       const findByIdSpy = jest.spyOn(MessageModel, 'findById');
       const findOneSpy = jest.spyOn(UserModel, 'findOne');
       const notifSpy = jest.spyOn(NotificationModel, 'create').mockResolvedValue({
@@ -211,18 +199,13 @@ describe('Chat service', () => {
         updatedAt: new Date(),
       };
 
-      // ChatModel.findByIdAndUpdate(...).lean() -> updatedChat
       jest.spyOn(ChatModel, 'findByIdAndUpdate').mockReturnValue(asLeanQuery(updatedChat) as any);
-
-      // MessageModel.findById(...).lean() -> null
       jest.spyOn(MessageModel, 'findById').mockReturnValue(asLeanQuery(null) as any);
 
-      // spies for "not called"
       const findOneSpy = jest.spyOn(UserModel, 'findOne');
       const notifSpy = jest.spyOn(NotificationModel, 'create').mockResolvedValue({
         toObject: () => ({}) as any,
       } as any);
-
       const emailSpy = jest.spyOn(NotificationService.prototype, 'sendChatNotification');
 
       const result = await addMessageToChat(chatIdString, messageIdString);
@@ -242,15 +225,12 @@ describe('Chat service', () => {
         updatedAt: new Date(),
       };
 
-      // ChatModel.findByIdAndUpdate(...).lean() -> updatedChat
       jest.spyOn(ChatModel, 'findByIdAndUpdate').mockReturnValue(asLeanQuery(updatedChat) as any);
 
-      // message doc (lean)
       jest
         .spyOn(MessageModel, 'findById')
         .mockReturnValue(asLeanQuery({ _id: messageId, msgFrom: 'alice', msg: 'ping' }) as any);
 
-      // bob exists but lacks a verified email
       jest
         .spyOn(UserModel, 'findOne')
         .mockReturnValue(
@@ -270,7 +250,6 @@ describe('Chat service', () => {
       expect('error' in (result as any)).toBe(false);
       expect(result).toEqual(updatedChat);
 
-      // DB notif created for bob, but email skipped
       expect(notifCreateSpy).toHaveBeenCalledTimes(1);
       expect(sendEmailSpy).not.toHaveBeenCalled();
     });
@@ -284,17 +263,14 @@ describe('Chat service', () => {
         updatedAt: new Date(),
       };
 
-      // ChatModel.findByIdAndUpdate(...).lean() -> updatedChat
       jest.spyOn(ChatModel, 'findByIdAndUpdate').mockReturnValue(asLeanQuery(updatedChat) as any);
 
-      // message doc (lean)
       jest
         .spyOn(MessageModel, 'findById')
         .mockReturnValue(
           asLeanQuery({ _id: messageId, msgFrom: 'alice', msg: 'hello again' }) as any,
         );
 
-      // bob with verified email
       jest
         .spyOn(UserModel, 'findOne')
         .mockReturnValue(
@@ -311,7 +287,6 @@ describe('Chat service', () => {
 
       const result = await addMessageToChat(chatIdString, messageIdString);
 
-      // Still returns the updated chat object
       expect('error' in (result as any)).toBe(false);
       expect(result).toEqual(updatedChat);
     });
@@ -431,7 +406,7 @@ describe('Chat service', () => {
         {
           _id: 'chat-1',
           messages: ['m1'],
-          participants: { alice: true, bob: false, carol: true }, // bob present but false is still a match
+          participants: { alice: true, bob: false, carol: true },
         },
         {
           _id: 'chat-2',
@@ -440,7 +415,6 @@ describe('Chat service', () => {
         },
       ];
 
-      // Make ChatModel.find() return an object that has .lean(), which resolves to mockChats
       const findSpy = jest.spyOn(ChatModel, 'find').mockReturnValue({} as any);
       (findSpy as any).mockReturnValue({
         lean: jest.fn().mockResolvedValue(mockChats),
@@ -448,7 +422,6 @@ describe('Chat service', () => {
 
       const result = await getChatsByParticipants(input);
 
-      // Verify query shape: dotted keys with $exists: true
       expect(ChatModel.find).toHaveBeenCalledWith({
         $and: [
           { 'participants.alice': { $exists: true } },
@@ -456,7 +429,6 @@ describe('Chat service', () => {
         ],
       });
 
-      // Should return what .lean() resolved to
       expect(result).toEqual(mockChats);
     });
 
@@ -470,6 +442,78 @@ describe('Chat service', () => {
 
       const result = await getChatsByParticipants(input);
       expect(result).toEqual([]);
+    });
+  });
+
+    describe('toggleNotify', () => {
+    it('toggles notify flag for a username and saves chat', async () => {
+      const chatId = new mongoose.Types.ObjectId().toString();
+      const participantsMap = new Map<string, boolean>([['alice', true]]);
+
+      const updatedChat = { participants: participantsMap };
+
+      const chatDoc = {
+        participants: participantsMap,
+        save: jest.fn().mockResolvedValue(updatedChat),
+      };
+
+      jest.spyOn(ChatModel, 'findById').mockResolvedValueOnce(chatDoc as any);
+
+      const result = await toggleNotify(chatId, 'alice');
+
+      expect(ChatModel.findById).toHaveBeenCalledWith(chatId);
+      expect(chatDoc.save).toHaveBeenCalled();
+      expect(participantsMap.get('alice')).toBe(false);
+
+      // result should be the updated chat document
+      expect((result as any).participants).toBe(participantsMap);
+    });
+
+    it('adds username to participants map when not present', async () => {
+      const chatId = new mongoose.Types.ObjectId().toString();
+      const participantsMap = new Map<string, boolean>(); // empty
+
+      const updatedChat = { participants: participantsMap };
+
+      const chatDoc = {
+        participants: participantsMap,
+        save: jest.fn().mockResolvedValue(updatedChat),
+      };
+
+      jest.spyOn(ChatModel, 'findById').mockResolvedValueOnce(chatDoc as any);
+
+      const result = await toggleNotify(chatId, 'bob');
+
+      expect(ChatModel.findById).toHaveBeenCalledWith(chatId);
+      expect(chatDoc.save).toHaveBeenCalled();
+      expect(participantsMap.get('bob')).toBe(true);
+      expect((result as any).participants).toBe(participantsMap);
+    });
+
+    it('returns error when chat is not found', async () => {
+      const chatId = new mongoose.Types.ObjectId().toString();
+      jest.spyOn(ChatModel, 'findById').mockResolvedValueOnce(null as any);
+
+      const result = await toggleNotify(chatId, 'alice');
+
+      expect(result).toHaveProperty('error');
+      if ('error' in result) {
+        expect(result.error).toContain('Chat not found');
+      }
+    });
+
+    it('returns error when DB operation fails', async () => {
+      const chatId = new mongoose.Types.ObjectId().toString();
+      jest
+        .spyOn(ChatModel, 'findById')
+        .mockRejectedValueOnce(new Error('DB failure') as any);
+
+      const result = await toggleNotify(chatId, 'alice');
+
+      expect(result).toHaveProperty('error');
+      if ('error' in result) {
+        expect(result.error).toContain('DB failure');
+      }
     });
   });
 });
