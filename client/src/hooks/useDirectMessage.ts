@@ -43,6 +43,11 @@ const useDirectMessage = () => {
     socket.emit('joinChat', String(chatID));
   };
 
+  const handleLeaveChat = (chatID: ObjectId | undefined) => {
+    if (!chatID) return;
+    socket.emit('leaveChat', String(chatID));
+  };
+
   const handleSendMessage = async () => {
     if (newMessage.trim() && selectedChat?._id) {
       // Stop typing indicator when sending message
@@ -129,6 +134,10 @@ const useDirectMessage = () => {
     if (!chatID) {
       setError('Invalid chat ID');
       setSelectedChat(null);
+      // leave any previously joined chat
+      if (selectedChatIdRef.current) {
+        handleLeaveChat(selectedChatIdRef.current);
+      }
       selectedChatIdRef.current = null;
       setDirectMessages([]);
       return;
@@ -136,6 +145,10 @@ const useDirectMessage = () => {
 
     const chat = await getChatById(chatID);
     setSelectedChat(chat);
+    // leave previous chat room if different
+    if (selectedChatIdRef.current && String(selectedChatIdRef.current) !== String(chatID)) {
+      handleLeaveChat(selectedChatIdRef.current);
+    }
     selectedChatIdRef.current = chatID;
     handleJoinChat(chatID);
 
@@ -487,9 +500,13 @@ const useDirectMessage = () => {
           username: user.username,
         });
       }
+      // ensure we leave any joined chat room on unmount
+      if (selectedChatIdRef.current) {
+        handleLeaveChat(selectedChatIdRef.current);
+      }
       setTypingUsers(new Set());
     };
-  }, [socket, user.username]);
+  }, [socket, user.username, handleLeaveChat]);
 
   return {
     selectedChat,
