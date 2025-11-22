@@ -17,7 +17,7 @@ import logger from '../utils/logger';
 const useProfileSettings = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
-  const { user: currentUser } = useUserContext();
+  const { user: currentUser, socket } = useUserContext();
 
   // Local state
   const [userData, setUserData] = useState<SafeDatabaseUser | null>(null);
@@ -36,7 +36,6 @@ const useProfileSettings = () => {
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   const [showPassword, setShowPassword] = useState(false);
-  const [forceRenderKey, setForceRenderKey] = useState(0); // State to force re-render
 
   const canEditProfile =
     currentUser.username && userData?.username ? currentUser.username === userData.username : false;
@@ -59,6 +58,22 @@ const useProfileSettings = () => {
 
     fetchUserData();
   }, [username]);
+
+  useEffect(() => {
+    if (!socket || !username) return;
+
+    const handleUserUpdate = (payload: { user: SafeDatabaseUser; type: string }) => {
+      if (payload.user.username === username) {
+        setUserData(payload.user);
+      }
+    };
+
+    socket.on('userUpdate', handleUserUpdate);
+
+    return () => {
+      socket.off('userUpdate', handleUserUpdate);
+    };
+  }, [socket, username]);
 
   /**
    * Toggles the visibility of the password fields.
@@ -133,8 +148,18 @@ const useProfileSettings = () => {
       await updateEmail(username, newEmail);
       logger.info('Passed updateEmail');
 
-      setUserData(u => {
-        const updatedUser = u ? { ...u, emailVerified: false } : u;
+      setUserData(prev => {
+        if (!prev) return prev;
+
+        const updatedUser = {
+          ...prev,
+          emailVerified: false,
+          emailVerification: {
+            ...(prev.emailVerification ?? {}),
+            pendingEmail: newEmail,
+          },
+        };
+
         logger.info('Updated userData state:', updatedUser); // Debugging log
         return updatedUser;
       });
@@ -142,9 +167,6 @@ const useProfileSettings = () => {
       setEditEmailMode(false);
       setSuccessMessage('Verification email sent');
       setErrorMessage(null);
-
-      // Force a re-render
-      setForceRenderKey(prevKey => prevKey + 1);
     } catch (error) {
       logger.error('Error in handleUpdateEmail:', error); // Debugging log
       setErrorMessage('Failed to update email.');
@@ -207,7 +229,6 @@ const useProfileSettings = () => {
     handleUpdateEmail,
     handleDeleteUser,
     handleViewCollectionsPage,
-    forceRenderKey, // Expose the forceRenderKey state
   };
 };
 

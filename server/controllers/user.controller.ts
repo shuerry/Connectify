@@ -235,12 +235,30 @@ const userController = (socket: FakeSOSocket) => {
         res.status(400).json({ error: 'Missing token' });
         return;
       }
+
       const result = await confirmEmailVerification(token);
       if ('error' in result) {
         res.status(400).json(result);
         return;
       }
-      res.status(200).json({ msg: 'Email verified successfully', email: result.email });
+
+      let updatedUser;
+
+      if ('username' in result) {
+        updatedUser = await getUserByUsername(result.username);
+      }
+
+      if (updatedUser && !('error' in updatedUser)) {
+        socket.emit('userUpdate', {
+          user: updatedUser,
+          type: 'updated',
+        });
+      }
+
+      res.status(200).json({
+        msg: 'Email verified successfully',
+        email: result.email,
+      });
     } catch (err) {
       res.status(500).json({ error: 'Failed to verify email' });
     }

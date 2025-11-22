@@ -22,26 +22,18 @@ const ChatsListCard = ({
     : null;
 
   const hasUnread = chat.messages?.some(
-    m =>
-      m.msgFrom !== user.username &&
-      (!m.readBy || !m.readBy.includes(user.username)),
+    m => m.msgFrom !== user.username && (!m.readBy || !m.readBy.includes(user.username)),
   );
 
   return (
     <div
       onClick={() => handleChatSelect(chat._id)}
-      className={`chats-list-card ${hasUnread ? 'chats-list-card--unread' : ''}`}
-    >
-      <div className="chats-list-card-header">
+      className={`chats-list-card ${hasUnread ? 'chats-list-card--unread' : ''}`}>
+      <div className='chats-list-card-header'>
         <p>
           <strong>Chat with:</strong> {otherParticipant}
         </p>
-        {hasUnread && (
-          <span
-            className="chats-list-card__unread-dot"
-            aria-label="Unread messages"
-          />
-        )}
+        {hasUnread && <span className='chats-list-card__unread-dot' aria-label='Unread messages' />}
       </div>
     </div>
   );

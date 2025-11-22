@@ -73,5 +73,5 @@ export async function confirmEmailVerification(token: string) {
   user.emailVerification = undefined;
 
   await user.save();
-  return { ok: true as const, email: newEmail };
+  return { ok: true as const, email: newEmail, username: user.username };
 }
