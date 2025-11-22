@@ -43,11 +43,14 @@ const useDirectMessage = () => {
     socket.emit('joinChat', String(chatID));
   };
 
-  const handleLeaveChat = useCallback((chatID: ObjectId | undefined) => {
-    if (!chatID) return;
-    socket.emit('leaveChat', String(chatID));
-  }, [socket]);
-  
+  const handleLeaveChat = useCallback(
+    (chatID: ObjectId | undefined) => {
+      if (!chatID) return;
+      socket.emit('leaveChat', String(chatID));
+    },
+    [socket],
+  );
+
   const handleSendMessage = async () => {
     if (newMessage.trim() && selectedChat?._id) {
       // Stop typing indicator when sending message
