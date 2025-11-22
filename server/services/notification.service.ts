@@ -160,7 +160,7 @@ export class NotificationService {
       ? `${fromName ? fromName + ' mentioned you' : 'You were mentioned'} in ${groupName || 'chat'}`
       : `${fromName ? fromName + ' sent a message' : 'New chat message'}${groupName ? ` in ${groupName}` : ''}`;
 
-    const link = chatId ? `${this._siteUrl}/chat/${chatId}` : this._siteUrl;
+    const link = chatId ? `${this._siteUrl}/messaging/direct-message` : this._siteUrl;
 
     const intro = toName ? `Hi ${this._escape(toName)},` : `Hello,`;
 
