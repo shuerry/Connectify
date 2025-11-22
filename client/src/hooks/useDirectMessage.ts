@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   ChatUpdatePayload,
   DatabaseMessage,
@@ -43,11 +43,11 @@ const useDirectMessage = () => {
     socket.emit('joinChat', String(chatID));
   };
 
-  const handleLeaveChat = (chatID: ObjectId | undefined) => {
+  const handleLeaveChat = useCallback((chatID: ObjectId | undefined) => {
     if (!chatID) return;
     socket.emit('leaveChat', String(chatID));
-  };
-
+  }, [socket]);
+  
   const handleSendMessage = async () => {
     if (newMessage.trim() && selectedChat?._id) {
       // Stop typing indicator when sending message

@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 import supertest from 'supertest';
 import { ObjectId } from 'mongodb';
-import express from 'express';
 
 import { app } from '../../app';
 import * as answerUtil from '../../services/answer.service';

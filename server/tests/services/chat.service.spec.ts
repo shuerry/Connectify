@@ -445,7 +445,7 @@ describe('Chat service', () => {
     });
   });
 
-    describe('toggleNotify', () => {
+  describe('toggleNotify', () => {
     it('toggles notify flag for a username and saves chat', async () => {
       const chatId = new mongoose.Types.ObjectId().toString();
       const participantsMap = new Map<string, boolean>([['alice', true]]);
@@ -504,9 +504,7 @@ describe('Chat service', () => {
 
     it('returns error when DB operation fails', async () => {
       const chatId = new mongoose.Types.ObjectId().toString();
-      jest
-        .spyOn(ChatModel, 'findById')
-        .mockRejectedValueOnce(new Error('DB failure') as any);
+      jest.spyOn(ChatModel, 'findById').mockRejectedValueOnce(new Error('DB failure') as any);
 
       const result = await toggleNotify(chatId, 'alice');
 

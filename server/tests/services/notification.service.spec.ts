@@ -1,7 +1,7 @@
 // tests/services/notification.service.spec.ts
 
 // IMPORTANT: do NOT import the service or @sendgrid/mail at top level.
-// We want to control module loading order with jest.resetModules + require().
+// We want to control module loading order with jest.resetModules + dynamic import().
 
 jest.mock('@sendgrid/mail', () => {
   const setApiKey = jest.fn();
@@ -32,7 +32,7 @@ jest.mock('../../utils/logger', () => ({
 }));
 
 // Service exports
-let NotificationService: any;
+let notificationService: any;
 let setNotificationSocket: any;
 let createNotification: any;
 let listNotifications: any;
@@ -40,18 +40,13 @@ let markRead: any;
 let markAllRead: any;
 let deleteNotification: any;
 
-// Mocks (same instances the service uses)
-let mockedSgMail: { setApiKey: jest.Mock; send: jest.Mock };
-let mockedNotificationModel: {
-  create: jest.Mock;
-  find: jest.Mock;
-  findByIdAndUpdate: jest.Mock;
-  updateMany: jest.Mock;
-  findByIdAndDelete: jest.Mock;
-};
-let mockedLogger: { info: jest.Mock; error: jest.Mock };
+// Mocks (same instances the service uses) –
+// typed as `any` to avoid TS structural type conflicts with the real module types.
+let mockedSgMail: any;
+let MockedNotificationModel: any;
+let mockedLogger: any;
 
-beforeAll(() => {
+beforeAll(async () => {
   // Ensure env is set before the service module runs.
   process.env.SENDGRID_API_KEY = 'test-sendgrid-key';
   process.env.FROM_EMAIL = 'no-reply@example.com';
@@ -60,21 +55,21 @@ beforeAll(() => {
   // Clear Jest module registry so the service is loaded fresh with our mocks.
   jest.resetModules();
 
-  // Require mocks AFTER resetModules so we get the same instances as the service.
-  const mailMod = require('@sendgrid/mail');
+  // Import mocks AFTER resetModules so we get the same instances as the service.
+  const mailMod = await import('@sendgrid/mail');
   mockedSgMail = mailMod.default;
 
-  const modelMod = require('../../models/notification.model');
-  mockedNotificationModel = modelMod.default;
+  const modelMod = await import('../../models/notification.model');
+  MockedNotificationModel = modelMod.default;
 
-  const loggerMod = require('../../utils/logger');
+  const loggerMod = await import('../../utils/logger');
   mockedLogger = loggerMod.default;
 
   // Now load the service module. At this point, sgMail is mocked and
   // sgMail.setApiKey(process.env.SENDGRID_API_KEY || '') is called on mockedSgMail.
-  const serviceMod = require('../../services/notification.service');
+  const serviceMod = await import('../../services/notification.service');
 
-  NotificationService = serviceMod.NotificationService;
+  notificationService = serviceMod.NotificationService;
   setNotificationSocket = serviceMod.setNotificationSocket;
   createNotification = serviceMod.createNotification;
   listNotifications = serviceMod.listNotifications;
@@ -101,7 +96,7 @@ describe('NotificationService internals', () => {
   let service: any;
 
   beforeEach(() => {
-    service = new NotificationService();
+    service = new notificationService();
   });
 
   describe('_sendMail', () => {
@@ -112,12 +107,7 @@ describe('NotificationService internals', () => {
       });
       mockedSgMail.send.mockReturnValue({ then: thenSpy } as any);
 
-      await (service as any)._sendMail(
-        ['user@example.com'],
-        'Subject',
-        '<p>HTML</p>',
-        'Text',
-      );
+      await (service as any)._sendMail(['user@example.com'], 'Subject', '<p>HTML</p>', 'Text');
 
       expect(mockedSgMail.send).toHaveBeenCalledWith({
         to: ['user@example.com'],
@@ -344,7 +334,7 @@ describe('socket wiring + exported CRUD helpers', () => {
 
     const docObj = { id: '1', recipient: 'alice' };
     const doc = { toObject: jest.fn(() => docObj) };
-    mockedNotificationModel.create.mockResolvedValue(doc);
+    MockedNotificationModel.create.mockResolvedValue(doc);
 
     const emit = jest.fn();
     const to = jest.fn().mockReturnValue({ emit });
@@ -353,7 +343,7 @@ describe('socket wiring + exported CRUD helpers', () => {
 
     const result = await createNotification(payload);
 
-    expect(mockedNotificationModel.create).toHaveBeenCalledWith(payload);
+    expect(MockedNotificationModel.create).toHaveBeenCalledWith(payload);
     expect(doc.toObject).toHaveBeenCalled();
     expect(result).toEqual(docObj);
     expect(to).toHaveBeenCalledWith('user:alice');
@@ -368,12 +358,12 @@ describe('socket wiring + exported CRUD helpers', () => {
 
     const docObj = { id: '2', recipient: 'bob' };
     const doc = { toObject: jest.fn(() => docObj) };
-    mockedNotificationModel.create.mockResolvedValue(doc);
+    MockedNotificationModel.create.mockResolvedValue(doc);
 
     // Intentionally NOT calling setNotificationSocket here
     const result = await createNotification(payload as any);
 
-    expect(mockedNotificationModel.create).toHaveBeenCalledWith(payload);
+    expect(MockedNotificationModel.create).toHaveBeenCalledWith(payload);
     expect(result).toEqual(docObj);
   });
 
@@ -386,11 +376,11 @@ describe('socket wiring + exported CRUD helpers', () => {
 
       const limitMock = jest.fn().mockResolvedValue(docs);
       const sortMock = jest.fn().mockReturnValue({ limit: limitMock });
-      mockedNotificationModel.find.mockReturnValue({ sort: sortMock });
+      MockedNotificationModel.find.mockReturnValue({ sort: sortMock });
 
       const result = await listNotifications('alice', 10);
 
-      expect(mockedNotificationModel.find).toHaveBeenCalledWith({
+      expect(MockedNotificationModel.find).toHaveBeenCalledWith({
         recipient: 'alice',
       });
       expect(sortMock).toHaveBeenCalledWith({ createdAt: -1 });
@@ -404,11 +394,11 @@ describe('socket wiring + exported CRUD helpers', () => {
 
       const limitMock = jest.fn().mockResolvedValue(docs);
       const sortMock = jest.fn().mockReturnValue({ limit: limitMock });
-      mockedNotificationModel.find.mockReturnValue({ sort: sortMock });
+      MockedNotificationModel.find.mockReturnValue({ sort: sortMock });
 
       const result = await listNotifications('bob', 5, cursor);
 
-      const query = mockedNotificationModel.find.mock.calls[0][0];
+      const query = MockedNotificationModel.find.mock.calls[0][0];
       expect(query.recipient).toBe('bob');
       expect(query.createdAt.$lt).toBeInstanceOf(Date);
       expect(query.createdAt.$lt.toISOString()).toBe(cursor);
@@ -420,12 +410,12 @@ describe('socket wiring + exported CRUD helpers', () => {
   describe('markRead', () => {
     it('marks a notification as read and returns updated doc', async () => {
       const updated = { _id: 'n1', isRead: true };
-      mockedNotificationModel.findByIdAndUpdate.mockResolvedValue(updated);
+      MockedNotificationModel.findByIdAndUpdate.mockResolvedValue(updated);
 
       const result = await markRead('n1');
 
-      expect(mockedNotificationModel.findByIdAndUpdate).toHaveBeenCalledTimes(1);
-      const [id, update, options] = mockedNotificationModel.findByIdAndUpdate.mock.calls[0];
+      expect(MockedNotificationModel.findByIdAndUpdate).toHaveBeenCalledTimes(1);
+      const [id, update, options] = MockedNotificationModel.findByIdAndUpdate.mock.calls[0];
 
       expect(id).toBe('n1');
       expect(update.isRead).toBe(true);
@@ -438,12 +428,12 @@ describe('socket wiring + exported CRUD helpers', () => {
 
   describe('markAllRead', () => {
     it('marks all notifications as read for a user and returns { ok: true }', async () => {
-      mockedNotificationModel.updateMany.mockResolvedValue({ modifiedCount: 3 });
+      MockedNotificationModel.updateMany.mockResolvedValue({ modifiedCount: 3 });
 
       const result = await markAllRead('carol');
 
-      expect(mockedNotificationModel.updateMany).toHaveBeenCalledTimes(1);
-      const [filter, update] = mockedNotificationModel.updateMany.mock.calls[0];
+      expect(MockedNotificationModel.updateMany).toHaveBeenCalledTimes(1);
+      const [filter, update] = MockedNotificationModel.updateMany.mock.calls[0];
 
       expect(filter).toEqual({ recipient: 'carol', isRead: false });
       expect(update.isRead).toBe(true);
@@ -455,11 +445,11 @@ describe('socket wiring + exported CRUD helpers', () => {
 
   describe('deleteNotification', () => {
     it('deletes a notification and returns { ok: true }', async () => {
-      mockedNotificationModel.findByIdAndDelete.mockResolvedValue({});
+      MockedNotificationModel.findByIdAndDelete.mockResolvedValue({});
 
       const result = await deleteNotification('del-1');
 
-      expect(mockedNotificationModel.findByIdAndDelete).toHaveBeenCalledWith('del-1');
+      expect(MockedNotificationModel.findByIdAndDelete).toHaveBeenCalledWith('del-1');
       expect(result).toEqual({ ok: true });
     });
   });

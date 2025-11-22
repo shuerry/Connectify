@@ -38,9 +38,7 @@ describe('User model', () => {
     });
 
     it('should return error if error when saving to database', async () => {
-      jest
-        .spyOn(UserModel, 'create')
-        .mockRejectedValueOnce(new Error('Error saving document'));
+      jest.spyOn(UserModel, 'create').mockRejectedValueOnce(new Error('Error saving document'));
 
       const saveError = await saveUser(user);
 

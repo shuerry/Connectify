@@ -36,22 +36,13 @@ const blockUserSpy = jest.spyOn(util, 'blockUser');
 const unblockUserSpy = jest.spyOn(util, 'unblockUser');
 const getRelationsSpy = jest.spyOn(util, 'getRelations');
 
-const startEmailVerificationSpy = jest.spyOn(
-  emailVerificationService,
-  'startEmailVerification',
-);
+const startEmailVerificationSpy = jest.spyOn(emailVerificationService, 'startEmailVerification');
 const confirmEmailVerificationSpy = jest.spyOn(
   emailVerificationService,
   'confirmEmailVerification',
 );
-const requestPasswordResetSpy = jest.spyOn(
-  passwordResetService,
-  'requestPasswordReset',
-);
-const confirmPasswordResetSpy = jest.spyOn(
-  passwordResetService,
-  'confirmPasswordReset',
-);
+const requestPasswordResetSpy = jest.spyOn(passwordResetService, 'requestPasswordReset');
+const confirmPasswordResetSpy = jest.spyOn(passwordResetService, 'confirmPasswordReset');
 
 describe('Test userController', () => {
   beforeEach(() => {
@@ -507,9 +498,7 @@ describe('Test userController', () => {
     it('should return 400 if confirmEmailVerification returns an error', async () => {
       confirmEmailVerificationSpy.mockResolvedValueOnce({ error: 'Invalid token' } as any);
 
-      const res = await supertest(app)
-        .get('/api/user/verifyEmail')
-        .query({ token: 'bad-token' });
+      const res = await supertest(app).get('/api/user/verifyEmail').query({ token: 'bad-token' });
 
       expect(confirmEmailVerificationSpy).toHaveBeenCalledWith('bad-token');
       expect(res.status).toBe(400);
@@ -524,9 +513,7 @@ describe('Test userController', () => {
 
       getUserByUsernameSpy.mockResolvedValueOnce(mockSafeUser);
 
-      const res = await supertest(app)
-        .post('/api/user/verifyEmail')
-        .send({ token: 'good-token' });
+      const res = await supertest(app).post('/api/user/verifyEmail').send({ token: 'good-token' });
 
       expect(confirmEmailVerificationSpy).toHaveBeenCalledWith('good-token');
       expect(getUserByUsernameSpy).toHaveBeenCalledWith('user1');
@@ -558,9 +545,7 @@ describe('Test userController', () => {
     it('should return 500 when confirmEmailVerification throws', async () => {
       confirmEmailVerificationSpy.mockRejectedValueOnce(new Error('boom'));
 
-      const res = await supertest(app)
-        .get('/api/user/verifyEmail')
-        .query({ token: 'tok' });
+      const res = await supertest(app).get('/api/user/verifyEmail').query({ token: 'tok' });
 
       expect(res.status).toBe(500);
       expect(res.body).toEqual({ error: 'Failed to verify email' });

@@ -82,9 +82,7 @@ describe('notificationController', () => {
 
       const { app } = createApp();
 
-      const res = await request(app)
-        .get('/api/notification/bob')
-        .expect(200);
+      const res = await request(app).get('/api/notification/bob').expect(200);
 
       expect(listNotifications).toHaveBeenCalledWith('bob', 20, undefined);
       expect(res.body.items).toEqual([]);
@@ -99,9 +97,7 @@ describe('notificationController', () => {
 
       const { app } = createApp();
 
-      const res = await request(app)
-        .get('/api/notification/error-user')
-        .expect(500);
+      const res = await request(app).get('/api/notification/error-user').expect(500);
 
       expect(res.text).toBe('Error when fetching notifications');
     });

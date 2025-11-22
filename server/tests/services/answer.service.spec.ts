@@ -11,11 +11,7 @@ import {
   getMostRecentAnswerTime,
 } from '../../services/answer.service';
 
-import {
-  DatabaseAnswer,
-  DatabaseQuestion,
-  PopulatedDatabaseQuestion,
-} from '../../types/types';
+import { DatabaseAnswer, DatabaseQuestion, PopulatedDatabaseQuestion } from '../../types/types';
 import { QUESTIONS, ans1, ans4 } from '../mockData.models';
 import * as notificationServiceModule from '../../services/notification.service';
 
@@ -38,9 +34,7 @@ describe('Answer service - saveAnswer', () => {
 
     jest
       .spyOn(AnswerModel, 'create')
-      .mockResolvedValueOnce(mockDBAnswer as unknown as ReturnType<
-        typeof AnswerModel.create
-      >);
+      .mockResolvedValueOnce(mockDBAnswer as unknown as ReturnType<typeof AnswerModel.create>);
 
     const result = (await saveAnswer(mockAnswer)) as DatabaseAnswer;
 
@@ -170,10 +164,7 @@ describe('Answer service - addAnswerToQuestion', () => {
       .mockResolvedValue({ ok: true } as any);
 
     sendAnswerNotificationSpy = jest
-      .spyOn(
-        notificationServiceModule.NotificationService.prototype,
-        'sendAnswerNotification',
-      )
+      .spyOn(notificationServiceModule.NotificationService.prototype, 'sendAnswerNotification')
       .mockResolvedValue(undefined as any);
   });
 
@@ -244,9 +235,7 @@ describe('Answer service - addAnswerToQuestion', () => {
       ansDateTime: new Date(),
     };
 
-    jest
-      .spyOn(QuestionModel, 'findOneAndUpdate')
-      .mockResolvedValueOnce(question as any);
+    jest.spyOn(QuestionModel, 'findOneAndUpdate').mockResolvedValueOnce(question as any);
 
     populateSpy.mockResolvedValueOnce({
       ...question,
@@ -264,10 +253,7 @@ describe('Answer service - addAnswerToQuestion', () => {
       lean: leanMock,
     } as any);
 
-    const result = (await addAnswerToQuestion(
-      question._id.toString(),
-      answer,
-    )) as DatabaseQuestion;
+    const result = (await addAnswerToQuestion(question._id.toString(), answer)) as DatabaseQuestion;
 
     expect(result._id.toString()).toBe(question._id.toString());
 
@@ -304,18 +290,16 @@ describe('Answer service - addAnswerToQuestion', () => {
       ansDateTime: new Date(),
     };
 
-    jest
-      .spyOn(QuestionModel, 'findOneAndUpdate')
-      .mockResolvedValueOnce(question as any);
+    jest.spyOn(QuestionModel, 'findOneAndUpdate').mockResolvedValueOnce(question as any);
 
     populateSpy.mockResolvedValueOnce({
       ...question,
       followers: [new mongoose.Types.ObjectId()],
     } as any);
 
-    const leanMock = jest.fn().mockResolvedValue([
-      { username: 'follower1', email: 'f1@example.com', emailVerified: true },
-    ]);
+    const leanMock = jest
+      .fn()
+      .mockResolvedValue([{ username: 'follower1', email: 'f1@example.com', emailVerified: true }]);
 
     userFindSpy.mockReturnValueOnce({
       select: jest.fn().mockReturnThis(),
@@ -366,8 +350,7 @@ describe('Answer service - deleteAnswer', () => {
     const result = await deleteAnswer('aid1', 'bob');
 
     expect(result).toEqual({
-      error:
-        'Unauthorized: You can only delete your own answers or answers on your question',
+      error: 'Unauthorized: You can only delete your own answers or answers on your question',
     });
   });
 
