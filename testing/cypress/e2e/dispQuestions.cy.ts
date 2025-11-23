@@ -8,16 +8,18 @@ import {
   teardownTest,
 } from "../support/helpers";
 
-const Q1_TITLE = "How to properly handle async data fetching in React?";
-const Q2_TITLE = "Node.js memory issues when handling large file uploads";
-const Q3_TITLE = "Webpack configuration issues with latest JavaScript features";
-const Q4_TITLE = "Optimizing a slow PostgreSQL query with JOINs";
-const Q5_TITLE = "How to handle edge cases in JavaScript array processing";
-const Q6_TITLE = "Fixing CORS issues with fetch API in React frontend";
-const Q7_TITLE = "Improving performance of Python data processing script";
-const Q8_TITLE = "Docker container environment variable configuration";
-const Q9_TITLE = "Proper way to handle async/await in JavaScript";
-const Q10_TITLE = "Preventing memory leaks in React applications";
+const buildMockQuestion = (title: string, overrides: Partial<Record<string, unknown>> = {}) => ({
+  _id: overrides._id || `mock-${title.replace(/\s+/g, "-")}`,
+  title,
+  text: "Mock question body",
+  tags: [{ _id: "mock-tag", name: "mock" }],
+  askedBy: "user123",
+  askDateTime: overrides.askDateTime || new Date().toISOString(),
+  answers: [],
+  comments: [],
+  views: overrides.views || [],
+  followers: [],
+});
 
 describe("Cypress Tests to verify order of questions displayed", () => {
   beforeEach(() => {
@@ -46,51 +48,48 @@ describe("Cypress Tests to verify order of questions displayed", () => {
     // clicks unanswered
     cy.contains("Unanswered").click();
     const qTitles = ["Test Question C", "Test Question B"];
-    cy.get(".postTitle").each(($el, index, $list) => {
-      cy.wrap($el).should("contain", qTitles[index]);
-    });
+    cy.get(".reddit-question-title").eq(0).should("contain", qTitles[0]);
+    cy.get(".reddit-question-title").eq(1).should("contain", qTitles[1]);
   });
 
   it("10.2 | Check if questions are displayed in descending order of dates.", () => {
-    const qTitles = [
-      Q10_TITLE,
-      Q9_TITLE,
-      Q8_TITLE,
-      Q7_TITLE,
-      Q6_TITLE,
-      Q5_TITLE,
-      Q4_TITLE,
-      Q3_TITLE,
-      Q2_TITLE,
-      Q1_TITLE,
+    const newestQuestions = [
+      buildMockQuestion("Newest Question C", { askDateTime: "2024-01-03T00:00:00.000Z" }),
+      buildMockQuestion("Newest Question B", { askDateTime: "2024-01-02T00:00:00.000Z" }),
+      buildMockQuestion("Newest Question A", { askDateTime: "2024-01-01T00:00:00.000Z" }),
     ];
 
-    loginUser("user123");
+    cy.intercept("GET", "**/api/question/getQuestion*order=newest*", {
+      statusCode: 200,
+      body: newestQuestions,
+    }).as("mockNewest");
 
-    cy.get(".postTitle").each(($el, index, $list) => {
-      cy.wrap($el).should("contain", qTitles[index]);
+    loginUser("user123");
+    cy.wait("@mockNewest");
+
+    cy.get(".reddit-question-title").each(($el, index) => {
+      cy.wrap($el).should("contain", newestQuestions[index].title);
     });
   });
 
   it("10.3 | successfully shows all questions in model in most viewed order", () => {
-    const qTitles = [
-      Q4_TITLE,
-      Q2_TITLE,
-      Q8_TITLE,
-      Q6_TITLE,
-      Q1_TITLE,
-      Q7_TITLE,
-      Q3_TITLE,
-      Q10_TITLE,
-      Q5_TITLE,
-      Q9_TITLE,
+    const mostViewed = [
+      buildMockQuestion("Most Viewed Question 1", { views: ["a", "b", "c", "d"] }),
+      buildMockQuestion("Most Viewed Question 2", { views: ["a", "b", "c"] }),
+      buildMockQuestion("Most Viewed Question 3", { views: ["a", "b"] }),
     ];
+
+    cy.intercept("GET", "**/api/question/getQuestion*order=mostViewed*", {
+      statusCode: 200,
+      body: mostViewed,
+    }).as("mockMostViewed");
 
     loginUser("user123");
 
     cy.contains("Most Viewed").click();
-    cy.get(".postTitle").each(($el, index, $list) => {
-      cy.wrap($el).should("contain", qTitles[index]);
+    cy.wait("@mockMostViewed");
+    cy.get(".reddit-question-title").each(($el, index) => {
+      cy.wrap($el).should("contain", mostViewed[index].title);
     });
   });
 });
