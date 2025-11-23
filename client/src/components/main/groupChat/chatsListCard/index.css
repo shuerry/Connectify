@@ -22,13 +22,17 @@
 .group-chat-icon {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
+}
+
+.group-chat-icon.community-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
 .chat-card-info {
@@ -46,6 +50,17 @@
   text-overflow: ellipsis;
 }
 
+.chat-card-badge {
+  display: inline-block;
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin: 2px 0 0 0;
+}
+
 .chat-card-subtitle {
   margin: 2px 0 0 0;
   font-size: 12px;
@@ -59,12 +74,6 @@
   background-color: #e0f2fe;
 }
 
-.chats-list-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .chats-list-card__unread-dot {
   width: 10px;
   height: 10px;
@@ -73,3 +82,4 @@
   flex-shrink: 0;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
+

@@ -16,10 +16,16 @@ export interface MessageInChat extends DatabaseMessage {
  * Represents a Chat with participants and messages (unpopulated).
  * - `participants`: Record of usernames representing the chat participants and their notification preferences.
  * - `messages`: Array of `Message` objects.
+ * - `name`: Optional name for group chats.
+ * - `isCommunityChat`: Whether this is a community chat (synced with community membership).
+ * - `communityId`: Optional reference to the community this chat is linked to.
  */
 export interface Chat {
   participants: Record<string, boolean>; // username -> Notify preference
   messages: Message[];
+  name?: string; // Optional name for group chats
+  isCommunityChat?: boolean; // Whether this is a community chat
+  communityId?: ObjectId; // Reference to community if this is a community chat
 }
 
 /**
@@ -27,12 +33,18 @@ export interface Chat {
  * - `_id`: Unique identifier for the chat.
  * - `participants`: Array of user ObjectIds representing the chat participants.
  * - `messages`: Array of ObjectIds referencing messages in the chat.
+ * - `name`: Optional name for group chats.
+ * - `isCommunityChat`: Whether this is a community chat (synced with community membership).
+ * - `communityId`: Optional reference to the community this chat is linked to.
  * - `createdAt`: Timestamp for when the chat was created (set by Mongoose).
  * - `updatedAt`: Timestamp for when the chat was last updated (set by Mongoose).
  */
 export interface DatabaseChat extends Omit<Chat, 'messages'> {
   _id: ObjectId;
   messages: ObjectId[];
+  name?: string; // Optional name for group chats
+  isCommunityChat?: boolean; // Whether this is a community chat
+  communityId?: ObjectId; // Reference to community if this is a community chat
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +65,9 @@ export interface CreateChatRequest extends Request {
   body: {
     participants: Record<string, boolean>;
     messages: Omit<Message, 'type'>[];
+    name?: string; // Optional name for group chats
+    isCommunityChat?: boolean; // Whether this is a community chat
+    communityId?: string; // Community ID if this is a community chat
   };
 }
 

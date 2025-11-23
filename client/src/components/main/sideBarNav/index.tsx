@@ -154,6 +154,11 @@ const SideBarNav = () => {
                   className={`nav-subitem ${isActiveOption('/messaging/direct-message')}`}>
                   <span className='nav-subitem-text'>Direct Messages</span>
                 </NavLink>
+                <NavLink
+                  to='/messaging/group-chat'
+                  className={`nav-subitem ${isActiveOption('/messaging/group-chat')}`}>
+                  <span className='nav-subitem-text'>Group Chats</span>
+                </NavLink>
               </div>
             )}
 

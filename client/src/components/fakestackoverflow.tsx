@@ -14,6 +14,7 @@ import NewAnswerPage from './main/newAnswer';
 import AnswerPage from './main/answerPage';
 import MessagingPage from './main/messagingPage';
 import DirectMessage from './main/directMessage';
+import GroupChat from './main/groupChat';
 import Signup from './auth/signup';
 import UsersListPage from './main/usersListPage';
 import ProfileSettings from './profileSettings';
@@ -127,6 +128,7 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
             <Route path='tags' element={<TagPage />} />
             <Route path='/messaging' element={<MessagingPage />} />
             <Route path='/messaging/direct-message' element={<DirectMessage />} />
+            <Route path='/messaging/group-chat' element={<GroupChat />} />
             <Route path='/question/:qid' element={<AnswerPage />} />
             <Route path='/new/question' element={<NewQuestionPage />} />
             <Route path='/new/answer/:qid' element={<NewAnswerPage />} />

@@ -1,5 +1,6 @@
 import CommunityModel from '../models/community.model';
 import { Community, CommunityResponse, DatabaseCommunity } from '../types/types';
+import { syncCommunityChatParticipants } from './chat.service';
 
 /**
  * Retrieves a community by its ID.
@@ -81,7 +82,19 @@ export const toggleCommunityMembership = async (
       );
     }
 
-    return updatedCommunity || { error: 'Failed to update community' };
+    if (!updatedCommunity) {
+      return { error: 'Failed to update community' };
+    }
+
+    // Sync community chat participants if a community chat exists
+    try {
+      await syncCommunityChatParticipants(communityId, updatedCommunity.participants);
+    } catch (err) {
+      // Log error but don't fail the membership update
+      console.error('Error syncing community chat participants:', err);
+    }
+
+    return updatedCommunity;
   } catch (err) {
     return { error: (err as Error).message };
   }

@@ -30,6 +30,9 @@ export const saveChat = async (chatPayload: Chat): Promise<ChatResponse> => {
     return await ChatModel.create({
       participants: chatPayload.participants,
       messages: messageIds,
+      name: chatPayload.name,
+      isCommunityChat: chatPayload.isCommunityChat || false,
+      communityId: chatPayload.communityId,
     });
   } catch (error) {
     return { error: `Error saving chat: ${error}` };
@@ -226,5 +229,65 @@ export const toggleNotify = async (chatId: string, username: string): Promise<Ch
     return updatedChat as DatabaseChat;
   } catch (error) {
     return { error: `Error toggling notification status: ${(error as Error).message}` };
+  }
+};
+
+/**
+ * Syncs chat participants with community members.
+ * Adds new community members to the chat and removes members who left.
+ * @param communityId - The ID of the community
+ * @param communityParticipants - Array of usernames who are currently in the community
+ * @returns {Promise<ChatResponse>} - The updated chat or an error message
+ */
+export const syncCommunityChatParticipants = async (
+  communityId: string,
+  communityParticipants: string[],
+): Promise<ChatResponse> => {
+  try {
+    // Find the community chat
+    const chat = await ChatModel.findOne({ communityId, isCommunityChat: true });
+    if (!chat) {
+      return { error: 'Community chat not found' };
+    }
+
+    const currentParticipants = Object.keys(chat.participants);
+    const participantsSet = new Set(communityParticipants);
+
+    // Add new participants
+    const participantsMap = chat.participants as unknown as Map<string, boolean>;
+    for (const participant of communityParticipants) {
+      if (!participantsMap.has(participant)) {
+        participantsMap.set(participant, true);
+      }
+    }
+
+    // Remove participants who are no longer in the community
+    for (const participant of currentParticipants) {
+      if (!participantsSet.has(participant)) {
+        participantsMap.delete(participant);
+      }
+    }
+
+    const updatedChat = await chat.save();
+    return updatedChat as DatabaseChat;
+  } catch (error) {
+    return { error: `Error syncing community chat participants: ${(error as Error).message}` };
+  }
+};
+
+/**
+ * Gets a community chat by community ID.
+ * @param communityId - The ID of the community
+ * @returns {Promise<ChatResponse>} - The chat or an error message
+ */
+export const getCommunityChat = async (communityId: string): Promise<ChatResponse> => {
+  try {
+    const chat = await ChatModel.findOne({ communityId, isCommunityChat: true });
+    if (!chat) {
+      return { error: 'Community chat not found' };
+    }
+    return chat;
+  } catch (error) {
+    return { error: `Error retrieving community chat: ${(error as Error).message}` };
   }
 };
