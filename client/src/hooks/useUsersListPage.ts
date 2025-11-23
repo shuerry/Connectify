@@ -77,12 +77,31 @@ const useUsersListPage = () => {
       });
     };
 
+    /**
+     * Function to handle user status updates from the socket.
+     */
+    const handleUserStatusUpdate = (payload: {
+      username: string;
+      isOnline: boolean;
+      showOnlineStatus: boolean;
+    }) => {
+      setUserList(prevUserList =>
+        prevUserList.map(user =>
+          user.username === payload.username
+            ? { ...user, isOnline: payload.isOnline, showOnlineStatus: payload.showOnlineStatus }
+            : user,
+        ),
+      );
+    };
+
     fetchData();
 
     socket.on('userUpdate', handleModifiedUserUpdate);
+    socket.on('userStatusUpdate', handleUserStatusUpdate);
 
     return () => {
       socket.off('userUpdate', handleModifiedUserUpdate);
+      socket.off('userStatusUpdate', handleUserStatusUpdate);
     };
   }, [socket]);
 

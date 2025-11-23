@@ -27,6 +27,11 @@
   min-width: 180px;
 }
 
+.user-avatar {
+  margin-right: var(--space-3);
+  flex-shrink: 0;
+}
+
 .user_mid {
   flex: 1;
   margin-right: var(--space-4);

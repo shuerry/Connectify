@@ -4,6 +4,7 @@ import { SafeDatabaseUser } from '../../../../types/types';
 import useUserContext from '../../../../hooks/useUserContext';
 import { removeFriend, blockUser, getRelations } from '../../../../services/userService';
 import { addDirectMessage, getDirectMessages } from '../../../../services/messageService';
+import Avatar from '../../../common/Avatar/Avatar';
 
 /**
  * Interface representing the props for the User component.
@@ -96,6 +97,14 @@ const UserCardView = (props: UserProps) => {
 
   return (
     <div className='user right_padding' onClick={() => handleUserCardViewClickHandler(user)}>
+      <Avatar
+        name={user.username}
+        size='md'
+        variant='circle'
+        isOnline={user.isOnline}
+        showOnlineStatus={user.showOnlineStatus}
+        className='user-avatar'
+      />
       <div className='user_mid'>
         <div className='userUsername'>{user.username}</div>
       </div>

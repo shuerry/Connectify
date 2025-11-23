@@ -34,6 +34,7 @@ const ProfileSettings: React.FC = () => {
     handleUpdateEmail,
     handleDeleteUser,
     handleViewCollectionsPage,
+    handleToggleOnlineStatus,
   } = useProfileSettings();
 
   if (loading) {
@@ -172,6 +173,34 @@ const ProfileSettings: React.FC = () => {
               <strong>Date Joined:</strong>{' '}
               {userData.dateJoined ? new Date(userData.dateJoined).toLocaleDateString() : 'N/A'}
             </p>
+
+            {/* ---- Online Status Section ---- */}
+            {canEditProfile && (
+              <>
+                <h4>Online Status</h4>
+                <div className='bio-section'>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label
+                      htmlFor='online-status-toggle'
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input
+                        id='online-status-toggle'
+                        type='checkbox'
+                        checked={userData.showOnlineStatus ?? true}
+                        onChange={handleToggleOnlineStatus}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Show my online status to others</span>
+                    </label>
+                  </div>
+                  <p style={{ fontSize: '0.9em', color: '#666', marginTop: '8px' }}>
+                    {userData.showOnlineStatus
+                      ? 'Other users can see when you are online.'
+                      : 'Your online status is hidden from others.'}
+                  </p>
+                </div>
+              </>
+            )}
 
             <button className='button button-primary' onClick={handleViewCollectionsPage}>
               View Collections

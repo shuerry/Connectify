@@ -37,6 +37,8 @@ export interface User extends UserCredentials {
     tokenHash?: string;
     expiresAt?: Date;
   };
+  isOnline?: boolean;
+  showOnlineStatus?: boolean;
 }
 
 /**

@@ -140,6 +140,61 @@
   right: 4px;
 }
 
+/* Online Status Indicator - positioned at lower left */
+.avatar__online-status {
+  position: absolute;
+  border: 2px solid var(--bg-surface, #fff);
+  border-radius: var(--radius-full, 50%);
+  background-color: #999;
+  z-index: 10;
+}
+
+/* Online Status Positioning by Size - Lower Left */
+.avatar--xs .avatar__online-status {
+  width: 8px;
+  height: 8px;
+  bottom: -1px;
+  left: -1px;
+  border-width: 1.5px;
+}
+
+.avatar--sm .avatar__online-status,
+.avatar--md .avatar__online-status {
+  width: 10px;
+  height: 10px;
+  bottom: 0;
+  left: 0;
+  border-width: 2px;
+}
+
+.avatar--lg .avatar__online-status {
+  width: 12px;
+  height: 12px;
+  bottom: 2px;
+  left: 2px;
+  border-width: 2px;
+}
+
+.avatar--xl .avatar__online-status,
+.avatar--2xl .avatar__online-status {
+  width: 14px;
+  height: 14px;
+  bottom: 4px;
+  left: 4px;
+  border-width: 2px;
+}
+
+/* Online Status Colors */
+.avatar__online-status--online {
+  background-color: #4caf50;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
+}
+
+.avatar__online-status--offline {
+  background-color: #999;
+  box-shadow: none;
+}
+
 /* Status Dot */
 .avatar__status-dot {
   width: 100%;
@@ -247,6 +302,19 @@
 /* Dark Mode Adjustments */
 [data-theme="dark"] .avatar__status {
   border-color: var(--gray-800);
+}
+
+[data-theme="dark"] .avatar__online-status {
+  border-color: var(--bg-surface, #1a1a1a);
+}
+
+[data-theme="dark"] .avatar__online-status--online {
+  background-color: #66bb6a;
+  box-shadow: 0 0 4px rgba(102, 187, 106, 0.5);
+}
+
+[data-theme="dark"] .avatar__online-status--offline {
+  background-color: #666;
 }
 
 /* Responsive Design */

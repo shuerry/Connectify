@@ -179,6 +179,7 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: var(--shadow-sm);
+  position: relative;
 }
 
 .user-avatar:hover {
@@ -190,6 +191,41 @@
   font-size: var(--text-sm);
   font-weight: 600;
   color: white;
+}
+
+/* Online Status Indicator for Header Avatar */
+.user-avatar__online-status {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  bottom: 0;
+  left: 0;
+  border: 2px solid var(--bg-surface, #fff);
+  border-radius: 50%;
+  z-index: 10;
+}
+
+.user-avatar__online-status--online {
+  background-color: #4caf50;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
+}
+
+.user-avatar__online-status--offline {
+  background-color: #999;
+  box-shadow: none;
+}
+
+[data-theme='dark'] .user-avatar__online-status {
+  border-color: var(--bg-surface, #1a1a1a);
+}
+
+[data-theme='dark'] .user-avatar__online-status--online {
+  background-color: #66bb6a;
+  box-shadow: 0 0 4px rgba(102, 187, 106, 0.5);
+}
+
+[data-theme='dark'] .user-avatar__online-status--offline {
+  background-color: #666;
 }
 
 .user-menu {
