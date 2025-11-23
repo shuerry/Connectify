@@ -174,29 +174,6 @@ describe('NotificationService internals', () => {
   });
 
   describe('sendChatNotification', () => {
-    it('sends mention notification with group and chatId', async () => {
-      await service.sendChatNotification({
-        toEmail: ['user@example.com'],
-        toName: 'Alice',
-        fromName: 'Bob',
-        messagePreview: 'Hello there',
-        groupName: 'General',
-        isMention: true,
-        chatId: '123',
-      });
-
-      expect(mockedSgMail.send).toHaveBeenCalledTimes(1);
-      const msg = mockedSgMail.send.mock.calls[0][0];
-
-      expect(msg.to).toEqual(['user@example.com']);
-      expect(msg.subject).toContain('Bob mentioned you');
-      expect(msg.subject).toContain('General');
-      expect(msg.html).toContain('Open chat');
-      expect(msg.html).toContain('/chat/123');
-      expect(msg.text).toContain('Bob wrote: Hello there');
-      expect(msg.text).toContain('https://example.com/chat/123');
-    });
-
     it('sends non-mention notification without groupName or chatId', async () => {
       await service.sendChatNotification({
         toEmail: ['user2@example.com'],

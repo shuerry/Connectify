@@ -181,8 +181,45 @@
   color: #b91c1c;
 }
 
+.delete-btn {
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: none;
+}
+
 .delete-label {
-  font-size: 0.75rem;
   text-transform: none;
   letter-spacing: 0.02em;
+}
+
+.reddit-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: #878A8C;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.reddit-action-btn:hover {
+  background: #F6F7F8;
+  color: #1A1A1B;
+}
+
+.report-btn {
+  color: #EF4444 !important;
+}
+
+.report-btn:hover {
+  background-color: #FEF2F2 !important;
+  color: #DC2626 !important;
 }

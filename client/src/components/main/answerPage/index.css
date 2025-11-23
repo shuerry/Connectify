@@ -114,6 +114,9 @@
   padding: 16px 24px;
   border-bottom: 1px solid #e5e7eb;
   background: linear-gradient(135deg, #f9fafb, #eef2ff);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .reddit-answers-header h3 {
@@ -141,13 +144,13 @@
   transform: translateY(-1px);
 }
 
-/* Answer Form Trigger */
+/* Answer Form Trigger
 .reddit-answer-form-trigger {
   padding: 20px 24px;
   background: #f9fafb;
   border-top: 1px solid #e5e7eb;
   text-align: center;
-}
+} */
 
 .reddit-answer-button {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
@@ -165,6 +168,7 @@
   text-transform: none;
   letter-spacing: 0.02em;
   box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+  margin-right: 0;
 }
 
 .reddit-answer-button:hover {
