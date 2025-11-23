@@ -208,6 +208,36 @@ export const addParticipantToChat = async (
 };
 
 /**
+ * Removes a participant from an existing chat.
+ * @param chatId - The ID of the chat to update.
+ * @param username - The username to remove from the chat.
+ * @returns {Promise<ChatResponse>} - The updated chat or an error message.
+ */
+export const removeParticipantFromChat = async (
+  chatId: string,
+  username: string,
+): Promise<ChatResponse> => {
+  try {
+    const updatePath = `participants.${username}`;
+
+    // Remove participant if they are in the chat
+    const updatedChat: DatabaseChat | null = await ChatModel.findOneAndUpdate(
+      { _id: chatId, [updatePath]: { $exists: true } },
+      { $unset: { [updatePath]: '' } },
+      { new: true }, // Return the updated document
+    );
+
+    if (!updatedChat) {
+      throw new Error('Chat not found or user is not a participant.');
+    }
+
+    return updatedChat;
+  } catch (error) {
+    return { error: `Error removing participant from chat: ${(error as Error).message}` };
+  }
+};
+
+/**
  * Toggles the notification preference for a participant in a chat.
  * @param chatId - The ID of the chat to update.
  * @param username - The username of the participant whose preference is to be toggled.

@@ -1,6 +1,6 @@
 import CommunityModel from '../models/community.model';
 import { Community, CommunityResponse, DatabaseCommunity } from '../types/types';
-import { syncCommunityChatParticipants } from './chat.service';
+import { getCommunityChat, addParticipantToChat, removeParticipantFromChat } from './chat.service';
 
 /**
  * Retrieves a community by its ID.
@@ -86,15 +86,26 @@ export const toggleCommunityMembership = async (
       return { error: 'Failed to update community' };
     }
 
-    // Sync community chat participants if a community chat exists
+    // Update community chat participants if a community chat exists
+    // This will be handled by the controller to emit socket events
     try {
-      await syncCommunityChatParticipants(communityId, updatedCommunity.participants);
+      const communityChat = await getCommunityChat(communityId);
+      if (!('error' in communityChat)) {
+        if (isParticipant) {
+          // User left the community, remove them from the community chat
+          await removeParticipantFromChat(communityChat._id.toString(), username);
+        } else {
+          // User joined the community, add them to the community chat
+          await addParticipantToChat(communityChat._id.toString(), username);
+        }
+      }
     } catch (err) {
       // Log error but don't fail the membership update
-      console.error('Error syncing community chat participants:', err);
+      console.error('Error updating community chat participants:', err);
     }
 
-    return updatedCommunity;
+    // At this point, updatedCommunity is guaranteed to be non-null due to the check above
+    return updatedCommunity as DatabaseCommunity;
   } catch (err) {
     return { error: (err as Error).message };
   }

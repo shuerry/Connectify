@@ -13,6 +13,9 @@ import {
   createCommunity,
   deleteCommunity,
 } from '../services/community.service';
+import { getCommunityChat } from '../services/chat.service';
+import { populateDocument } from '../utils/database.util';
+import { PopulatedDatabaseChat } from '../types/types';
 
 /**
  * This controller handles community-related routes.
@@ -99,6 +102,26 @@ const communityController = (socket: FakeSOSocket) => {
         type: 'updated',
         community: result,
       });
+
+      // Emit chat update if community chat exists and was updated
+      try {
+        const communityChat = await getCommunityChat(communityId);
+        if (!('error' in communityChat)) {
+          const populatedChat = await populateDocument(
+            communityChat._id.toString(),
+            'chat',
+          );
+          if (!('error' in populatedChat)) {
+            socket.emit('chatUpdate', {
+              chat: populatedChat as PopulatedDatabaseChat,
+              type: 'newParticipant',
+            });
+          }
+        }
+      } catch (err) {
+        // Log error but don't fail the response
+        console.error('Error emitting chat update:', err);
+      }
 
       res.json(result);
     } catch (err: unknown) {
