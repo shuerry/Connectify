@@ -89,9 +89,47 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
     // join on mount / login
     socket.emit('joinUserRoom', user.username);
 
+    // Listen for user status updates for the current user
+    const handleUserStatusUpdate = (payload: {
+      username: string;
+      isOnline: boolean;
+      showOnlineStatus: boolean;
+    }) => {
+      if (payload.username === user.username) {
+        setUser(prevUser => {
+          if (!prevUser) return prevUser;
+          return {
+            ...prevUser,
+            isOnline: payload.isOnline,
+            showOnlineStatus: payload.showOnlineStatus,
+          };
+        });
+        // Also update localStorage
+        const current = localStorage.getItem('currentUser');
+        if (current) {
+          const currentUser = JSON.parse(current);
+          currentUser.isOnline = payload.isOnline;
+          currentUser.showOnlineStatus = payload.showOnlineStatus;
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        }
+      }
+    };
+
+    const handleUserUpdate = (payload: { user: SafeDatabaseUser; type: string }) => {
+      if (payload.user.username === user.username) {
+        setUser(payload.user);
+        localStorage.setItem('currentUser', JSON.stringify(payload.user));
+      }
+    };
+
+    socket.on('userStatusUpdate', handleUserStatusUpdate);
+    socket.on('userUpdate', handleUserUpdate);
+
     // leave on unmount / logout or username change
     return () => {
       socket.emit('leaveUserRoom', user.username);
+      socket.off('userStatusUpdate', handleUserStatusUpdate);
+      socket.off('userUpdate', handleUserUpdate);
     };
   }, [socket, user?.username]);
 

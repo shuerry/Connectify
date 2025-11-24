@@ -156,6 +156,18 @@ export interface TypingIndicatorPayload {
 }
 
 /**
+ * Payload for a user status update event.
+ * - `username`: The username of the user whose status changed.
+ * - `isOnline`: Whether the user is currently online.
+ * - `showOnlineStatus`: Whether the user wants to show their online status.
+ */
+export interface UserStatusUpdatePayload {
+  username: string;
+  isOnline: boolean;
+  showOnlineStatus: boolean;
+}
+
+/**
  * Interface representing the events the client can emit to the server.
  * - `makeMove`: Client can emit a move in the game.
  * - `joinGame`: Client can join a game.
@@ -230,4 +242,6 @@ export interface ServerToClientEvents {
   commentDelete: (payload: { parentId: ObjectId; cid: ObjectId }) => void;
   // Send notification update (for user-specific room)
   notificationUpdate: () => void;
+  // Send user status update (online/offline status change)
+  userStatusUpdate: (payload: UserStatusUpdatePayload) => void;
 }

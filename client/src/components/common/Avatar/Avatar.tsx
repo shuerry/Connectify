@@ -9,6 +9,8 @@ interface AvatarProps {
   variant?: 'circle' | 'rounded' | 'square';
   status?: 'online' | 'offline' | 'away' | 'busy';
   showStatus?: boolean;
+  isOnline?: boolean;
+  showOnlineStatus?: boolean;
   fallbackColor?: string;
   className?: string;
   onClick?: () => void;
@@ -26,6 +28,8 @@ const Avatar: React.FC<AvatarProps> = ({
   variant = 'circle',
   status,
   showStatus = false,
+  isOnline,
+  showOnlineStatus = true,
   fallbackColor,
   className = '',
   onClick,
@@ -91,6 +95,13 @@ const Avatar: React.FC<AvatarProps> = ({
         <div className={`avatar__status avatar__status--${status}`} title={status}>
           <div className='avatar__status-dot'></div>
         </div>
+      )}
+
+      {/* Online Status Indicator - positioned at lower left */}
+      {showOnlineStatus !== false && isOnline !== undefined && (
+        <div
+          className={`avatar__online-status ${isOnline ? 'avatar__online-status--online' : 'avatar__online-status--offline'}`}
+          title={isOnline ? 'Online' : 'Offline'}></div>
       )}
     </div>
   );
