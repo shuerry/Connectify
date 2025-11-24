@@ -1,3 +1,26 @@
+/**
+ * Toggles the user's read receipts preference.
+ */
+export const toggleReadReceipts = async (username: string): Promise<UserResponse> => {
+  try {
+    const user = await UserModel.findOne({ username });
+    if (!user) {
+      throw Error('User not found');
+    }
+    const newReadReceiptsEnabled = !(user.readReceiptsEnabled ?? true);
+    const updatedUser: SafeDatabaseUser | null = await UserModel.findOneAndUpdate(
+      { username },
+      { $set: { readReceiptsEnabled: newReadReceiptsEnabled } },
+      { new: true },
+    ).select('-password');
+    if (!updatedUser) {
+      throw Error('Error updating read receipts preference');
+    }
+    return updatedUser;
+  } catch (error) {
+    return { error: `Error when toggling read receipts: ${error}` };
+  }
+};
 import UserModel from '../models/users.model';
 import {
   DatabaseUser,

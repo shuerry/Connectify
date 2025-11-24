@@ -349,10 +349,21 @@ export const markMessagesAsRead = async (
 ): Promise<{ success: boolean } | { error: string }> => {
   try {
     const ChatModel = (await import('../models/chat.model')).default;
+    const UserModel = (await import('../models/users.model')).default;
     const chat = await ChatModel.findById(chatId);
 
     if (!chat) {
       return { error: 'Chat not found' };
+    }
+
+    // Check if user has read receipts enabled
+    const user = await UserModel.findOne({ username: readerUsername });
+    if (!user) {
+      return { error: 'User not found' };
+    }
+    if (user.readReceiptsEnabled === false) {
+      // Do not mark messages as read if user has disabled read receipts
+      return { success: true };
     }
 
     // Get all messages in the chat

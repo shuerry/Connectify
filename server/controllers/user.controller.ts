@@ -22,8 +22,29 @@ import {
   unblockUser,
   getRelations,
   toggleOnlineStatusVisibility,
+  toggleReadReceipts,
   getOnlineStatus,
 } from '../services/user.service';
+/**
+ * Toggles the user's read receipts preference.
+ */
+const toggleReadReceiptsRoute = async (req: express.Request, res: Response): Promise<void> => {
+  try {
+    const { username } = req.body;
+    if (!username) {
+      res.status(400).send('Username is required');
+      return;
+    }
+    const result = await toggleReadReceipts(username);
+    if ('error' in result) {
+      res.status(500).send(result.error);
+      return;
+    }
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).send(`Error when toggling read receipts: ${error}`);
+  }
+};
 import {
   confirmEmailVerification,
   startEmailVerification,
@@ -459,6 +480,8 @@ const userController = (socket: FakeSOSocket) => {
   router.post('/forgotPassword', forgotPassword);
   router.post('/resetPasswordWithToken', resetPasswordWithToken);
   router.post('/toggleOnlineStatus', toggleOnlineStatusRoute);
+  router.post('/toggleReadReceipts', toggleReadReceiptsRoute);
+  router.post('/toggleReadReceipts', toggleReadReceiptsRoute);
   router.get('/onlineStatus/:username', getOnlineStatusRoute);
   return router;
 };

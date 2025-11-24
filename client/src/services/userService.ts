@@ -1,3 +1,13 @@
+/**
+ * Toggles the user's read receipts preference.
+ */
+const toggleReadReceipts = async (username: string): Promise<SafeDatabaseUser> => {
+  const res = await api.post(`${USER_API_URL}/toggleReadReceipts`, { username });
+  if (res.status !== 200) {
+    throw new Error('Error when toggling read receipts');
+  }
+  return res.data;
+};
 import axios from 'axios';
 import { UserCredentials, SafeDatabaseUser } from '../types/types';
 import api from './config';
@@ -285,4 +295,5 @@ export {
   resetPasswordWithToken,
   toggleOnlineStatus,
   getOnlineStatus,
+  toggleReadReceipts,
 };

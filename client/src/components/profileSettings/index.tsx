@@ -35,6 +35,7 @@ const ProfileSettings: React.FC = () => {
     handleDeleteUser,
     handleViewCollectionsPage,
     handleToggleOnlineStatus,
+    handleToggleReadReceipts,
   } = useProfileSettings();
 
   if (loading) {
@@ -202,6 +203,35 @@ const ProfileSettings: React.FC = () => {
                     {userData.showOnlineStatus
                       ? 'Other users can see when you are online.'
                       : 'Your online status is hidden from others.'}
+                  </p>
+                </div>
+
+                {/* ---- Read Receipts Section ---- */}
+                <h4>Read Receipts</h4>
+                <div className='bio-section'>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label
+                      htmlFor='read-receipts-toggle'
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                      }}>
+                      <input
+                        id='read-receipts-toggle'
+                        type='checkbox'
+                        checked={userData.readReceiptsEnabled ?? true}
+                        onChange={handleToggleReadReceipts}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Show read receipts to others</span>
+                    </label>
+                  </div>
+                  <p style={{ fontSize: '0.9em', color: '#666', marginTop: '8px' }}>
+                    {userData.readReceiptsEnabled
+                      ? 'Other users can see when you have read their messages.'
+                      : 'Your read receipts are hidden from others.'}
                   </p>
                 </div>
               </>

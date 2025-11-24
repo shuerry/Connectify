@@ -7,7 +7,9 @@ import {
   updateBiography,
   updateEmail,
   toggleOnlineStatus,
+  toggleReadReceipts,
 } from '../services/userService';
+// ...existing code...
 import { SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
 import logger from '../utils/logger';
@@ -235,6 +237,24 @@ const useProfileSettings = () => {
     }
   };
 
+  /**
+   * Handler for toggling read receipts preference
+   */
+  const handleToggleReadReceipts = async () => {
+    if (!username) return;
+    try {
+      const updatedUser = await toggleReadReceipts(username);
+      setUserData(updatedUser);
+      setSuccessMessage(
+        `Read receipts ${updatedUser.readReceiptsEnabled ? 'enabled' : 'disabled'}`,
+      );
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage('Failed to toggle read receipts.');
+      setSuccessMessage(null);
+    }
+  };
+
   return {
     userData,
     newPassword,
@@ -265,6 +285,7 @@ const useProfileSettings = () => {
     handleDeleteUser,
     handleViewCollectionsPage,
     handleToggleOnlineStatus,
+    handleToggleReadReceipts,
   };
 };
 

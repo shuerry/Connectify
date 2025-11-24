@@ -69,6 +69,10 @@ const userSchema: Schema = new Schema(
       type: Boolean,
       default: true,
     },
+    readReceiptsEnabled: {
+      type: Boolean,
+      default: true,
+    },
   },
   { collection: 'User' },
 );

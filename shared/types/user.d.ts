@@ -39,6 +39,7 @@ export interface User extends UserCredentials {
   };
   isOnline?: boolean;
   showOnlineStatus?: boolean;
+  readReceiptsEnabled?: boolean;
 }
 
 /**
@@ -52,6 +53,7 @@ export interface User extends UserCredentials {
  */
 export interface DatabaseUser extends User {
   _id: ObjectId;
+  readReceiptsEnabled?: boolean;
 }
 
 /**
@@ -81,7 +83,7 @@ export interface UserByUsernameRequest extends Request {
 /**
  * Represents a "safe" user object that excludes sensitive information like the password.
  */
-export type SafeDatabaseUser = Omit<DatabaseUser, 'password'>;
+export type SafeDatabaseUser = Omit<DatabaseUser, 'password'> & { showReadReceipts?: boolean };
 
 /**
  * Represents the response for user-related operations.
