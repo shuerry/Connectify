@@ -19,6 +19,7 @@ import {
 } from '../services/chatService';
 import { getDirectMessages } from '../services/messageService';
 import { getRelations, getUserByUsername } from '../services/userService';
+import filter from 'leo-profanity';
 
 /**
  * useDirectMessage is a custom hook that provides state and functions for direct messaging between users.
@@ -38,6 +39,8 @@ const useDirectMessage = () => {
   const [participantUsers, setParticipantUsers] = useState<Map<string, SafeDatabaseUser>>(
     new Map(),
   );
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [filterReason, setFilterReason] = useState('');
   const selectedChatIdRef = useRef<ObjectId | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef<boolean>(false);
@@ -56,6 +59,16 @@ const useDirectMessage = () => {
 
   const handleSendMessage = async () => {
     if (newMessage.trim() && selectedChat?._id) {
+      // Check for profanity before sending
+      const hits = filter.badWordsUsed(newMessage);
+      if (hits.length > 0) {
+        setFilterReason(
+          `Your message contains inappropriate language. Please remove: ${hits.join(', ')}`,
+        );
+        setIsFilterModalOpen(true);
+        return;
+      }
+
       // Stop typing indicator when sending message
       if (isTypingRef.current && selectedChat._id) {
         socket.emit('typingStop', { chatID: String(selectedChat._id), username: user.username });
@@ -455,6 +468,9 @@ const useDirectMessage = () => {
 
     fetchChats();
 
+    // Ensure the profanity dictionary is available before checking text
+    filter.loadDictionary('en');
+
     // Set up socket listeners
     socket.on('chatUpdate', handleChatUpdate);
     socket.on('messageUpdate', handleMessageUpdate);
@@ -670,6 +686,9 @@ const useDirectMessage = () => {
     typingUsers,
     participantUsers,
     otherParticipantUser,
+    isFilterModalOpen,
+    setIsFilterModalOpen,
+    filterReason,
   };
 };
 

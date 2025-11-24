@@ -7,6 +7,7 @@ import {
   TypingIndicatorPayload,
 } from '../types/types';
 import { addMessage, getMessages } from '../services/messageService';
+import filter from 'leo-profanity';
 
 /**
  * Custom hook that handles the logic for the messaging page.
@@ -23,6 +24,8 @@ const useMessagingPage = () => {
   const [newMessage, setNewMessage] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [filterReason, setFilterReason] = useState('');
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef<boolean>(false);
 
@@ -33,6 +36,11 @@ const useMessagingPage = () => {
     };
 
     fetchMessages();
+  }, []);
+
+  useEffect(() => {
+    // Ensure the profanity dictionary is available before checking text
+    filter.loadDictionary('en');
   }, []);
 
   useEffect(() => {
@@ -105,6 +113,16 @@ const useMessagingPage = () => {
 
     setError('');
 
+    // Check for profanity before sending
+    const hits = filter.badWordsUsed(newMessage);
+    if (hits.length > 0) {
+      setFilterReason(
+        `Your message contains inappropriate language. Please remove: ${hits.join(', ')}`,
+      );
+      setIsFilterModalOpen(true);
+      return;
+    }
+
     // Stop typing indicator when sending message
     if (isTypingRef.current) {
       socket.emit('typingStop', { username: user.username });
@@ -172,6 +190,9 @@ const useMessagingPage = () => {
     handleSendMessage,
     error,
     typingUsers,
+    isFilterModalOpen,
+    setIsFilterModalOpen,
+    filterReason,
   };
 };
 

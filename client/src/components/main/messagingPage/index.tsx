@@ -1,14 +1,24 @@
 import './index.css';
 import useMessagingPage from '../../../hooks/useMessagingPage';
 import MessageCard from '../messageCard';
+import ProfanityFilterModal from '../newQuestion/profanityFilterModal';
 
 /**
  * Represents the MessagingPage component which displays the public chat room.
  * Modern design with improved UX and visual hierarchy.
  */
 const MessagingPage = () => {
-  const { messages, newMessage, setNewMessage, handleSendMessage, error, typingUsers } =
-    useMessagingPage();
+  const {
+    messages,
+    newMessage,
+    setNewMessage,
+    handleSendMessage,
+    error,
+    typingUsers,
+    isFilterModalOpen,
+    setIsFilterModalOpen,
+    filterReason,
+  } = useMessagingPage();
 
   const typingUsersArray = Array.from(typingUsers);
   const typingText =
@@ -131,6 +141,10 @@ const MessagingPage = () => {
           </div>
         </div>
       </div>
+
+      {isFilterModalOpen && (
+        <ProfanityFilterModal reason={filterReason} onClose={() => setIsFilterModalOpen(false)} />
+      )}
     </div>
   );
 };

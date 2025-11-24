@@ -177,42 +177,6 @@ const MessageCard = ({
         </div>
       </div>
       <div className='message-body'>
-        {(canModifyMessage && !isEditing) || (hasHistory && !isEditing) ? (
-          <div className='message-body-controls'>
-            {canModifyMessage && !isEditing && (
-              <div className='message-actions'>
-                <button
-                  className='message-action-btn'
-                  onClick={() => {
-                    setDraftMessage(message.msg);
-                    setIsEditing(true);
-                    setActionError(null);
-                  }}>
-                  Edit
-                </button>
-                <button
-                  className='message-action-btn destructive'
-                  onClick={handleDeleteMessage}
-                  disabled={isDeleting}>
-                  {isDeleting ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
-            )}
-            {hasHistory && !isEditing && (
-              <div className='message-history-buttons'>
-                <button
-                  className='message-history-toggle'
-                  type='button'
-                  onClick={() => setIsHistoryOpen(prev => !prev)}>
-                  {isHistoryOpen
-                    ? 'Hide edit history'
-                    : `View edit history (${historyEntries.length})`}
-                </button>
-              </div>
-            )}
-          </div>
-        ) : null}
-
         {actionError && <div className='message-inline-error'>{actionError}</div>}
 
         {isEditing ? (
@@ -239,7 +203,44 @@ const MessageCard = ({
             </div>
           </div>
         ) : (
-          <Markdown remarkPlugins={[remarkGfm]}>{displayedBody}</Markdown>
+          <>
+            <Markdown remarkPlugins={[remarkGfm]}>{displayedBody}</Markdown>
+            {(canModifyMessage && !isEditing) || (hasHistory && !isEditing) ? (
+              <div className='message-body-controls'>
+                {canModifyMessage && !isEditing && (
+                  <div className='message-actions'>
+                    <button
+                      className='message-action-btn'
+                      onClick={() => {
+                        setDraftMessage(message.msg);
+                        setIsEditing(true);
+                        setActionError(null);
+                      }}>
+                      Edit
+                    </button>
+                    <button
+                      className='message-action-btn destructive'
+                      onClick={handleDeleteMessage}
+                      disabled={isDeleting}>
+                      {isDeleting ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                )}
+                {hasHistory && !isEditing && (
+                  <div className='message-history-buttons'>
+                    <button
+                      className='message-history-toggle'
+                      type='button'
+                      onClick={() => setIsHistoryOpen(prev => !prev)}>
+                      {isHistoryOpen
+                        ? 'Hide edit history'
+                        : `View edit history (${historyEntries.length})`}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </>
         )}
 
         {message.type === 'friendRequest' && message.msgTo === currentUser.username && (

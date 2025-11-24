@@ -7,6 +7,7 @@ import NotifComponent from '../notifyButton';
 import ChatsListCard from './chatsListCard';
 import useUserContext from '../../../hooks/useUserContext';
 import OnlineStatusIndicator from '../../common/OnlineStatusIndicator/OnlineStatusIndicator';
+import ProfanityFilterModal from '../newQuestion/profanityFilterModal';
 
 /**
  * GroupChat component renders a page for group chat messaging.
@@ -40,6 +41,9 @@ const GroupChat = () => {
     setSelectedCommunity,
     communities,
     participantUsers,
+    isFilterModalOpen,
+    setIsFilterModalOpen,
+    filterReason,
   } = useGroupChat();
 
   const participants = selectedChat ? Object.keys(selectedChat.participants) : [];
@@ -486,6 +490,10 @@ const GroupChat = () => {
           )}
         </div>
       </div>
+
+      {isFilterModalOpen && (
+        <ProfanityFilterModal reason={filterReason} onClose={() => setIsFilterModalOpen(false)} />
+      )}
     </div>
   );
 };

@@ -21,6 +21,7 @@ import {
 } from '../services/chatService';
 import { getRelations, getUserByUsername } from '../services/userService';
 import { getCommunities } from '../services/communityService';
+import filter from 'leo-profanity';
 
 /**
  * useGroupChat is a custom hook that provides state and functions for group chat messaging.
@@ -42,6 +43,8 @@ const useGroupChat = () => {
   const [participantUsers, setParticipantUsers] = useState<Map<string, SafeDatabaseUser>>(
     new Map(),
   );
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [filterReason, setFilterReason] = useState('');
   const selectedChatIdRef = useRef<ObjectId | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef<boolean>(false);
@@ -52,6 +55,16 @@ const useGroupChat = () => {
 
   const handleSendMessage = async () => {
     if (newMessage.trim() && selectedChat?._id) {
+      // Check for profanity before sending
+      const hits = filter.badWordsUsed(newMessage);
+      if (hits.length > 0) {
+        setFilterReason(
+          `Your message contains inappropriate language. Please remove: ${hits.join(', ')}`,
+        );
+        setIsFilterModalOpen(true);
+        return;
+      }
+
       // Stop typing indicator when sending message
       if (isTypingRef.current && selectedChat._id) {
         socket.emit('typingStop', { chatID: String(selectedChat._id), username: user.username });
@@ -248,6 +261,9 @@ const useGroupChat = () => {
 
     fetchChats();
     fetchCommunities();
+
+    // Ensure the profanity dictionary is available before checking text
+    filter.loadDictionary('en');
 
     const handleChatUpdate = (chatUpdate: ChatUpdatePayload) => {
       const { chat, type } = chatUpdate;
@@ -591,6 +607,9 @@ const useGroupChat = () => {
     setSelectedCommunity,
     communities,
     participantUsers,
+    isFilterModalOpen,
+    setIsFilterModalOpen,
+    filterReason,
   };
 };
 

@@ -81,45 +81,53 @@
   padding: 12px 16px;
   font-size: 15px;
   line-height: 1.4;
-  color: #1f2937;
+  color: #f5f6f8;
   word-wrap: break-word;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   position: relative;
 }
 
 .message.sender .message-body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #8e9bd2 30%, #4b54a2 80%);
   color: white;
   border: none;
 }
-
 .message.receiver .message-body {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: transparent;
+  border: none;
 }
 
 .message-body-controls {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 8px;
+  flex-direction: row;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(156, 163, 175, 0.2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.message.sender .message-body-controls {
+  border-top-color: rgba(255, 255, 255, 0.2);
 }
 
 .message-actions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .message-action-btn {
   border: none;
   background: rgba(99, 102, 241, 0.15);
   color: #4c1d95;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .message-action-btn:hover:not(:disabled) {
@@ -147,7 +155,7 @@
 
 .message-history-buttons {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
@@ -155,12 +163,13 @@
   background: transparent;
   border: 1px solid rgba(99, 102, 241, 0.4);
   color: #4c1d95;
-  border-radius: 12px;
-  padding: 4px 10px;
-  font-size: 12px;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .message-history-toggle:hover {
@@ -256,6 +265,11 @@
   background: rgba(255, 255, 255, 0.2);
   color: #fff;
   border-color: rgba(255, 255, 255, 0.4);
+}
+
+.message.sender .message-action-btn:hover:not(:disabled),
+.message.sender .message-history-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .message.sender .message-action-btn.destructive {
@@ -402,7 +416,7 @@
 /* Read Receipt */
 .read-receipt {
   font-size: 11px;
-  color: #9ca3af;
+  color: #f6f6f6;
   margin-top: 4px;
   text-align: right;
   font-weight: 400;

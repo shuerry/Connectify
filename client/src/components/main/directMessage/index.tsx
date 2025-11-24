@@ -7,6 +7,7 @@ import NotifComponent from '../notifyButton';
 import ChatsListCard from './chatsListCard';
 import useUserContext from '../../../hooks/useUserContext';
 import Avatar from '../../common/Avatar/Avatar';
+import ProfanityFilterModal from '../newQuestion/profanityFilterModal';
 
 /**
  * DirectMessage component renders a page for direct messaging between users.
@@ -32,6 +33,9 @@ const DirectMessage = () => {
     typingUsers,
     participantUsers,
     otherParticipantUser,
+    isFilterModalOpen,
+    setIsFilterModalOpen,
+    filterReason,
   } = useDirectMessage();
 
   // Get the other participant's username (excluding current user)
@@ -352,6 +356,10 @@ const DirectMessage = () => {
           )}
         </div>
       </div>
+
+      {isFilterModalOpen && (
+        <ProfanityFilterModal reason={filterReason} onClose={() => setIsFilterModalOpen(false)} />
+      )}
     </div>
   );
 };
