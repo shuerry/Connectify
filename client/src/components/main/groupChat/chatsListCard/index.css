@@ -70,6 +70,30 @@
   text-overflow: ellipsis;
 }
 
+.chat-card-participant-wrapper {
+  display: inline;
+}
+
+.chat-card-participant {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chat-card-participant-separator {
+  color: #d1d5db;
+  margin: 0 2px;
+}
+
+.chat-card-status-dot {
+  margin-right: 2px;
+}
+
+.chat-card-more-count {
+  font-weight: 500;
+  margin-left: 4px;
+}
+
 .chats-list-card--unread {
   background-color: #e0f2fe;
 }

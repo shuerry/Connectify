@@ -19,7 +19,7 @@ import {
   markMessagesAsRead,
   getCommunityChat,
 } from '../services/chatService';
-import { getRelations } from '../services/userService';
+import { getRelations, getUserByUsername } from '../services/userService';
 import { getCommunities } from '../services/communityService';
 
 /**
@@ -39,6 +39,9 @@ const useGroupChat = () => {
   const [isCreatingCommunityChat, setIsCreatingCommunityChat] = useState<boolean>(false);
   const [selectedCommunity, setSelectedCommunity] = useState<DatabaseCommunity | null>(null);
   const [communities, setCommunities] = useState<DatabaseCommunity[]>([]);
+  const [participantUsers, setParticipantUsers] = useState<Map<string, SafeDatabaseUser>>(
+    new Map(),
+  );
   const selectedChatIdRef = useRef<ObjectId | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef<boolean>(false);
@@ -387,6 +390,99 @@ const useGroupChat = () => {
     };
   }, [user.username, socket, selectedChat?._id]);
 
+  useEffect(() => {
+    const fetchParticipantUsers = async () => {
+      const usernames = new Set<string>();
+      chats.forEach(chat => {
+        Object.keys(chat.participants).forEach(username => {
+          if (username !== user.username) {
+            usernames.add(username);
+          }
+        });
+      });
+
+      if (selectedChat) {
+        Object.keys(selectedChat.participants).forEach(username => {
+          if (username !== user.username) {
+            usernames.add(username);
+          }
+        });
+      }
+
+      const usernamesToFetch = Array.from(usernames).filter(
+        username => !participantUsers.has(username),
+      );
+      if (usernamesToFetch.length === 0) {
+        return;
+      }
+
+      const fetchedUsers = await Promise.all(
+        usernamesToFetch.map(async username => {
+          try {
+            const userData = await getUserByUsername(username);
+            return { username, userData };
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      setParticipantUsers(prev => {
+        const updated = new Map(prev);
+        fetchedUsers.forEach(entry => {
+          if (entry) {
+            updated.set(entry.username, entry.userData);
+          }
+        });
+        return updated;
+      });
+    };
+
+    if (chats.length > 0 || selectedChat) {
+      fetchParticipantUsers();
+    }
+  }, [chats, participantUsers, selectedChat, user.username]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUserStatusUpdate = (payload: {
+      username: string;
+      isOnline: boolean;
+      showOnlineStatus: boolean;
+    }) => {
+      setParticipantUsers(prev => {
+        const existing = prev.get(payload.username);
+        if (!existing) {
+          return prev;
+        }
+        const updated = new Map(prev);
+        updated.set(payload.username, {
+          ...existing,
+          isOnline: payload.isOnline,
+          showOnlineStatus: payload.showOnlineStatus,
+        });
+        return updated;
+      });
+    };
+
+    const handleUserUpdate = (payload: { user: SafeDatabaseUser; type: string }) => {
+      setParticipantUsers(prev => {
+        const updated = new Map(prev);
+        updated.set(payload.user.username, payload.user);
+        return updated;
+      });
+    };
+
+    socket.on('userStatusUpdate', handleUserStatusUpdate);
+    socket.on('userUpdate', handleUserUpdate);
+
+    return () => {
+      socket.off('userStatusUpdate', handleUserStatusUpdate);
+      socket.off('userUpdate', handleUserUpdate);
+    };
+  }, [socket]);
+
   const allMessages: DatabaseMessage[] = selectedChat
     ? selectedChat.messages
         .map(msg => ({
@@ -468,6 +564,7 @@ const useGroupChat = () => {
     selectedCommunity,
     setSelectedCommunity,
     communities,
+    participantUsers,
   };
 };
 

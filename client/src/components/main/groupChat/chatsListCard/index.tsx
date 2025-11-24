@@ -1,7 +1,8 @@
 import './index.css';
 import { ObjectId } from 'mongodb';
-import { PopulatedDatabaseChat } from '../../../../types/types';
+import { PopulatedDatabaseChat, SafeDatabaseUser } from '../../../../types/types';
 import useUserContext from '../../../../hooks/useUserContext';
+import OnlineStatusIndicator from '../../../common/OnlineStatusIndicator/OnlineStatusIndicator';
 
 /**
  * ChatsListCard component displays information about a group chat and allows the user to select it.
@@ -12,9 +13,11 @@ import useUserContext from '../../../../hooks/useUserContext';
 const ChatsListCard = ({
   chat,
   handleChatSelect,
+  participantUsers,
 }: {
   chat: PopulatedDatabaseChat;
   handleChatSelect: (chatID: ObjectId | undefined) => void;
+  participantUsers?: Map<string, SafeDatabaseUser>;
 }) => {
   const { user } = useUserContext();
   const participants = Object.keys(chat.participants);
@@ -30,6 +33,45 @@ const ChatsListCard = ({
   const hasUnread = chat.messages?.some(
     m => m.msgFrom !== user.username && (!m.readBy || !m.readBy.includes(user.username)),
   );
+
+  const renderParticipantPreview = () => {
+    const otherParticipants = participants.filter(p => p !== user.username);
+    if (otherParticipants.length === 0) {
+      return null;
+    }
+
+    const previewParticipants = otherParticipants.slice(0, 3);
+    const remainingCount = otherParticipants.length - previewParticipants.length;
+
+    return (
+      <>
+        {previewParticipants.map((username, index) => {
+          const userData = participantUsers?.get(username);
+          const canShowStatus = Boolean(userData) && userData?.showOnlineStatus !== false;
+
+          return (
+            <span key={username} className='chat-card-participant-wrapper'>
+              {index > 0 && <span className='chat-card-participant-separator'>, </span>}
+              <span className='chat-card-participant'>
+                {canShowStatus && (
+                  <OnlineStatusIndicator
+                    size='small'
+                    isOnline={userData?.isOnline}
+                    showOnlineStatus={userData?.showOnlineStatus}
+                    className='chat-card-status-dot'
+                  />
+                )}
+                {username}
+              </span>
+            </span>
+          );
+        })}
+        {remainingCount > 0 && (
+          <span className='chat-card-more-count'> +{remainingCount} more</span>
+        )}
+      </>
+    );
+  };
 
   return (
     <div
@@ -50,15 +92,7 @@ const ChatsListCard = ({
         <div className='chat-card-info'>
           <p className='chat-card-title'>{getChatDisplayName()}</p>
           {isCommunityChat && <p className='chat-card-badge'>Community</p>}
-          {!chat.name && (
-            <p className='chat-card-subtitle'>
-              {participants
-                .filter(p => p !== user.username)
-                .slice(0, 3)
-                .join(', ')}
-              {participants.length > 4 && ` +${participants.length - 4} more`}
-            </p>
-          )}
+          {!chat.name && <p className='chat-card-subtitle'>{renderParticipantPreview()}</p>}
         </div>
         {hasUnread && <span className='chats-list-card__unread-dot' aria-label='Unread messages' />}
       </div>

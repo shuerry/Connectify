@@ -29,9 +29,6 @@ const useDirectMessage = () => {
   const { user, socket } = useUserContext();
   const [showCreatePanel, setShowCreatePanel] = useState<boolean>(false);
   const [chatToCreate, setChatToCreate] = useState<string>('');
-  const [selectedUsersForGroup, setSelectedUsersForGroup] = useState<Set<string>>(new Set());
-  const [groupChatName, setGroupChatName] = useState<string>('');
-  const [isGroupChat, setIsGroupChat] = useState<boolean>(false);
   const [selectedChat, setSelectedChat] = useState<PopulatedDatabaseChat | null>(null);
   const [chats, setChats] = useState<PopulatedDatabaseChat[]>([]);
   const [directMessages, setDirectMessages] = useState<DatabaseMessage[]>([]);
@@ -188,138 +185,75 @@ const useDirectMessage = () => {
   };
 
   const handleUserSelect = (selectedUser: SafeDatabaseUser) => {
-    if (isGroupChat) {
-      // Toggle user selection for group chat
-      setSelectedUsersForGroup(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(selectedUser.username)) {
-          newSet.delete(selectedUser.username);
-        } else {
-          newSet.add(selectedUser.username);
-        }
-        return newSet;
-      });
-    } else {
-      // Single user selection for direct message
-      setChatToCreate(selectedUser.username);
-    }
+    setChatToCreate(selectedUser.username);
   };
 
   const handleCreateChat = async () => {
-    if (isGroupChat) {
-      // Group chat creation
-      if (selectedUsersForGroup.size === 0) {
-        setError('Please select at least one friend to create a group chat');
+    if (!chatToCreate) {
+      setError('Please select a user to chat with');
+      return;
+    }
+
+    // Check if users are friends before creating chat
+    try {
+      const relations = await getRelations(user.username);
+      if (!relations.friends.includes(chatToCreate)) {
+        setError('You can only message users who are your friends');
         return;
       }
+    } catch (err) {
+      setError('Error checking friend status');
+      return;
+    }
 
-      // Check if all selected users are friends
+    // Check if a chat already exists between these two users
+    const existingChat = chats.find(chat => {
+      const participants = Object.keys(chat.participants);
+      return (
+        participants.length === 2 &&
+        participants.includes(user.username) &&
+        participants.includes(chatToCreate)
+      );
+    });
+
+    if (existingChat) {
+      setSelectedChat(existingChat);
+      selectedChatIdRef.current = existingChat._id;
+      handleJoinChat(existingChat._id);
+      setShowCreatePanel(false);
+      setError(null);
+
       try {
-        const relations = await getRelations(user.username);
-        for (const username of selectedUsersForGroup) {
-          if (!relations.friends.includes(username)) {
-            setError(`You must be friends with ${username} to add them to a group chat`);
-            return;
-          }
-        }
+        const directMsgs = await getDirectMessages(user.username, chatToCreate);
+        setDirectMessages(directMsgs);
       } catch (err) {
-        setError('Error checking friend status');
-        return;
-      }
-
-      // Create group chat with all selected users
-      try {
-        const participants: Record<string, boolean> = { [user.username]: true };
-        selectedUsersForGroup.forEach(username => {
-          participants[username] = true;
-        });
-
-        const chat = await createChat(participants, groupChatName || undefined);
-        setSelectedChat(chat);
-        selectedChatIdRef.current = chat._id;
-        handleJoinChat(chat._id);
-        setShowCreatePanel(false);
-        setError(null);
-        setSelectedUsersForGroup(new Set());
-        setGroupChatName('');
-        setIsGroupChat(false);
         setDirectMessages([]);
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Error creating group chat';
-        setError(errorMessage);
+        throw new Error('Error fetching direct messages');
       }
-    } else {
-      // Direct message chat creation
-      if (!chatToCreate) {
-        setError('Please select a user to chat with');
-        return;
-      }
+      return;
+    }
 
-      // Check if users are friends before creating chat
+    try {
+      const chat = await createChat({ [user.username]: true, [chatToCreate]: true });
+      setSelectedChat(chat);
+      selectedChatIdRef.current = chat._id;
+      handleJoinChat(chat._id);
+      setShowCreatePanel(false);
+      setError(null);
+
       try {
-        const relations = await getRelations(user.username);
-        if (!relations.friends.includes(chatToCreate)) {
-          setError('You can only message users who are your friends');
-          return;
-        }
+        const directMsgs = await getDirectMessages(user.username, chatToCreate);
+        setDirectMessages(directMsgs);
       } catch (err) {
-        setError('Error checking friend status');
-        return;
+        setDirectMessages([]);
+        throw new Error('Error fetching direct messages');
       }
-
-      // Check if a chat already exists between these two users
-      const existingChat = chats.find(chat => {
-        const participants = Object.keys(chat.participants);
-        return (
-          participants.length === 2 &&
-          participants.includes(user.username) &&
-          participants.includes(chatToCreate)
-        );
-      });
-
-      if (existingChat) {
-        // Use existing chat instead of creating a new one
-        setSelectedChat(existingChat);
-        selectedChatIdRef.current = existingChat._id;
-        handleJoinChat(existingChat._id);
-        setShowCreatePanel(false);
-        setError(null);
-
-        // Fetch direct messages (friend requests, game invitations, etc.) between participants
-        try {
-          const directMsgs = await getDirectMessages(user.username, chatToCreate);
-          setDirectMessages(directMsgs);
-        } catch (err) {
-          setDirectMessages([]);
-          throw new Error('Error fetching direct messages');
-        }
-        return;
-      }
-
-      // No existing chat found, create a new one
-      try {
-        const chat = await createChat({ [user.username]: true, [chatToCreate]: true });
-        setSelectedChat(chat);
-        selectedChatIdRef.current = chat._id;
-        handleJoinChat(chat._id);
-        setShowCreatePanel(false);
-        setError(null);
-
-        // Fetch direct messages (friend requests, game invitations, etc.) between participants
-        try {
-          const directMsgs = await getDirectMessages(user.username, chatToCreate);
-          setDirectMessages(directMsgs);
-        } catch (err) {
-          setDirectMessages([]);
-          throw new Error('Error fetching direct messages');
-        }
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Error creating chat';
-        if (errorMessage.includes('must be friends')) {
-          setError('You can only message users who are your friends');
-        } else {
-          setError(errorMessage);
-        }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Error creating chat';
+      if (errorMessage.includes('must be friends')) {
+        setError('You can only message users who are your friends');
+      } else {
+        setError(errorMessage);
       }
     }
   };
@@ -707,12 +641,6 @@ const useDirectMessage = () => {
     refreshChat,
     error,
     typingUsers,
-    isGroupChat,
-    setIsGroupChat,
-    selectedUsersForGroup,
-    setSelectedUsersForGroup,
-    groupChatName,
-    setGroupChatName,
     participantUsers,
     otherParticipantUser,
   };

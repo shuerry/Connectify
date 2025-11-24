@@ -32,28 +32,15 @@ const DirectMessage = () => {
     typingUsers,
     participantUsers,
     otherParticipantUser,
-    isGroupChat,
-    setIsGroupChat,
-    selectedUsersForGroup,
-    setSelectedUsersForGroup,
-    groupChatName,
-    setGroupChatName,
   } = useDirectMessage();
 
-  // Get the other participant's username (excluding current user) or group info
+  // Get the other participant's username (excluding current user)
   const participants = selectedChat ? Object.keys(selectedChat.participants) : [];
-  const isSelectedGroupChat = participants.length > 2;
-  const otherParticipant = !isSelectedGroupChat
-    ? participants.find(username => username !== user.username)
-    : null;
+  const otherParticipant = participants.find(username => username !== user.username) || null;
 
   const getChatDisplayName = () => {
     if (!selectedChat) return null;
     if (selectedChat.name) return selectedChat.name;
-    if (isSelectedGroupChat) {
-      const otherParticipants = participants.filter(p => p !== user.username);
-      return `${otherParticipants.length} participants`;
-    }
     return otherParticipant;
   };
 
@@ -126,9 +113,6 @@ const DirectMessage = () => {
               className='close-panel-btn'
               onClick={() => {
                 setShowCreatePanel(false);
-                setIsGroupChat(false);
-                setSelectedUsersForGroup(new Set());
-                setGroupChatName('');
               }}>
               <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
                 <path
@@ -141,26 +125,6 @@ const DirectMessage = () => {
             </button>
           </div>
 
-          {/* Chat Type Toggle */}
-          <div className='chat-type-toggle'>
-            <button
-              className={`chat-type-btn ${!isGroupChat ? 'active' : ''}`}
-              onClick={() => {
-                setIsGroupChat(false);
-                setSelectedUsersForGroup(new Set());
-                setGroupChatName('');
-              }}>
-              Direct Message
-            </button>
-            <button
-              className={`chat-type-btn ${isGroupChat ? 'active' : ''}`}
-              onClick={() => {
-                setIsGroupChat(true);
-              }}>
-              Group Chat
-            </button>
-          </div>
-
           {error && (
             <div className='create-chat-error'>
               <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
@@ -170,81 +134,31 @@ const DirectMessage = () => {
             </div>
           )}
 
-          {isGroupChat ? (
-            <>
-              {/* Group Chat Name Input */}
-              <div className='group-chat-name-input'>
-                <label>Group Chat Name (optional)</label>
-                <input
-                  type='text'
-                  value={groupChatName}
-                  onChange={e => setGroupChatName(e.target.value)}
-                  placeholder='Enter group name...'
-                />
-              </div>
-
-              {/* Selected Users for Group Chat */}
-              {selectedUsersForGroup.size > 0 && (
-                <div className='selected-users-group'>
-                  <div className='selected-users-header'>
-                    <span>Selected ({selectedUsersForGroup.size}):</span>
-                    <button
-                      className='clear-selection-btn'
-                      onClick={() => setSelectedUsersForGroup(new Set())}>
-                      Clear
-                    </button>
-                  </div>
-                  <div className='selected-users-list'>
-                    {Array.from(selectedUsersForGroup).map(username => (
-                      <div key={username} className='selected-user-tag'>
-                        <span>{username}</span>
-                        <button
-                          onClick={() => {
-                            setSelectedUsersForGroup(prev => {
-                              const newSet = new Set(prev);
-                              newSet.delete(username);
-                              return newSet;
-                            });
-                          }}>
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    className='create-chat-confirm-btn'
-                    onClick={handleCreateChat}
-                    disabled={selectedUsersForGroup.size === 0}>
-                    Create Group Chat
-                  </button>
+          {chatToCreate ? (
+            <div className='selected-user'>
+              <div className='selected-user-info'>
+                <div className='selected-avatar'>
+                  <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+                    <path
+                      d='M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      fill='none'
+                    />
+                  </svg>
                 </div>
-              )}
-            </>
+                <span>
+                  Selected: <strong>{chatToCreate}</strong>
+                </span>
+              </div>
+              <button className='create-chat-confirm-btn' onClick={handleCreateChat}>
+                Create Chat
+              </button>
+            </div>
           ) : (
-            chatToCreate && (
-              <div className='selected-user'>
-                <div className='selected-user-info'>
-                  <div className='selected-avatar'>
-                    <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
-                      <path
-                        d='M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z'
-                        stroke='currentColor'
-                        strokeWidth='2'
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        fill='none'
-                      />
-                    </svg>
-                  </div>
-                  <span>
-                    Selected: <strong>{chatToCreate}</strong>
-                  </span>
-                </div>
-                <button className='create-chat-confirm-btn' onClick={handleCreateChat}>
-                  Create Chat
-                </button>
-              </div>
-            )
+            <p className='selected-user-hint'>Select a friend below to start a chat.</p>
           )}
 
           <div className='users-list-container'>
@@ -315,64 +229,25 @@ const DirectMessage = () => {
                       showOnlineStatus={otherParticipantUser.showOnlineStatus}
                     />
                   ) : (
-                    {isSelectedGroupChat ? (
-                    <div className='participant-avatar group-avatar'>
-                      <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
+                    <div className='participant-avatar'>
+                      <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
                         <path
-                          d='M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M13 7a4 4 0 11-8 0 4 4 0 018 0z'
+                          d='M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z'
                           stroke='currentColor'
                           strokeWidth='2'
                           strokeLinecap='round'
                           strokeLinejoin='round'
+                          fill='none'
                         />
                       </svg>
                     </div>
-                  ) : (
-                    <div className='participant-avatar'>
-                        <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
-                          <path
-                            d='M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z'
-                            stroke='currentColor'
-                            strokeWidth='2'
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            fill='none'
-                          />
-                        </svg>
-                      </div>
-                  )}
                   )}
                   <div className='participant-details'>
                     <h2>{getChatDisplayName()}</h2>
-                    {isSelectedGroupChat && (
-                      <p className='group-participants-list'>
-                        {participants.filter(p => p !== user.username).join(', ')}
-                      </p>
-                    )}
-                    {!isSelectedGroupChat && <p>{typingText || ''}</p>}
-                    {isSelectedGroupChat && typingText && <p>{typingText}</p>}
+                    <p>{typingText || ''}</p>
                   </div>
                 </div>
                 <div className='chat-actions'>
-                  {isSelectedGroupChat && (
-                    <button
-                      className='chat-action-btn'
-                      title='Add participant'
-                      onClick={() => {
-                        // TODO: Implement add participant modal
-                        alert('Add participant feature coming soon!');
-                      }}>
-                      <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
-                        <path
-                          d='M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8zM20 8v6M23 11h-6'
-                          stroke='currentColor'
-                          strokeWidth='2'
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                        />
-                      </svg>
-                    </button>
-                  )}
                   <NotifComponent chat={selectedChat} />
                   <button className='chat-action-btn' title='Chat options'>
                     <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
@@ -401,11 +276,7 @@ const DirectMessage = () => {
                         </svg>
                       </div>
                       <h3>Start the conversation</h3>
-                      <p>
-                        {isSelectedGroupChat
-                          ? `Send a message to ${getChatDisplayName()}`
-                          : `Send a message to ${otherParticipant}`}
-                      </p>
+                      <p>Send a message to {otherParticipant || 'your friend'}</p>
                     </div>
                   ) : (
                     messages.map(message => (
@@ -448,11 +319,7 @@ const DirectMessage = () => {
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder={
-                        isSelectedGroupChat
-                          ? `Message ${getChatDisplayName()}...`
-                          : `Message ${otherParticipant}...`
-                      }
+                      placeholder={`Message ${otherParticipant || 'your friend'}...`}
                     />
                     <button
                       className={`dm-send-button ${newMessage.trim() ? 'active' : ''}`}

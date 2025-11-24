@@ -6,6 +6,7 @@ import MessageCard from '../messageCard';
 import NotifComponent from '../notifyButton';
 import ChatsListCard from './chatsListCard';
 import useUserContext from '../../../hooks/useUserContext';
+import OnlineStatusIndicator from '../../common/OnlineStatusIndicator/OnlineStatusIndicator';
 
 /**
  * GroupChat component renders a page for group chat messaging.
@@ -38,6 +39,7 @@ const GroupChat = () => {
     selectedCommunity,
     setSelectedCommunity,
     communities,
+    participantUsers,
   } = useGroupChat();
 
   const participants = selectedChat ? Object.keys(selectedChat.participants) : [];
@@ -65,6 +67,35 @@ const GroupChat = () => {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const renderParticipantStatusList = () => {
+    const otherParticipants = participants.filter(p => p !== user.username);
+    if (otherParticipants.length === 0) {
+      return null;
+    }
+
+    return otherParticipants.map((participant, index) => {
+      const participantUser = participantUsers.get(participant);
+      const canShowStatus = Boolean(participantUser) && participantUser?.showOnlineStatus !== false;
+
+      return (
+        <React.Fragment key={participant}>
+          {index > 0 && <span className='participant-status-separator'>, </span>}
+          <span className='participant-status-entry'>
+            {canShowStatus && (
+              <OnlineStatusIndicator
+                size='small'
+                isOnline={participantUser?.isOnline}
+                showOnlineStatus={participantUser?.showOnlineStatus}
+                className='participant-status-dot'
+              />
+            )}
+            {participant}
+          </span>
+        </React.Fragment>
+      );
+    });
   };
 
   return (
@@ -291,6 +322,7 @@ const GroupChat = () => {
                   key={String(chat._id)}
                   chat={chat}
                   handleChatSelect={handleChatSelect}
+                  participantUsers={participantUsers}
                 />
               ))
             )}
@@ -329,9 +361,7 @@ const GroupChat = () => {
                   <div className='participant-details'>
                     <h2>{getChatDisplayName()}</h2>
                     {isCommunityChat && <p className='community-badge'>Community Chat</p>}
-                    <p className='participants-list'>
-                      {participants.filter(p => p !== user.username).join(', ')}
-                    </p>
+                    <p className='participants-list'>{renderParticipantStatusList()}</p>
                     {typingText && <p>{typingText}</p>}
                   </div>
                 </div>
