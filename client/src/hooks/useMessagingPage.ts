@@ -29,19 +29,45 @@ const useMessagingPage = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       const msgs = await getMessages();
-      setMessages(msgs);
+      setMessages(msgs.filter(msg => !msg.isDeleted));
     };
 
     fetchMessages();
   }, []);
 
   useEffect(() => {
-    const handleMessageUpdate = async (data: MessageUpdatePayload) => {
-      setMessages([...messages, data.msg]);
+    const handleMessageUpdate = (data: MessageUpdatePayload) => {
+      const { msg } = data;
+
+      if (msg.type !== 'global') {
+        return;
+      }
+
+      setMessages(prev => {
+        const existingIndex = prev.findIndex(existing => String(existing._id) === String(msg._id));
+
+        if (msg.isDeleted) {
+          if (existingIndex === -1) {
+            return prev;
+          }
+          const next = [...prev];
+          next.splice(existingIndex, 1);
+          return next;
+        }
+
+        if (existingIndex >= 0) {
+          const next = [...prev];
+          next[existingIndex] = { ...next[existingIndex], ...msg };
+          return next;
+        }
+
+        return [...prev, msg].sort(
+          (a, b) => new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime(),
+        );
+      });
     };
 
     const handleTypingIndicator = (payload: TypingIndicatorPayload) => {
-      // Only show typing indicators for other users
       if (payload.username === user.username) {
         return;
       }
@@ -64,7 +90,7 @@ const useMessagingPage = () => {
       socket.off('messageUpdate', handleMessageUpdate);
       socket.off('typingIndicator', handleTypingIndicator);
     };
-  }, [socket, messages, user.username]);
+  }, [socket, user.username]);
 
   /**
    * Handles sending a new message.

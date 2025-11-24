@@ -46,7 +46,7 @@ const DirectMessage = () => {
 
   // Find the latest message sent by the current user
   const latestSentMessage = messages
-    .filter(msg => msg.msgFrom === user.username && msg.type === 'direct')
+    .filter(msg => msg.msgFrom === user.username && msg.type === 'direct' && !msg.isDeleted)
     .sort((a, b) => new Date(b.msgDateTime).getTime() - new Date(a.msgDateTime).getTime())[0];
 
   // Get typing indicator text

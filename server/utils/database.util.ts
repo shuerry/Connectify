@@ -81,33 +81,41 @@ const populateChat = async (chatID: string): Promise<PopulatedDatabaseChat | nul
   }
 
   const messagesWithUser: Array<MessageInChat | null> = await Promise.all(
-    chatDoc.messages.map(async (messageDoc: DatabaseMessage) => {
-      if (!messageDoc) return null;
+    chatDoc.messages
+      .filter((messageDoc: DatabaseMessage | null) => messageDoc && !messageDoc.isDeleted)
+      .map(async (messageDoc: DatabaseMessage | null) => {
+        if (!messageDoc) return null;
 
-      let userDoc: DatabaseUser | null = null;
+        let userDoc: DatabaseUser | null = null;
 
-      if (messageDoc.msgFrom) {
-        userDoc = await UserModel.findOne({ username: messageDoc.msgFrom });
-      }
+        if (messageDoc.msgFrom) {
+          userDoc = await UserModel.findOne({ username: messageDoc.msgFrom });
+        }
 
-      return {
-        _id: messageDoc._id,
-        msg: messageDoc.msg,
-        msgFrom: messageDoc.msgFrom,
-        msgDateTime: messageDoc.msgDateTime,
-        type: messageDoc.type,
-        msgTo: messageDoc.msgTo,
-        friendRequestStatus: messageDoc.friendRequestStatus,
-        gameInvitation: messageDoc.gameInvitation,
-        readBy: messageDoc.readBy || [],
-        user: userDoc
-          ? {
-              _id: userDoc._id!,
-              username: userDoc.username,
-            }
-          : null,
-      };
-    }),
+        return {
+          _id: messageDoc._id,
+          msg: messageDoc.msg,
+          msgFrom: messageDoc.msgFrom,
+          msgDateTime: messageDoc.msgDateTime,
+          type: messageDoc.type,
+          msgTo: messageDoc.msgTo,
+          friendRequestStatus: messageDoc.friendRequestStatus,
+          gameInvitation: messageDoc.gameInvitation,
+          readBy: messageDoc.readBy || [],
+          editHistory: messageDoc.editHistory || [],
+          lastEditedAt: messageDoc.lastEditedAt,
+          lastEditedBy: messageDoc.lastEditedBy,
+          isDeleted: messageDoc.isDeleted,
+          deletedAt: messageDoc.deletedAt,
+          deletedBy: messageDoc.deletedBy,
+          user: userDoc
+            ? {
+                _id: userDoc._id!,
+                username: userDoc.username,
+              }
+            : null,
+        };
+      }),
   );
 
   // Filters out null values

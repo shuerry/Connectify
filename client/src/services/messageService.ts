@@ -70,6 +70,41 @@ const getDirectMessages = async (user1: string, user2: string): Promise<Database
 };
 
 /**
+ * Updates the body of an existing message.
+ */
+const editMessage = async (
+  messageId: string,
+  editorUsername: string,
+  newMessage: string,
+): Promise<DatabaseMessage> => {
+  const res = await api.patch(`${MESSAGE_API_URL}/${messageId}`, {
+    editorUsername,
+    newMessage,
+  });
+
+  if (res.status !== 200) {
+    throw new Error('Error when editing message');
+  }
+
+  return res.data;
+};
+
+/**
+ * Deletes a message authored by the given user.
+ */
+const deleteMessage = async (messageId: string, username: string): Promise<{ success: boolean }> => {
+  const res = await api.delete(`${MESSAGE_API_URL}/${messageId}`, {
+    data: { username },
+  });
+
+  if (res.status !== 200) {
+    throw new Error('Error when deleting message');
+  }
+
+  return res.data;
+};
+
+/**
  * Responds to a friend request (accept or decline).
  *
  * @param messageId - The message ID of the friend request
@@ -200,4 +235,6 @@ export {
   respondToFriendRequest,
   sendGameInvitation,
   respondToGameInvitation,
+  editMessage,
+  deleteMessage,
 };
