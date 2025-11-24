@@ -66,7 +66,8 @@ const useDirectMessage = () => {
         typingTimeoutRef.current = null;
       }
 
-      // Check if users are friends before sending message
+      // Check if users are friends before sending message (only for 2-person chats)
+      // Group chats (3+ participants) don't require friend checks
       const participants = Object.keys(selectedChat.participants);
       if (participants.length === 2) {
         const otherParticipant = participants.find(p => p !== user.username);
@@ -216,14 +217,12 @@ const useDirectMessage = () => {
     });
 
     if (existingChat) {
-      // Use existing chat instead of creating a new one
       setSelectedChat(existingChat);
       selectedChatIdRef.current = existingChat._id;
       handleJoinChat(existingChat._id);
       setShowCreatePanel(false);
       setError(null);
 
-      // Fetch direct messages (friend requests, game invitations, etc.) between participants
       try {
         const directMsgs = await getDirectMessages(user.username, chatToCreate);
         setDirectMessages(directMsgs);
@@ -234,7 +233,6 @@ const useDirectMessage = () => {
       return;
     }
 
-    // No existing chat found, create a new one
     try {
       const chat = await createChat({ [user.username]: true, [chatToCreate]: true });
       setSelectedChat(chat);
@@ -243,7 +241,6 @@ const useDirectMessage = () => {
       setShowCreatePanel(false);
       setError(null);
 
-      // Fetch direct messages (friend requests, game invitations, etc.) between participants
       try {
         const directMsgs = await getDirectMessages(user.username, chatToCreate);
         setDirectMessages(directMsgs);
@@ -262,13 +259,26 @@ const useDirectMessage = () => {
   };
 
   useEffect(() => {
+    // Helper function to check if a chat is a direct message (2-person, not community chat)
+    const isDirectMessageChat = (chat: PopulatedDatabaseChat): boolean => {
+      const participants = Object.keys(chat.participants);
+      return participants.length === 2 && !chat.isCommunityChat;
+    };
+
     const fetchChats = async () => {
       const userChats = await getChatsByUser(user.username);
-      setChats(userChats);
+      // Filter to only show 2-person direct message chats (exclude group chats and community chats)
+      const directMessageChats = userChats.filter(isDirectMessageChat);
+      setChats(directMessageChats);
     };
 
     const handleChatUpdate = (chatUpdate: ChatUpdatePayload) => {
       const { chat, type } = chatUpdate;
+
+      // Only process direct message chats (2-person, not community chats)
+      if (!isDirectMessageChat(chat)) {
+        return;
+      }
 
       switch (type) {
         case 'created': {
@@ -331,13 +341,20 @@ const useDirectMessage = () => {
           return;
         }
         case 'newParticipant': {
+          // If a participant is added and it's no longer a 2-person chat, remove it from the list
           if (user.username in chat.participants) {
-            setChats(prevChats => {
-              if (prevChats.some(c => String(c._id) === String(chat._id))) {
-                return prevChats.map(c => (String(c._id) === String(chat._id) ? chat : c));
-              }
-              return [chat, ...prevChats];
-            });
+            const participants = Object.keys(chat.participants);
+            if (participants.length > 2 || chat.isCommunityChat) {
+              // This is now a group chat, remove it from direct messages
+              setChats(prevChats => prevChats.filter(c => String(c._id) !== String(chat._id)));
+            } else {
+              setChats(prevChats => {
+                if (prevChats.some(c => String(c._id) === String(chat._id))) {
+                  return prevChats.map(c => (String(c._id) === String(chat._id) ? chat : c));
+                }
+                return [chat, ...prevChats];
+              });
+            }
           }
           return;
         }

@@ -20,23 +20,36 @@ const MessageCard = ({
   onMessageUpdate,
   isLatestSentMessage = false,
   otherParticipant = null,
+  allParticipants = null,
 }: {
   message: DatabaseMessage;
   onMessageUpdate?: () => void;
   isLatestSentMessage?: boolean;
   otherParticipant?: string | null;
+  allParticipants?: string[] | null;
 }) => {
   const { user: currentUser } = useUserContext();
   const navigate = useNavigate();
 
-  // Check if this message is from the current user and has been read by the other participant
+  // Check if this message is from the current user and has been read
   const isSentByCurrentUser = message.msgFrom === currentUser.username;
-  const isRead =
-    isLatestSentMessage &&
-    isSentByCurrentUser &&
-    otherParticipant &&
-    message.readBy &&
-    message.readBy.includes(otherParticipant);
+
+  // For group chats: check if all participants (except sender) have read
+  // For direct messages: check if the other participant has read
+  let isRead = false;
+  if (isLatestSentMessage && isSentByCurrentUser) {
+    if (allParticipants && allParticipants.length > 2) {
+      // Group chat: all participants except sender must have read
+      const participantsToRead = allParticipants.filter(p => p !== message.msgFrom);
+      isRead =
+        !!message.readBy &&
+        participantsToRead.length > 0 &&
+        participantsToRead.every(participant => message.readBy?.includes(participant));
+    } else if (otherParticipant) {
+      // Direct message: other participant must have read
+      isRead = !!(message.readBy && message.readBy.includes(otherParticipant));
+    }
+  }
 
   const handleFriendRequestResponse = async (status: 'accepted' | 'declined') => {
     try {
@@ -160,7 +173,28 @@ const MessageCard = ({
           </div>
         )}
         {isLatestSentMessage && isSentByCurrentUser && (
-          <div className='read-receipt'>{isRead ? 'Read' : 'Delivered'}</div>
+          <div className='read-receipt'>
+            {allParticipants && allParticipants.length > 2
+              ? // Group chat: show read count or "Read by all"
+                (() => {
+                  const participantsToRead = allParticipants.filter(p => p !== message.msgFrom);
+                  const readCount = message.readBy
+                    ? message.readBy.filter(reader => participantsToRead.includes(reader)).length
+                    : 0;
+                  const totalCount = participantsToRead.length;
+                  if (isRead) {
+                    return 'Read by all';
+                  } else if (readCount > 0) {
+                    return `Read by ${readCount}/${totalCount}`;
+                  } else {
+                    return 'Delivered';
+                  }
+                })()
+              : // Direct message: show Read or Delivered
+                isRead
+                ? 'Read'
+                : 'Delivered'}
+          </div>
         )}
       </div>
     </div>

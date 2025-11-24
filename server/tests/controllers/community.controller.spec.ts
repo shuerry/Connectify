@@ -2,7 +2,9 @@ import supertest from 'supertest';
 import mongoose from 'mongoose';
 import { app } from '../../app';
 import * as communityService from '../../services/community.service';
-import { DatabaseCommunity } from '../../types/types';
+import * as chatService from '../../services/chat.service';
+import * as databaseUtil from '../../utils/database.util';
+import { DatabaseCommunity, PopulatedDatabaseChat } from '../../types/types';
 
 // Mock community data for testing
 const mockCommunity: DatabaseCommunity = {
@@ -34,10 +36,14 @@ const getAllCommunitiesSpy = jest.spyOn(communityService, 'getAllCommunities');
 const toggleCommunityMembershipSpy = jest.spyOn(communityService, 'toggleCommunityMembership');
 const createCommunitySpy = jest.spyOn(communityService, 'createCommunity');
 const deleteCommunitySpy = jest.spyOn(communityService, 'deleteCommunity');
+const getCommunityChatSpy = jest.spyOn(chatService, 'getCommunityChat');
+const populateDocumentSpy = jest.spyOn(databaseUtil, 'populateDocument');
 
 describe('Community Controller', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getCommunityChatSpy.mockResolvedValue({ error: 'Community chat not found' });
+    populateDocumentSpy.mockResolvedValue({ error: 'Chat not found' });
   });
 
   describe('GET /getCommunity/:communityId', () => {
@@ -127,6 +133,41 @@ describe('Community Controller', () => {
         mockReqBody.communityId,
         mockReqBody.username,
       );
+    });
+
+    test('should fetch and populate community chat when membership changes', async () => {
+      const mockReqBody = {
+        communityId: '65e9b58910afe6e94fc6e6dc',
+        username: 'user3',
+      };
+
+      toggleCommunityMembershipSpy.mockResolvedValueOnce({
+        ...mockCommunity,
+        participants: [...mockCommunity.participants, 'user3'],
+      });
+
+      const mockChat = {
+        _id: new mongoose.Types.ObjectId(),
+        participants: { admin_user: true, user1: true },
+      } as any;
+
+      const populatedChat: PopulatedDatabaseChat = {
+        ...mockChat,
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      getCommunityChatSpy.mockResolvedValueOnce(mockChat);
+      populateDocumentSpy.mockResolvedValueOnce(populatedChat);
+
+      const response = await supertest(app)
+        .post('/api/community/toggleMembership')
+        .send(mockReqBody);
+
+      expect(response.status).toBe(200);
+      expect(getCommunityChatSpy).toHaveBeenCalledWith(mockReqBody.communityId);
+      expect(populateDocumentSpy).toHaveBeenCalledWith(mockChat._id.toString(), 'chat');
     });
 
     test('should successfully toggle membership when removing user', async () => {

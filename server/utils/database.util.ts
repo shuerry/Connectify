@@ -117,6 +117,9 @@ const populateChat = async (chatID: string): Promise<PopulatedDatabaseChat | nul
     _id: chatDoc._id as unknown as ObjectId,
     participants: chatDoc.participants,
     messages: enrichedMessages,
+    name: chatDoc.name,
+    isCommunityChat: chatDoc.isCommunityChat,
+    communityId: chatDoc.communityId,
     createdAt: chatDoc.createdAt,
     updatedAt: chatDoc.updatedAt,
   };

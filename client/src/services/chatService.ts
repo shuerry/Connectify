@@ -63,16 +63,45 @@ export const sendMessage = async (
  * Creates a new chat with the specified participants.
  *
  * @param participants - An array of user IDs representing the participants of the chat.
+ * @param name - Optional name for group chats.
+ * @param isCommunityChat - Whether this is a community chat.
+ * @param communityId - Community ID if this is a community chat.
  * @returns The newly created chat data.
  * @throws Throws an error if the chat creation fails or if the status code is not 200.
  */
 export const createChat = async (
   participants: Record<string, boolean>,
+  name?: string,
+  isCommunityChat?: boolean,
+  communityId?: string,
 ): Promise<PopulatedDatabaseChat> => {
-  const res = await api.post(`${CHAT_API_URL}/createChat`, { participants, messages: [] });
+  const res = await api.post(`${CHAT_API_URL}/createChat`, {
+    participants,
+    messages: [],
+    name,
+    isCommunityChat,
+    communityId,
+  });
 
   if (res.status !== 200) {
     throw new Error('Error when adding message to chat');
+  }
+
+  return res.data;
+};
+
+/**
+ * Gets a community chat by community ID.
+ *
+ * @param communityId - The ID of the community.
+ * @returns The community chat data.
+ * @throws Throws an error if the fetch fails or if the status code is not 200.
+ */
+export const getCommunityChat = async (communityId: string): Promise<PopulatedDatabaseChat> => {
+  const res = await api.get(`${CHAT_API_URL}/getCommunityChat?communityId=${communityId}`);
+
+  if (res.status !== 200) {
+    throw new Error('Error when fetching community chat');
   }
 
   return res.data;
@@ -104,6 +133,25 @@ export const markMessagesAsRead = async (
   const res = await api.post(`${CHAT_API_URL}/${chatID}/markAsRead`, { username });
   if (res.status !== 200) {
     throw new Error('Error when marking messages as read');
+  }
+  return res.data;
+};
+
+/**
+ * Adds a participant to an existing chat.
+ *
+ * @param chatID - The ID of the chat.
+ * @param username - The username of the participant to add.
+ * @returns The updated chat data.
+ * @throws Throws an error if the operation fails.
+ */
+export const addParticipant = async (
+  chatID: ObjectId,
+  username: string,
+): Promise<PopulatedDatabaseChat> => {
+  const res = await api.post(`${CHAT_API_URL}/${chatID}/addParticipant`, { username });
+  if (res.status !== 200) {
+    throw new Error('Error when adding participant to chat');
   }
   return res.data;
 };

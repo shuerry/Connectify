@@ -20,6 +20,19 @@ const chatSchema = new Schema(
         ref: 'Message',
       },
     ],
+    name: {
+      type: String,
+      required: false,
+    },
+    isCommunityChat: {
+      type: Boolean,
+      default: false,
+    },
+    communityId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Community',
+      required: false,
+    },
   },
   {
     collection: 'Chat',

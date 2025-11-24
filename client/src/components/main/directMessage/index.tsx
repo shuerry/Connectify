@@ -35,9 +35,14 @@ const DirectMessage = () => {
   } = useDirectMessage();
 
   // Get the other participant's username (excluding current user)
-  const otherParticipant = selectedChat
-    ? Object.keys(selectedChat.participants).find(username => username !== user.username)
-    : null;
+  const participants = selectedChat ? Object.keys(selectedChat.participants) : [];
+  const otherParticipant = participants.find(username => username !== user.username) || null;
+
+  const getChatDisplayName = () => {
+    if (!selectedChat) return null;
+    if (selectedChat.name) return selectedChat.name;
+    return otherParticipant;
+  };
 
   // Find the latest message sent by the current user
   const latestSentMessage = messages
@@ -104,7 +109,11 @@ const DirectMessage = () => {
         <div className='create-chat-panel'>
           <div className='create-chat-header'>
             <h3>Start a New Conversation</h3>
-            <button className='close-panel-btn' onClick={() => setShowCreatePanel(false)}>
+            <button
+              className='close-panel-btn'
+              onClick={() => {
+                setShowCreatePanel(false);
+              }}>
               <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
                 <path
                   d='M18 6L6 18M6 6l12 12'
@@ -115,6 +124,7 @@ const DirectMessage = () => {
               </svg>
             </button>
           </div>
+
           {error && (
             <div className='create-chat-error'>
               <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
@@ -123,7 +133,8 @@ const DirectMessage = () => {
               {error}
             </div>
           )}
-          {chatToCreate && (
+
+          {chatToCreate ? (
             <div className='selected-user'>
               <div className='selected-user-info'>
                 <div className='selected-avatar'>
@@ -146,7 +157,10 @@ const DirectMessage = () => {
                 Create Chat
               </button>
             </div>
+          ) : (
+            <p className='selected-user-hint'>Select a friend below to start a chat.</p>
           )}
+
           <div className='users-list-container'>
             <UsersListPage handleUserSelect={handleUserSelect} />
           </div>
@@ -201,7 +215,7 @@ const DirectMessage = () => {
 
         {/* Chat Area */}
         <div className='dm-chat-area'>
-          {selectedChat && otherParticipant ? (
+          {selectedChat ? (
             <>
               {/* Chat Header */}
               <div className='dm-chat-header'>
@@ -229,7 +243,7 @@ const DirectMessage = () => {
                     </div>
                   )}
                   <div className='participant-details'>
-                    <h2>{otherParticipant}</h2>
+                    <h2>{getChatDisplayName()}</h2>
                     <p>{typingText || ''}</p>
                   </div>
                 </div>
@@ -262,7 +276,7 @@ const DirectMessage = () => {
                         </svg>
                       </div>
                       <h3>Start the conversation</h3>
-                      <p>Send a message to {otherParticipant}</p>
+                      <p>Send a message to {otherParticipant || 'your friend'}</p>
                     </div>
                   ) : (
                     messages.map(message => (
@@ -305,7 +319,7 @@ const DirectMessage = () => {
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder={`Message ${otherParticipant}...`}
+                      placeholder={`Message ${otherParticipant || 'your friend'}...`}
                     />
                     <button
                       className={`dm-send-button ${newMessage.trim() ? 'active' : ''}`}
