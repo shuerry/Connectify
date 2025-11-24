@@ -45,6 +45,11 @@ const NewQuestionPage = () => {
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const storageKey = `unsaved_question_${user?.username || 'guest'}`;
 
+  useEffect(() => {
+    // Ensure the profanity dictionary is available before checking text
+    filter.loadDictionary('en');
+  }, []);
+
   useAutosave(
     storageKey,
     { title, text, tagNames, community },

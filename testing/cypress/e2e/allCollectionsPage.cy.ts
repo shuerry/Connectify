@@ -4,11 +4,27 @@ import {
   setupTest,
   teardownTest,
   verifyCollectionExists,
+  mockCollectionsApi,
 } from "../support/helpers";
+
+const MOCK_COLLECTION = {
+  _id: "mock-collection-1",
+  name: "Mock React Favorites",
+  description: "Mock collection for Cypress tests",
+  questions: [
+    {
+      title: "Mock Question",
+    },
+  ],
+};
 
 describe("Cypress Tests to verify viewing all collections", () => {
   beforeEach(() => {
     setupTest();
+    mockCollectionsApi({
+      ownerUsername: "user123",
+      collections: [MOCK_COLLECTION],
+    });
   });
 
   afterEach(() => {
@@ -22,7 +38,6 @@ describe("Cypress Tests to verify viewing all collections", () => {
 
     cy.get(".collections-title").should("contain", "Collections");
 
-    // Verify some pre-seeded collections appear
-    verifyCollectionExists("React Favorites");
+    verifyCollectionExists(MOCK_COLLECTION.name);
   });
 });

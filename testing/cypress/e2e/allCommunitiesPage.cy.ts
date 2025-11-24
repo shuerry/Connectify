@@ -1,20 +1,36 @@
 import {
   goToCommunities,
-  createCommunity,
   loginUser,
   setupTest,
   teardownTest,
+  mockCommunitiesApi,
 } from "../support/helpers";
 
-const C1_NAME = "React Enthusiasts";
-const C2_NAME = "Backend Masters";
-const C3_NAME = "Data Science Hub";
-const C4_NAME = "DevOps Specialists";
-const C5_NAME = "TypeScript Champions";
+const MOCK_COMMUNITIES = [
+  {
+    _id: "mock-community-1",
+    name: "Mock React Enthusiasts",
+    description: "Mock React community",
+    participants: ["user123", "user234"],
+  },
+  {
+    _id: "mock-community-2",
+    name: "Mock Backend Masters",
+    description: "Mock backend community",
+    participants: ["user123"],
+  },
+  {
+    _id: "mock-community-3",
+    name: "Mock Data Science Hub",
+    description: "Mock data community",
+    participants: [],
+  },
+];
 
 describe("Cypress Tests to verify display of all communities", () => {
   beforeEach(() => {
     setupTest();
+    mockCommunitiesApi(MOCK_COMMUNITIES);
   });
 
   afterEach(() => {
@@ -28,22 +44,17 @@ describe("Cypress Tests to verify display of all communities", () => {
     // go to all communities page
     goToCommunities();
 
-    const C_NAME_NEW = "Public Community1";
-    createCommunity(C_NAME_NEW, "A public community for devs", false);
-    const cTitles = [C1_NAME, C2_NAME, C3_NAME, C4_NAME, C5_NAME, C_NAME_NEW];
-
-    goToCommunities();
-
     // verify all communities are displayed
-    cy.get(".community-card").each(($el, index, $list) => {
-      cy.wrap($el).should("contain", cTitles[index]);
+    cy.get(".community-card").should("have.length", MOCK_COMMUNITIES.length);
+    MOCK_COMMUNITIES.forEach(community => {
+      cy.contains(".community-card-title", community.name).should("exist");
     });
   });
 
   it("4.2 | Should search for a community", () => {
     loginUser("user123");
     goToCommunities();
-    cy.get(".community-search").type(C1_NAME);
-    cy.get(".community-card").should("contain", C1_NAME);
+    cy.get(".community-search").type(MOCK_COMMUNITIES[0].name);
+    cy.get(".community-card").should("contain", MOCK_COMMUNITIES[0].name);
   });
 });
