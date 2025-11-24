@@ -454,39 +454,38 @@ const useDirectMessage = () => {
         });
       });
 
-      // Get current state and check which users we need to fetch
+      // Determine which usernames we still need to fetch
+      const usernamesToFetch = Array.from(usernames).filter(username => !participantUsers.has(username));
+      if (usernamesToFetch.length === 0) {
+        return;
+      }
+
+      const fetchedUsers = await Promise.all(
+        usernamesToFetch.map(async username => {
+          try {
+            const userData = await getUserByUsername(username);
+            return { username, userData };
+          } catch {
+            return null;
+          }
+        }),
+      );
+
       setParticipantUsers(prev => {
-        const usernamesToFetch = Array.from(usernames).filter(username => !prev.has(username));
-        
-        if (usernamesToFetch.length === 0) {
-          return prev; // No new users to fetch
-        }
-
-        // Fetch new users asynchronously
-        Promise.all(
-          usernamesToFetch.map(async username => {
-            try {
-              const userData = await getUserByUsername(username);
-              setParticipantUsers(current => {
-                const updated = new Map(current);
-                updated.set(username, userData);
-                return updated;
-              });
-            } catch {
-              // Ignore errors
-            }
-          })
-        );
-
-        return prev; // Return previous state immediately
+        const updated = new Map(prev);
+        fetchedUsers.forEach(entry => {
+          if (entry) {
+            updated.set(entry.username, entry.userData);
+          }
+        });
+        return updated;
       });
     };
 
     if (chats.length > 0) {
       fetchParticipantUsers();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chats.length, user.username]);
+  }, [chats, participantUsers, user.username]);
 
   // Listen for user status updates for all participants
   useEffect(() => {

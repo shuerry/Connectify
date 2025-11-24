@@ -407,13 +407,15 @@ const userController = (socket: FakeSOSocket) => {
       }
       socket.emit('userUpdate', { user: result, type: 'updated' });
       // Notify friends about status change
+      const payload = {
+        username: result.username,
+        isOnline: result.isOnline ?? false,
+        showOnlineStatus: result.showOnlineStatus ?? true,
+      };
+      socket.emit('userStatusUpdate', payload);
       if (result.friends && result.friends.length > 0) {
         result.friends.forEach(friendUsername => {
-          socket.to(`user:${friendUsername}`).emit('userStatusUpdate', {
-            username: result.username,
-            isOnline: result.isOnline ?? false,
-            showOnlineStatus: result.showOnlineStatus ?? true,
-          });
+          socket.to(`user:${friendUsername}`).emit('userStatusUpdate', payload);
         });
       }
       res.status(200).json(result);

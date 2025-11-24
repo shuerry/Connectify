@@ -109,19 +109,20 @@ socket.on('connection', clientSocket => {
     if (currentCount === 0) {
       try {
         const result = await updateOnlineStatus(username, true);
-        if (!('error' in result)) {
-          // Notify friends about status change
-          const relations = await getRelations(username);
-          if (!('error' in relations) && relations.friends && relations.friends.length > 0) {
-            relations.friends.forEach(friendUsername => {
-              socket.to(`user:${friendUsername}`).emit('userStatusUpdate', {
-                username: result.username,
-                isOnline: true,
-                showOnlineStatus: result.showOnlineStatus ?? true,
+          if (!('error' in result)) {
+            const payload = {
+              username: result.username,
+              isOnline: true,
+              showOnlineStatus: result.showOnlineStatus ?? true,
+            };
+            socket.emit('userStatusUpdate', payload);
+            const relations = await getRelations(username);
+            if (!('error' in relations) && relations.friends && relations.friends.length > 0) {
+              relations.friends.forEach(friendUsername => {
+                socket.to(`user:${friendUsername}`).emit('userStatusUpdate', payload);
               });
-            });
+            }
           }
-        }
       } catch (err) {
         error('Error updating online status on join:', err);
       }
@@ -148,15 +149,16 @@ socket.on('connection', clientSocket => {
         try {
           const result = await updateOnlineStatus(username, false);
           if (!('error' in result)) {
-            // Notify friends about status change
+            const payload = {
+              username: result.username,
+              isOnline: false,
+              showOnlineStatus: result.showOnlineStatus ?? true,
+            };
+            socket.emit('userStatusUpdate', payload);
             const relations = await getRelations(username);
             if (!('error' in relations) && relations.friends && relations.friends.length > 0) {
               relations.friends.forEach(friendUsername => {
-                socket.to(`user:${friendUsername}`).emit('userStatusUpdate', {
-                  username: result.username,
-                  isOnline: false,
-                  showOnlineStatus: result.showOnlineStatus ?? true,
-                });
+                socket.to(`user:${friendUsername}`).emit('userStatusUpdate', payload);
               });
             }
           }
@@ -186,15 +188,16 @@ socket.on('connection', clientSocket => {
         try {
           const result = await updateOnlineStatus(username, false);
           if (!('error' in result)) {
-            // Notify friends about status change
+            const payload = {
+              username: result.username,
+              isOnline: false,
+              showOnlineStatus: result.showOnlineStatus ?? true,
+            };
+            socket.emit('userStatusUpdate', payload);
             const relations = await getRelations(username);
             if (!('error' in relations) && relations.friends && relations.friends.length > 0) {
               relations.friends.forEach(friendUsername => {
-                socket.to(`user:${friendUsername}`).emit('userStatusUpdate', {
-                  username: result.username,
-                  isOnline: false,
-                  showOnlineStatus: result.showOnlineStatus ?? true,
-                });
+                socket.to(`user:${friendUsername}`).emit('userStatusUpdate', payload);
               });
             }
           }
