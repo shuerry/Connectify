@@ -57,11 +57,25 @@ const findGames = async (
     const sanitized = games
       .filter(game => {
         if (game.gameType === 'Connect Four') {
-          const state = game.state as any;
+          const state = game.state as unknown as {
+            roomSettings?: { privacy?: string; allowSpectators?: boolean };
+            status?: string;
+            player1?: string;
+            [key: string]: unknown;
+          };
           const privacy = state?.roomSettings?.privacy;
           const creator = state?.player1;
-          if (privacy === 'PUBLIC') return true;
-          if (privacy === 'FRIENDS_ONLY' && username && friends.includes(creator)) return true;
+          const allowSpectators = state?.roomSettings?.allowSpectators !== false; // default true
+          const status = state?.status;
+          if (privacy === 'PUBLIC') return status !== 'OVER' && allowSpectators;
+          if (
+            privacy === 'FRIENDS_ONLY' &&
+            username &&
+            typeof creator === 'string' &&
+            friends.includes(creator)
+          ) {
+            return status !== 'OVER' && allowSpectators;
+          }
           return false;
         }
         return true;
