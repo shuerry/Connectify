@@ -9,16 +9,6 @@ This document describes the manual regression checks performed for key product r
 3. In `client/`: `npm install` (first run) and `npm run dev`.
 4. Visit `http://localhost:4530`, sign in using seeded accounts (e.g., `user123` / `securePass123!`).
 
-## Save to Collection
-
-- **Goal:** User can save/unsave a post via the dropdown modal and see the saved state reflected.
-- **Steps:**
-  1. Log in as `user123` and navigate to `Questions`.
-  2. Open the "Save" dropdown on any post, choose `React Favorites`, then close the modal.
-  3. Refresh the questions page, reopen the Save modal for the same post.
-  4. Verify that `React Favorites` now shows the “Unsave” state.
-- **Screenshot prompts:** Save modal showing the “saved” pill; the same modal after reloading showing persistence.
-
 ## Report & Moderation
 
 - **Goal:** Reporters can submit a reason and authors see the moderation warning.
@@ -58,22 +48,18 @@ This document describes the manual regression checks performed for key product r
   3. Ensure the list updates and the order matches the returned payload (titles re-render).
 - **Screenshot prompts:** Question list with the `Trending` button highlighted and changed ordering; optional dev-tools network tab highlighting the 200 response.
 
-
-
 ### Auto-Save (Drafts) Feature
 
 **Test Steps:**
 1. Log in as a user.
 2. Start creating a new question or post.
 3. Enter a title and some content, but do NOT submit/publish.
-4. Refresh the page or navigate away, then return to the question creation page.
-5. Observe if the previously entered content is restored automatically.
+4. Refresh the page or navigate away, then it should save under My Drafts
+5. Observe if the previously entered content is restored automatically when you edit it.
 
 **Expected Result:**
 - The draft content (title and body) should be auto-saved and restored after refresh or navigation.
 - No data loss should occur unless the user explicitly discards the draft.
-
-- **Screenshot prompts:** :
 
 ### 2. Chats Feature
 
