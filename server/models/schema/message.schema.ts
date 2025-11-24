@@ -66,6 +66,36 @@ const messageSchema: Schema = new Schema(
       type: [String],
       default: [],
     },
+    editHistory: {
+      type: [
+        {
+          body: { type: String, required: true },
+          editedAt: { type: Date, required: true },
+          editedBy: { type: String, required: true },
+        },
+      ],
+      default: [],
+    },
+    lastEditedAt: {
+      type: Date,
+      required: false,
+    },
+    lastEditedBy: {
+      type: String,
+      required: false,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      required: false,
+    },
+    deletedBy: {
+      type: String,
+      required: false,
+    },
   },
   { collection: 'Message' },
 );

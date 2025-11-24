@@ -262,7 +262,8 @@ const useGroupChat = () => {
           }
           return;
         }
-        case 'newMessage': {
+        case 'newMessage':
+        case 'messageDeleted': {
           setSelectedChat(prevSelectedChat => {
             if (prevSelectedChat?._id && String(chat._id) === String(prevSelectedChat._id)) {
               return chat;
@@ -270,7 +271,11 @@ const useGroupChat = () => {
             return prevSelectedChat;
           });
 
-          if (selectedChatIdRef.current && String(chat._id) === String(selectedChatIdRef.current)) {
+          if (
+            type === 'newMessage' &&
+            selectedChatIdRef.current &&
+            String(chat._id) === String(selectedChatIdRef.current)
+          ) {
             markMessagesAsRead(chat._id, user.username).catch(err => {
               throw new Error(err);
             });
@@ -336,17 +341,31 @@ const useGroupChat = () => {
       const { msg } = messageUpdate;
 
       setSelectedChat(prevSelectedChat => {
-        if (prevSelectedChat) {
-          if (prevSelectedChat.messages.some(m => String(m._id) === String(msg._id))) {
-            return {
-              ...prevSelectedChat,
-              messages: prevSelectedChat.messages.map(m =>
-                String(m._id) === String(msg._id) ? { ...m, ...msg, user: m.user } : m,
-              ),
-            };
-          }
+        if (!prevSelectedChat) {
+          return prevSelectedChat;
         }
-        return prevSelectedChat;
+
+        const messageIndex = prevSelectedChat.messages.findIndex(
+          m => String(m._id) === String(msg._id),
+        );
+
+        if (messageIndex === -1) {
+          return prevSelectedChat;
+        }
+
+        if (msg.isDeleted) {
+          return {
+            ...prevSelectedChat,
+            messages: prevSelectedChat.messages.filter(m => String(m._id) !== String(msg._id)),
+          };
+        }
+
+        return {
+          ...prevSelectedChat,
+          messages: prevSelectedChat.messages.map(m =>
+            String(m._id) === String(msg._id) ? { ...m, ...msg, user: m.user } : m,
+          ),
+        };
       });
     };
 
@@ -485,6 +504,7 @@ const useGroupChat = () => {
 
   const allMessages: DatabaseMessage[] = selectedChat
     ? selectedChat.messages
+        .filter(msg => !msg.isDeleted)
         .map(msg => ({
           _id: msg._id,
           msg: msg.msg,
@@ -495,6 +515,12 @@ const useGroupChat = () => {
           friendRequestStatus: msg.friendRequestStatus,
           gameInvitation: msg.gameInvitation,
           readBy: msg.readBy || [],
+          editHistory: msg.editHistory || [],
+          lastEditedAt: msg.lastEditedAt,
+          lastEditedBy: msg.lastEditedBy,
+          isDeleted: msg.isDeleted,
+          deletedAt: msg.deletedAt,
+          deletedBy: msg.deletedBy,
         }))
         .sort((a, b) => new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime())
     : [];

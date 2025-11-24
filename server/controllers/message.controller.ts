@@ -7,6 +7,8 @@ import {
   updateFriendRequestStatus,
   sendGameInvitation,
   updateGameInvitationStatus,
+  editMessageContent,
+  deleteMessageById,
 } from '../services/message.service';
 import { getChatsByParticipants, saveChat, addMessageToChat } from '../services/chat.service';
 import { populateDocument } from '../utils/database.util';
@@ -229,6 +231,80 @@ const messageController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Edit an existing message's content.
+   */
+  const editMessageRoute = async (req: Request, res: Response): Promise<void> => {
+    const { messageId } = req.params;
+    const { newMessage, editorUsername } = req.body;
+
+    if (!newMessage || typeof newMessage !== 'string') {
+      res.status(400).send('Updated message is required');
+      return;
+    }
+
+    if (!editorUsername) {
+      res.status(400).send('Editor username is required');
+      return;
+    }
+
+    try {
+      const result = await editMessageContent(messageId, editorUsername, newMessage);
+
+      if ('error' in result) {
+        res.status(400).send(result.error);
+        return;
+      }
+
+      socket.emit('messageUpdate', { msg: result });
+      res.json(result);
+    } catch (err: unknown) {
+      res.status(500).send(`Error when editing message: ${(err as Error).message}`);
+    }
+  };
+
+  /**
+   * Delete a message authored by the current user.
+   */
+  const deleteMessageRoute = async (req: Request, res: Response): Promise<void> => {
+    const { messageId } = req.params;
+    const { username } = req.body;
+
+    if (!username) {
+      res.status(400).send('Username is required to delete a message');
+      return;
+    }
+
+    try {
+      const result = await deleteMessageById(messageId, username);
+
+      if ('error' in result) {
+        res.status(400).send(result.error);
+        return;
+      }
+
+      const { message, chatIds } = result;
+
+      socket.emit('messageUpdate', { msg: message });
+
+      await Promise.all(
+        chatIds.map(async chatId => {
+          const populatedChat = await populateDocument(chatId, 'chat');
+          if (!('error' in populatedChat)) {
+            socket.emit('chatUpdate', {
+              chat: populatedChat as PopulatedDatabaseChat,
+              type: 'messageDeleted',
+            });
+          }
+        }),
+      );
+
+      res.json({ success: true, messageId });
+    } catch (err: unknown) {
+      res.status(500).send(`Error when deleting message: ${(err as Error).message}`);
+    }
+  };
+
   // Handle typing indicators for global chat
   socket.on('connection', conn => {
     conn.on('typingStart', (data: { chatID?: string; username: string }) => {
@@ -262,6 +338,8 @@ const messageController = (socket: FakeSOSocket) => {
   router.post('/respondToFriendRequest', respondToFriendRequestRoute);
   router.post('/sendGameInvitation', sendGameInvitationRoute);
   router.post('/respondToGameInvitation', respondToGameInvitationRoute);
+  router.patch('/:messageId', editMessageRoute);
+  router.delete('/:messageId', deleteMessageRoute);
 
   return router;
 };

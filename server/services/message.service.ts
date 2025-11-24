@@ -1,5 +1,6 @@
 import MessageModel from '../models/messages.model';
 import UserModel from '../models/users.model';
+import ChatModel from '../models/chat.model';
 import { DatabaseMessage, DatabaseUser, Message, MessageResponse } from '../types/types';
 import { addFriend } from './user.service';
 
@@ -29,7 +30,10 @@ export const saveMessage = async (message: Message): Promise<MessageResponse> =>
  */
 export const getMessages = async (): Promise<DatabaseMessage[]> => {
   try {
-    const messages: DatabaseMessage[] = await MessageModel.find({ type: 'global' });
+    const messages: DatabaseMessage[] = await MessageModel.find({
+      type: 'global',
+      isDeleted: { $ne: true },
+    });
     messages.sort((a, b) => a.msgDateTime.getTime() - b.msgDateTime.getTime());
 
     return messages;
@@ -50,6 +54,7 @@ export const getDirectMessages = async (
 ): Promise<DatabaseMessage[]> => {
   try {
     const messages: DatabaseMessage[] = await MessageModel.find({
+      isDeleted: { $ne: true },
       $or: [
         { msgFrom: user1, msgTo: user2, type: 'direct' },
         { msgFrom: user2, msgTo: user1, type: 'direct' },
@@ -87,6 +92,10 @@ export const updateFriendRequestStatus = async (
 
     if (message.type !== 'friendRequest') {
       return { error: 'Not a friend request message' };
+    }
+
+    if (message.isDeleted) {
+      return { error: 'Message has been deleted' };
     }
 
     if (message.msgTo !== responderUsername) {
@@ -191,7 +200,9 @@ export const updateGameInvitationStatus = async (
     if (message.type !== 'gameInvitation') {
       return { error: 'Not a game invitation message' };
     }
-
+    if (message.isDeleted) {
+      return { error: 'Message has been deleted' };
+    }
     if (message.msgTo !== responderUsername) {
       return { error: 'Unauthorized to respond to this invitation' };
     }
@@ -214,6 +225,114 @@ export const updateGameInvitationStatus = async (
     return updatedMessage;
   } catch (error) {
     return { error: `Error updating game invitation: ${(error as Error).message}` };
+  }
+};
+
+const isEditableMessageType = (messageType: Message['type']): boolean =>
+  messageType === 'direct' || messageType === 'global';
+
+export const editMessageContent = async (
+  messageId: string,
+  editorUsername: string,
+  newBody: string,
+): Promise<MessageResponse> => {
+  try {
+    const message = await MessageModel.findById(messageId);
+
+    if (!message) {
+      return { error: 'Message not found' };
+    }
+
+    if (message.isDeleted) {
+      return { error: 'Message has been deleted' };
+    }
+
+    if (message.msgFrom !== editorUsername) {
+      return { error: 'You can only edit your own messages' };
+    }
+
+    if (!isEditableMessageType(message.type)) {
+      return { error: 'This message type cannot be edited' };
+    }
+
+    const trimmedBody = newBody.trim();
+
+    if (!trimmedBody) {
+      return { error: 'Updated message cannot be empty' };
+    }
+
+    if (message.msg === trimmedBody) {
+      return message;
+    }
+
+    const editEntry = {
+      body: message.msg,
+      editedAt: new Date(),
+      editedBy: editorUsername,
+    };
+
+    message.msg = trimmedBody;
+    message.lastEditedAt = editEntry.editedAt;
+    message.lastEditedBy = editorUsername;
+    message.editHistory = [...(message.editHistory ?? []), editEntry];
+
+    const updatedMessage = await message.save();
+    return updatedMessage;
+  } catch (error) {
+    return { error: `Error updating message: ${(error as Error).message}` };
+  }
+};
+
+type DeleteMessageResult =
+  | {
+      message: DatabaseMessage;
+      chatIds: string[];
+    }
+  | { error: string };
+
+export const deleteMessageById = async (
+  messageId: string,
+  deleterUsername: string,
+): Promise<DeleteMessageResult> => {
+  try {
+    const message = await MessageModel.findById(messageId);
+
+    if (!message) {
+      return { error: 'Message not found' };
+    }
+
+    if (message.isDeleted) {
+      return { error: 'Message already deleted' };
+    }
+
+    if (message.msgFrom !== deleterUsername) {
+      return { error: 'You can only delete your own messages' };
+    }
+
+    if (!isEditableMessageType(message.type)) {
+      return { error: 'This message type cannot be deleted' };
+    }
+
+    const chatsContainingMessage = await ChatModel.find({
+      messages: message._id,
+    })
+      .select('_id')
+      .lean();
+
+    await ChatModel.updateMany({ messages: message._id }, { $pull: { messages: message._id } });
+
+    message.isDeleted = true;
+    message.deletedAt = new Date();
+    message.deletedBy = deleterUsername;
+
+    const softDeletedMessage = (await message.save()).toObject() as DatabaseMessage;
+
+    return {
+      message: softDeletedMessage,
+      chatIds: chatsContainingMessage.map(chat => chat._id.toString()),
+    };
+  } catch (error) {
+    return { error: `Error deleting message: ${(error as Error).message}` };
   }
 };
 

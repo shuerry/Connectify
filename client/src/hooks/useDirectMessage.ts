@@ -287,7 +287,8 @@ const useDirectMessage = () => {
           }
           return;
         }
-        case 'newMessage': {
+        case 'newMessage':
+        case 'messageDeleted': {
           // Use functional updates to access current state
           setSelectedChat(prevSelectedChat => {
             // Update the selected chat if it matches
@@ -298,7 +299,11 @@ const useDirectMessage = () => {
           });
 
           // If user is currently viewing this chat, automatically mark messages as read
-          if (selectedChatIdRef.current && String(chat._id) === String(selectedChatIdRef.current)) {
+          if (
+            type === 'newMessage' &&
+            selectedChatIdRef.current &&
+            String(chat._id) === String(selectedChatIdRef.current)
+          ) {
             markMessagesAsRead(chat._id, user.username).catch(err => {
               throw new Error(err);
             });
@@ -367,49 +372,62 @@ const useDirectMessage = () => {
     const handleMessageUpdate = (messageUpdate: MessageUpdatePayload) => {
       const { msg } = messageUpdate;
 
-      // Use functional updates to access current state
       setSelectedChat(prevSelectedChat => {
-        // If this is a direct message (friend request, game invitation, etc.) for the current chat
-        if (prevSelectedChat) {
-          const participants = Object.keys(prevSelectedChat.participants);
-          const otherParticipant = participants.find(p => p !== user.username);
-
-          if (
-            otherParticipant &&
-            ((msg.msgFrom === user.username && msg.msgTo === otherParticipant) ||
-              (msg.msgFrom === otherParticipant && msg.msgTo === user.username) ||
-              (msg.type === 'friendRequest' &&
-                participants.includes(msg.msgFrom) &&
-                participants.includes(msg.msgTo || '')))
-          ) {
-            // Also update the chat if the message is in the chat's messages
-            if (prevSelectedChat.messages.some(m => String(m._id) === String(msg._id))) {
-              return {
-                ...prevSelectedChat,
-                messages: prevSelectedChat.messages.map(m =>
-                  String(m._id) === String(msg._id)
-                    ? { ...m, ...msg, user: m.user } // Preserve user field
-                    : m,
-                ),
-              };
-            }
-          }
+        if (!prevSelectedChat) {
+          return prevSelectedChat;
         }
-        return prevSelectedChat;
+
+        const messageIndex = prevSelectedChat.messages.findIndex(
+          m => String(m._id) === String(msg._id),
+        );
+
+        if (messageIndex === -1) {
+          return prevSelectedChat;
+        }
+
+        if (msg.isDeleted) {
+          return {
+            ...prevSelectedChat,
+            messages: prevSelectedChat.messages.filter(m => String(m._id) !== String(msg._id)),
+          };
+        }
+
+        return {
+          ...prevSelectedChat,
+          messages: prevSelectedChat.messages.map(m =>
+            String(m._id) === String(msg._id) ? { ...m, ...msg, user: m.user } : m,
+          ),
+        };
       });
 
-      // Update direct messages
       setDirectMessages(prev => {
         const existingIndex = prev.findIndex(m => String(m._id) === String(msg._id));
-        if (existingIndex >= 0) {
-          // Update existing message
-          return prev.map((m, idx) => (idx === existingIndex ? msg : m));
-        } else {
-          // Add new message
-          return [...prev, msg].sort(
-            (a, b) => new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime(),
-          );
+
+        if (msg.isDeleted) {
+          if (existingIndex === -1) {
+            return prev;
+          }
+          return prev.filter(m => String(m._id) !== String(msg._id));
         }
+
+        if (existingIndex >= 0) {
+          return prev.map((m, idx) => (idx === existingIndex ? { ...m, ...msg } : m));
+        }
+
+        if (msg.type === 'global') {
+          return prev;
+        }
+
+        const involvesCurrentUser =
+          msg.msgFrom === user.username || (msg.msgTo ? msg.msgTo === user.username : false);
+
+        if (!involvesCurrentUser) {
+          return prev;
+        }
+
+        return [...prev, msg].sort(
+          (a, b) => new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime(),
+        );
       });
     };
 
@@ -550,19 +568,28 @@ const useDirectMessage = () => {
   // Convert MessageInChat to DatabaseMessage format for consistency
   const allMessages: DatabaseMessage[] = selectedChat
     ? [
-        ...selectedChat.messages.map(msg => ({
-          _id: msg._id,
-          msg: msg.msg,
-          msgFrom: msg.msgFrom,
-          msgDateTime: msg.msgDateTime,
-          type: msg.type,
-          msgTo: msg.msgTo,
-          friendRequestStatus: msg.friendRequestStatus,
-          gameInvitation: msg.gameInvitation,
-          readBy: msg.readBy || [],
-        })),
+        ...selectedChat.messages
+          .filter(msg => !msg.isDeleted)
+          .map(msg => ({
+            _id: msg._id,
+            msg: msg.msg,
+            msgFrom: msg.msgFrom,
+            msgDateTime: msg.msgDateTime,
+            type: msg.type,
+            msgTo: msg.msgTo,
+            friendRequestStatus: msg.friendRequestStatus,
+            gameInvitation: msg.gameInvitation,
+            readBy: msg.readBy || [],
+            editHistory: msg.editHistory || [],
+            lastEditedAt: msg.lastEditedAt,
+            lastEditedBy: msg.lastEditedBy,
+            isDeleted: msg.isDeleted,
+            deletedAt: msg.deletedAt,
+            deletedBy: msg.deletedBy,
+          })),
         ...directMessages.filter(
-          dm => !selectedChat.messages.some(cm => String(cm._id) === String(dm._id)),
+          dm =>
+            !dm.isDeleted && !selectedChat.messages.some(cm => String(cm._id) === String(dm._id)),
         ),
       ].sort((a, b) => new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime())
     : [];

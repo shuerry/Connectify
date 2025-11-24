@@ -11,6 +11,12 @@ import { Request } from 'express';
  * - `friendRequestStatus`: The status of friend request ('pending', 'accepted', 'declined').
  * - `gameInvitation`: Game invitation details (for game invitation messages).
  */
+export interface MessageEditEntry {
+  body: string;
+  editedAt: Date;
+  editedBy: string;
+}
+
 export interface Message {
   msg: string;
   msgFrom: string;
@@ -26,6 +32,12 @@ export interface Message {
     status: 'pending' | 'accepted' | 'declined' | 'expired';
   };
   readBy?: string[];
+  editHistory?: MessageEditEntry[];
+  lastEditedAt?: Date;
+  lastEditedBy?: string;
+  isDeleted?: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }
 
 /**
