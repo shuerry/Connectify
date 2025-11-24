@@ -97,7 +97,7 @@
   align-items: center;
   justify-content: center;
   letter-spacing: -0.025em;
-  background: rgba(0, 0, 0, 0.2);
+  background: linear-gradient(90deg, #ff2d2d 0%, #ffe066 100%);
   padding: var(--space-4) var(--space-6);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(8px);
@@ -115,7 +115,7 @@
   max-width: 600px;
   margin: 0 auto;
   line-height: 1.5;
-  background: rgba(0, 0, 0, 0.15);
+  background: linear-gradient(90deg, #ff2d2d 0%, #ffe066 100%);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   backdrop-filter: blur(4px);
