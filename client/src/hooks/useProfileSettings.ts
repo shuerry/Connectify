@@ -6,6 +6,7 @@ import {
   resetPassword,
   updateBiography,
   updateEmail,
+  toggleOnlineStatus,
 } from '../services/userService';
 import { SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
@@ -68,12 +69,28 @@ const useProfileSettings = () => {
       }
     };
 
+    const handleUserStatusUpdate = (payload: {
+      username: string;
+      isOnline: boolean;
+      showOnlineStatus: boolean;
+    }) => {
+      if (payload.username === username && userData) {
+        setUserData({
+          ...userData,
+          isOnline: payload.isOnline,
+          showOnlineStatus: payload.showOnlineStatus,
+        });
+      }
+    };
+
     socket.on('userUpdate', handleUserUpdate);
+    socket.on('userStatusUpdate', handleUserStatusUpdate);
 
     return () => {
       socket.off('userUpdate', handleUserUpdate);
+      socket.off('userStatusUpdate', handleUserStatusUpdate);
     };
-  }, [socket, username]);
+  }, [socket, username, userData]);
 
   /**
    * Toggles the visibility of the password fields.
@@ -200,6 +217,24 @@ const useProfileSettings = () => {
     return;
   };
 
+  /**
+   * Handler for toggling online status visibility
+   */
+  const handleToggleOnlineStatus = async () => {
+    if (!username) return;
+    try {
+      const updatedUser = await toggleOnlineStatus(username);
+      setUserData(updatedUser);
+      setSuccessMessage(
+        `Online status visibility ${updatedUser.showOnlineStatus ? 'enabled' : 'disabled'}`,
+      );
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage('Failed to toggle online status visibility.');
+      setSuccessMessage(null);
+    }
+  };
+
   return {
     userData,
     newPassword,
@@ -229,6 +264,7 @@ const useProfileSettings = () => {
     handleUpdateEmail,
     handleDeleteUser,
     handleViewCollectionsPage,
+    handleToggleOnlineStatus,
   };
 };
 

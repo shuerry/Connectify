@@ -61,6 +61,14 @@ const userSchema: Schema = new Schema(
       tokenHash: { type: String, index: true },
       expiresAt: { type: Date, index: true },
     },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
+    showOnlineStatus: {
+      type: Boolean,
+      default: true,
+    },
   },
   { collection: 'User' },
 );

@@ -1,38 +1,9 @@
-import { useEffect, useState } from 'react';
 import './index.css';
-import useUserContext from '../../../hooks/useUserContext';
-import { SafeDatabaseUser } from '../../../types/types';
-import { getRelations, getUserByUsername, removeFriend } from '../../../services/userService';
+import useFriendsList from '../../../hooks/useFriendsList';
+import Avatar from '../../common/Avatar/Avatar';
 
 const FriendsListPage = () => {
-  const { user: currentUser } = useUserContext();
-  const [friends, setFriends] = useState<SafeDatabaseUser[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const { friends: friendUsernames } = await getRelations(currentUser.username);
-        const results = await Promise.all(friendUsernames.map(u => getUserByUsername(u)));
-        setFriends(results);
-      } catch {
-        setFriends([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [currentUser.username]);
-
-  const onRemove = async (target: string) => {
-    try {
-      await removeFriend(currentUser.username, target);
-      setFriends(prev => prev.filter(u => u.username !== target));
-    } catch {
-      throw new Error('Failed to remove friend');
-    }
-  };
+  const { friends, loading, onRemove } = useFriendsList();
 
   return (
     <div className='friends-container'>
@@ -61,7 +32,13 @@ const FriendsListPage = () => {
         <div className='friends-list'>
           {friends.map(friend => (
             <div key={friend.username} className='friend-card'>
-              <div className='friend-avatar'>{friend.username.charAt(0).toUpperCase()}</div>
+              <Avatar
+                name={friend.username}
+                size='lg'
+                variant='circle'
+                isOnline={friend.isOnline}
+                showOnlineStatus={friend.showOnlineStatus}
+              />
               <div className='friend-info'>
                 <h3 className='friend-username'>{friend.username}</h3>
                 <p className='friend-joined'>

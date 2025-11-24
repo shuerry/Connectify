@@ -27,6 +27,7 @@ import communityController from './controllers/community.controller';
 import reportController from './controllers/report.controller';
 import notificationController from './controllers/notification.controller';
 import { info, warn, error } from './utils/logger';
+import { updateOnlineStatus, getRelations } from './services/user.service';
 
 const MONGO_URL = `${process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017'}/fake_so`;
 const PORT = parseInt(process.env.PORT || '8000');
@@ -88,23 +89,123 @@ function startServer() {
   });
 }
 
-socket.on('connection', socket => {
-  info('A user connected ->', socket.id);
+// Track socket to username mapping and username to socket count
+const socketToUsername = new Map<string, string>();
+const usernameToSocketCount = new Map<string, number>();
 
-  socket.on('joinUserRoom', (username: string) => {
+socket.on('connection', clientSocket => {
+  info('A user connected ->', clientSocket.id);
+
+  clientSocket.on('joinUserRoom', async (username: string) => {
     if (!username) return;
-    socket.join(`user:${username}`);
-    info(`Socket ${socket.id} joined user room user:${username}`);
+    clientSocket.join(`user:${username}`);
+    socketToUsername.set(clientSocket.id, username);
+
+    // Increment socket count for this username
+    const currentCount = usernameToSocketCount.get(username) || 0;
+    usernameToSocketCount.set(username, currentCount + 1);
+
+    // If this is the first socket for this user, set them as online
+    if (currentCount === 0) {
+      try {
+        const result = await updateOnlineStatus(username, true);
+        if (!('error' in result)) {
+          const payload = {
+            username: result.username,
+            isOnline: true,
+            showOnlineStatus: result.showOnlineStatus ?? true,
+          };
+          socket.emit('userStatusUpdate', payload);
+          const relations = await getRelations(username);
+          if (!('error' in relations) && relations.friends && relations.friends.length > 0) {
+            relations.friends.forEach(friendUsername => {
+              socket.to(`user:${friendUsername}`).emit('userStatusUpdate', payload);
+            });
+          }
+        }
+      } catch (err) {
+        error('Error updating online status on join:', err);
+      }
+    }
+
+    info(`Socket ${clientSocket.id} joined user room user:${username}`);
   });
 
-  socket.on('leaveUserRoom', (username: string) => {
+  clientSocket.on('leaveUserRoom', async (username: string) => {
     if (!username) return;
-    socket.leave(`user:${username}`);
-    info(`Socket ${socket.id} left user room user:${username}`);
+    clientSocket.leave(`user:${username}`);
+
+    const socketUsername = socketToUsername.get(clientSocket.id);
+    if (socketUsername === username) {
+      socketToUsername.delete(clientSocket.id);
+
+      // Decrement socket count for this username
+      const currentCount = usernameToSocketCount.get(username) || 0;
+      const newCount = Math.max(0, currentCount - 1);
+      usernameToSocketCount.set(username, newCount);
+
+      // If this was the last socket for this user, set them as offline
+      if (newCount === 0) {
+        try {
+          const result = await updateOnlineStatus(username, false);
+          if (!('error' in result)) {
+            const payload = {
+              username: result.username,
+              isOnline: false,
+              showOnlineStatus: result.showOnlineStatus ?? true,
+            };
+            socket.emit('userStatusUpdate', payload);
+            const relations = await getRelations(username);
+            if (!('error' in relations) && relations.friends && relations.friends.length > 0) {
+              relations.friends.forEach(friendUsername => {
+                socket.to(`user:${friendUsername}`).emit('userStatusUpdate', payload);
+              });
+            }
+          }
+        } catch (err) {
+          error('Error updating online status on leave:', err);
+        }
+      }
+    }
+
+    info(`Socket ${clientSocket.id} left user room user:${username}`);
   });
 
-  socket.on('disconnect', () => {
-    info('User disconnected');
+  clientSocket.on('disconnect', async () => {
+    const username = socketToUsername.get(clientSocket.id);
+    info(`User disconnected -> socket: ${clientSocket.id}, username: ${username || 'unknown'}`);
+
+    if (username) {
+      socketToUsername.delete(clientSocket.id);
+
+      // Decrement socket count for this username
+      const currentCount = usernameToSocketCount.get(username) || 0;
+      const newCount = Math.max(0, currentCount - 1);
+      usernameToSocketCount.set(username, newCount);
+
+      // If this was the last socket for this user, set them as offline
+      if (newCount === 0) {
+        try {
+          const result = await updateOnlineStatus(username, false);
+          if (!('error' in result)) {
+            const payload = {
+              username: result.username,
+              isOnline: false,
+              showOnlineStatus: result.showOnlineStatus ?? true,
+            };
+            socket.emit('userStatusUpdate', payload);
+            const relations = await getRelations(username);
+            if (!('error' in relations) && relations.friends && relations.friends.length > 0) {
+              relations.friends.forEach(friendUsername => {
+                socket.to(`user:${friendUsername}`).emit('userStatusUpdate', payload);
+              });
+            }
+          }
+        } catch (err) {
+          error('Error updating online status on disconnect:', err);
+        }
+      }
+    }
   });
 });
 

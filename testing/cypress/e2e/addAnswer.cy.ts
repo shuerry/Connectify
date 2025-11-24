@@ -1,6 +1,6 @@
-import { Q1_DESC, A1_TXT, A2_TXT } from "../../../server/testData/post_strings";
 import {
   createAnswer,
+  createQuestion,
   goToAnswerQuestion,
   loginUser,
   setupTest,
@@ -17,11 +17,13 @@ describe("Cypress Tests to verify adding new answers", () => {
   });
 
   it("1.1 | Created new answer should be displayed at the top of the answers page", () => {
-    const answers = ["Test Answer 1", A1_TXT];
+    const answers = ["Test Answer 1", "Seeded answer"];
+    const questionTitle = `Answer flow ${Date.now()}`;
 
     loginUser("user123");
+    createQuestion(questionTitle, "Question body for answers page", "answers");
 
-    goToAnswerQuestion(Q1_DESC);
+    goToAnswerQuestion(questionTitle);
 
     createAnswer(answers[0]);
 
@@ -31,9 +33,11 @@ describe("Cypress Tests to verify adding new answers", () => {
   });
 
   it("1.2 | Answer is mandatory when creating a new answer", () => {
+    const questionTitle = `Answer validation ${Date.now()}`;
     loginUser("user123");
+    createQuestion(questionTitle, "Question body for validation", "answers");
 
-    goToAnswerQuestion(Q1_DESC);
+    goToAnswerQuestion(questionTitle);
 
     cy.contains("Post Answer").click();
     cy.contains("Answer text cannot be empty");

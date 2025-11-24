@@ -21,6 +21,8 @@ import {
   blockUser,
   unblockUser,
   getRelations,
+  toggleOnlineStatusVisibility,
+  getOnlineStatus,
 } from '../services/user.service';
 import {
   confirmEmailVerification,
@@ -392,6 +394,51 @@ const userController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Toggles the user's online status visibility preference.
+   */
+  const toggleOnlineStatusRoute = async (req: express.Request, res: Response): Promise<void> => {
+    try {
+      const { username } = req.body as { username: string };
+      const result = await toggleOnlineStatusVisibility(username);
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+      socket.emit('userUpdate', { user: result, type: 'updated' });
+      // Notify friends about status change
+      const payload = {
+        username: result.username,
+        isOnline: result.isOnline ?? false,
+        showOnlineStatus: result.showOnlineStatus ?? true,
+      };
+      socket.emit('userStatusUpdate', payload);
+      if (result.friends && result.friends.length > 0) {
+        result.friends.forEach(friendUsername => {
+          socket.to(`user:${friendUsername}`).emit('userStatusUpdate', payload);
+        });
+      }
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).send(`Error when toggling online status: ${error}`);
+    }
+  };
+
+  /**
+   * Gets the online status for a user.
+   */
+  const getOnlineStatusRoute = async (req: UserByUsernameRequest, res: Response): Promise<void> => {
+    try {
+      const { username } = req.params;
+      const result = await getOnlineStatus(username);
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).send(`Error when getting online status: ${error}`);
+    }
+  };
+
   // Define routes for the user-related operations.
   router.post('/signup', createUser);
   router.post('/login', userLogin);
@@ -411,6 +458,8 @@ const userController = (socket: FakeSOSocket) => {
   router.get('/verifyEmail', verifyEmail);
   router.post('/forgotPassword', forgotPassword);
   router.post('/resetPasswordWithToken', resetPasswordWithToken);
+  router.post('/toggleOnlineStatus', toggleOnlineStatusRoute);
+  router.get('/onlineStatus/:username', getOnlineStatusRoute);
   return router;
 };
 

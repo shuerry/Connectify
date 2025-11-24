@@ -62,7 +62,11 @@
 .chats-list-card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
+}
+
+.chats-list-card-avatar {
+  flex-shrink: 0;
 }
 
 .chats-list-card__unread-dot {

@@ -6,6 +6,7 @@ import MessageCard from '../messageCard';
 import NotifComponent from '../notifyButton';
 import ChatsListCard from './chatsListCard';
 import useUserContext from '../../../hooks/useUserContext';
+import Avatar from '../../common/Avatar/Avatar';
 
 /**
  * DirectMessage component renders a page for direct messaging between users.
@@ -29,6 +30,8 @@ const DirectMessage = () => {
     refreshChat,
     error,
     typingUsers,
+    participantUsers,
+    otherParticipantUser,
     isGroupChat,
     setIsGroupChat,
     selectedUsersForGroup,
@@ -276,13 +279,22 @@ const DirectMessage = () => {
                 <small>Start a new chat to begin messaging</small>
               </div>
             ) : (
-              chats.map(chat => (
-                <ChatsListCard
-                  key={String(chat._id)}
-                  chat={chat}
-                  handleChatSelect={handleChatSelect}
-                />
-              ))
+              chats.map(chat => {
+                const otherParticipantUsername = Object.keys(chat.participants).find(
+                  username => username !== user.username,
+                );
+                const participantUser = otherParticipantUsername
+                  ? participantUsers.get(otherParticipantUsername)
+                  : null;
+                return (
+                  <ChatsListCard
+                    key={String(chat._id)}
+                    chat={chat}
+                    handleChatSelect={handleChatSelect}
+                    participantUser={participantUser}
+                  />
+                );
+              })
             )}
           </div>
         </div>
@@ -294,7 +306,16 @@ const DirectMessage = () => {
               {/* Chat Header */}
               <div className='dm-chat-header'>
                 <div className='chat-participant-info'>
-                  {isSelectedGroupChat ? (
+                  {otherParticipantUser ? (
+                    <Avatar
+                      name={otherParticipantUser.username}
+                      size='md'
+                      variant='circle'
+                      isOnline={otherParticipantUser.isOnline}
+                      showOnlineStatus={otherParticipantUser.showOnlineStatus}
+                    />
+                  ) : (
+                    {isSelectedGroupChat ? (
                     <div className='participant-avatar group-avatar'>
                       <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
                         <path
@@ -308,17 +329,18 @@ const DirectMessage = () => {
                     </div>
                   ) : (
                     <div className='participant-avatar'>
-                      <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
-                        <path
-                          d='M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z'
-                          stroke='currentColor'
-                          strokeWidth='2'
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          fill='none'
-                        />
-                      </svg>
-                    </div>
+                        <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
+                          <path
+                            d='M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z'
+                            stroke='currentColor'
+                            strokeWidth='2'
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            fill='none'
+                          />
+                        </svg>
+                      </div>
+                  )}
                   )}
                   <div className='participant-details'>
                     <h2>{getChatDisplayName()}</h2>

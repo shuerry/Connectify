@@ -217,6 +217,30 @@ export const getRelations = async (
 };
 
 /**
+ * Toggles the user's online status visibility preference.
+ */
+const toggleOnlineStatus = async (username: string): Promise<SafeDatabaseUser> => {
+  const res = await api.post(`${USER_API_URL}/toggleOnlineStatus`, { username });
+  if (res.status !== 200) {
+    throw new Error('Error when toggling online status');
+  }
+  return res.data;
+};
+
+/**
+ * Gets the online status for a user.
+ */
+const getOnlineStatus = async (
+  username: string,
+): Promise<{ isOnline: boolean; showOnlineStatus: boolean }> => {
+  const res = await api.get(`${USER_API_URL}/onlineStatus/${username}`);
+  if (res.status !== 200) {
+    throw new Error('Error when fetching online status');
+  }
+  return res.data;
+};
+
+/**
  * Requests a password reset by sending an email with a reset link.
  * @param usernameOrEmail - The username or email address of the account
  * @returns A promise that resolves to a success message
@@ -259,4 +283,6 @@ export {
   updateEmail,
   forgotPassword,
   resetPasswordWithToken,
+  toggleOnlineStatus,
+  getOnlineStatus,
 };

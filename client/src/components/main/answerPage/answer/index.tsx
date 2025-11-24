@@ -87,7 +87,7 @@ const AnswerView = ({
                   }
                 })();
               }}>
-              <svg width='12' height='12' viewBox='0 0 24 24' fill='currentColor'>
+              <svg width='18' height='18' viewBox='0 0 24 24' fill='currentColor'>
                 <path d='M3 6h18v2H3V6zm2 3h14l-1.1 12.2c-.1 1.1-1 1.8-2.1 1.8H8.2c-1.1 0-2-.8-2.1-1.8L5 9zm5 2v8h2v-8H10zm4 0v8h2v-8h-2zM9 4V3h6v1h5v2H4V4h5z' />
               </svg>
               <span className='delete-label'>Delete</span>

@@ -32,11 +32,6 @@
   background: none;
 }
 
-.delete-btn svg {
-  width: 12px;
-  height: 12px;
-}
-
 .delete-label {
   text-transform: none;
   letter-spacing: 0.02em;

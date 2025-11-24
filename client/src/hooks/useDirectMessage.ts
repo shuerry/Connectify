@@ -18,7 +18,7 @@ import {
   markMessagesAsRead,
 } from '../services/chatService';
 import { getDirectMessages } from '../services/messageService';
-import { getRelations } from '../services/userService';
+import { getRelations, getUserByUsername } from '../services/userService';
 
 /**
  * useDirectMessage is a custom hook that provides state and functions for direct messaging between users.
@@ -38,6 +38,9 @@ const useDirectMessage = () => {
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [participantUsers, setParticipantUsers] = useState<Map<string, SafeDatabaseUser>>(
+    new Map(),
+  );
   const selectedChatIdRef = useRef<ObjectId | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef<boolean>(false);
@@ -521,6 +524,94 @@ const useDirectMessage = () => {
     };
   }, [user.username, socket, selectedChat?._id]);
 
+  // Fetch and manage user data for chat participants
+  useEffect(() => {
+    const fetchParticipantUsers = async () => {
+      const usernames = new Set<string>();
+      chats.forEach(chat => {
+        Object.keys(chat.participants).forEach(username => {
+          if (username !== user.username) {
+            usernames.add(username);
+          }
+        });
+      });
+
+      // Determine which usernames we still need to fetch
+      const usernamesToFetch = Array.from(usernames).filter(
+        username => !participantUsers.has(username),
+      );
+      if (usernamesToFetch.length === 0) {
+        return;
+      }
+
+      const fetchedUsers = await Promise.all(
+        usernamesToFetch.map(async username => {
+          try {
+            const userData = await getUserByUsername(username);
+            return { username, userData };
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      setParticipantUsers(prev => {
+        const updated = new Map(prev);
+        fetchedUsers.forEach(entry => {
+          if (entry) {
+            updated.set(entry.username, entry.userData);
+          }
+        });
+        return updated;
+      });
+    };
+
+    if (chats.length > 0) {
+      fetchParticipantUsers();
+    }
+  }, [chats, participantUsers, user.username]);
+
+  // Listen for user status updates for all participants
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUserStatusUpdate = (payload: {
+      username: string;
+      isOnline: boolean;
+      showOnlineStatus: boolean;
+    }) => {
+      setParticipantUsers(prev => {
+        const user = prev.get(payload.username);
+        if (user) {
+          const newMap = new Map(prev);
+          newMap.set(payload.username, {
+            ...user,
+            isOnline: payload.isOnline,
+            showOnlineStatus: payload.showOnlineStatus,
+          });
+          return newMap;
+        }
+        return prev;
+      });
+    };
+
+    const handleUserUpdate = (payload: { user: SafeDatabaseUser; type: string }) => {
+      setParticipantUsers(prev => {
+        const newMap = new Map(prev);
+        newMap.set(payload.user.username, payload.user);
+        return newMap;
+      });
+    };
+
+    socket.on('userStatusUpdate', handleUserStatusUpdate);
+    socket.on('userUpdate', handleUserUpdate);
+
+    return () => {
+      socket.off('userStatusUpdate', handleUserStatusUpdate);
+      socket.off('userUpdate', handleUserUpdate);
+    };
+  }, [socket]);
+
   // Merge chat messages with direct messages (friend requests, game invitations, etc.)
   // Convert MessageInChat to DatabaseMessage format for consistency
   const allMessages: DatabaseMessage[] = selectedChat
@@ -594,6 +685,12 @@ const useDirectMessage = () => {
     };
   }, [socket, user.username, handleLeaveChat]);
 
+  // Get the other participant's user data for the selected chat
+  const otherParticipant = selectedChat
+    ? Object.keys(selectedChat.participants).find(username => username !== user.username)
+    : null;
+  const otherParticipantUser = otherParticipant ? participantUsers.get(otherParticipant) : null;
+
   return {
     selectedChat,
     chatToCreate,
@@ -616,6 +713,8 @@ const useDirectMessage = () => {
     setSelectedUsersForGroup,
     groupChatName,
     setGroupChatName,
+    participantUsers,
+    otherParticipantUser,
   };
 };
 

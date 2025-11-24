@@ -13,6 +13,9 @@ import {
   saveUser,
   unblockUser,
   updateUser,
+  toggleOnlineStatusVisibility,
+  updateOnlineStatus,
+  getOnlineStatus,
 } from '../../services/user.service';
 import { SafeDatabaseUser, User, UserCredentials } from '../../types/types';
 import { user, safeUser } from '../mockData.models';
@@ -673,6 +676,143 @@ describe('getUsersWhoBlocked', () => {
     });
 
     const result = await getUsersWhoBlocked(user.username);
+
+    expect('error' in result).toBe(true);
+  });
+});
+
+describe('toggleOnlineStatusVisibility', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('should toggle showOnlineStatus and return updated user', async () => {
+    jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce({ showOnlineStatus: true } as any);
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue({ ...safeUser, showOnlineStatus: false }),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = (await toggleOnlineStatusVisibility(user.username)) as SafeDatabaseUser;
+
+    expect(result.showOnlineStatus).toBe(false);
+    expect(UserModel.findOne).toHaveBeenCalledWith({ username: user.username });
+    expect(UserModel.findOneAndUpdate).toHaveBeenCalled();
+  });
+
+  it('should return error if user not found', async () => {
+    jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce(null);
+
+    const result = await toggleOnlineStatusVisibility(user.username);
+
+    expect('error' in result).toBe(true);
+  });
+
+  it('should return error if update fails', async () => {
+    jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce({ showOnlineStatus: true } as any);
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue(null),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = await toggleOnlineStatusVisibility(user.username);
+
+    expect('error' in result).toBe(true);
+  });
+
+  it('should return error if findOne throws', async () => {
+    jest.spyOn(UserModel, 'findOne').mockImplementation(() => {
+      throw new Error('db');
+    });
+
+    const result = await toggleOnlineStatusVisibility(user.username);
+
+    expect('error' in result).toBe(true);
+  });
+});
+
+describe('updateOnlineStatus', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('should update isOnline flag', async () => {
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue({ ...safeUser, isOnline: true }),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = (await updateOnlineStatus(user.username, true)) as SafeDatabaseUser;
+
+    expect(result.isOnline).toBe(true);
+    expect(UserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      { username: user.username },
+      { $set: { isOnline: true } },
+      { new: true },
+    );
+  });
+
+  it('should return error if user not found', async () => {
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue(null),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = await updateOnlineStatus(user.username, false);
+
+    expect('error' in result).toBe(true);
+  });
+
+  it('should return error if update throws', async () => {
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockImplementation(() => {
+      throw new Error('db');
+    });
+
+    const result = await updateOnlineStatus(user.username, false);
+
+    expect('error' in result).toBe(true);
+  });
+});
+
+describe('getOnlineStatus', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('should return online status data', async () => {
+    jest.spyOn(UserModel, 'findOne').mockReturnValue({
+      select: jest.fn().mockResolvedValue({ isOnline: true, showOnlineStatus: false }),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = await getOnlineStatus(user.username);
+
+    if ('error' in result) throw new Error('Expected status data');
+    expect(result).toEqual({ isOnline: true, showOnlineStatus: false });
+  });
+
+  it('should default values when fields missing', async () => {
+    jest.spyOn(UserModel, 'findOne').mockReturnValue({
+      select: jest.fn().mockResolvedValue({}),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = await getOnlineStatus(user.username);
+
+    if ('error' in result) throw new Error('Expected status data');
+    expect(result).toEqual({ isOnline: false, showOnlineStatus: true });
+  });
+
+  it('should return error if user not found', async () => {
+    jest.spyOn(UserModel, 'findOne').mockReturnValue({
+      select: jest.fn().mockResolvedValue(null),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = await getOnlineStatus(user.username);
+
+    expect('error' in result).toBe(true);
+  });
+
+  it('should return error if query throws', async () => {
+    jest.spyOn(UserModel, 'findOne').mockImplementation(() => {
+      throw new Error('db');
+    });
+
+    const result = await getOnlineStatus(user.username);
 
     expect('error' in result).toBe(true);
   });

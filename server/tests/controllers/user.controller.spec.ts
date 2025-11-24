@@ -35,6 +35,8 @@ const removeFriendSpy = jest.spyOn(util, 'removeFriend');
 const blockUserSpy = jest.spyOn(util, 'blockUser');
 const unblockUserSpy = jest.spyOn(util, 'unblockUser');
 const getRelationsSpy = jest.spyOn(util, 'getRelations');
+const toggleOnlineStatusSpy = jest.spyOn(util, 'toggleOnlineStatusVisibility');
+const getOnlineStatusSpy = jest.spyOn(util, 'getOnlineStatus');
 
 const startEmailVerificationSpy = jest.spyOn(emailVerificationService, 'startEmailVerification');
 const confirmEmailVerificationSpy = jest.spyOn(
@@ -549,6 +551,54 @@ describe('Test userController', () => {
 
       expect(res.status).toBe(500);
       expect(res.body).toEqual({ error: 'Failed to verify email' });
+    });
+  });
+
+  describe('Online status routes', () => {
+    it('POST /toggleOnlineStatus should toggle visibility and return 200', async () => {
+      toggleOnlineStatusSpy.mockResolvedValueOnce({
+        ...mockSafeUser,
+        showOnlineStatus: false,
+        friends: [],
+      } as any);
+
+      const res = await supertest(app)
+        .post('/api/user/toggleOnlineStatus')
+        .send({ username: 'user1' });
+
+      expect(toggleOnlineStatusSpy).toHaveBeenCalledWith('user1');
+      expect(res.status).toBe(200);
+      expect(res.body.showOnlineStatus).toBe(false);
+    });
+
+    it('POST /toggleOnlineStatus should return 500 on service error', async () => {
+      toggleOnlineStatusSpy.mockResolvedValueOnce({ error: 'failed' } as any);
+
+      const res = await supertest(app)
+        .post('/api/user/toggleOnlineStatus')
+        .send({ username: 'user1' });
+
+      expect(res.status).toBe(500);
+      expect(res.text).toContain('Error when toggling online status');
+    });
+
+    it('GET /onlineStatus/:username should return status object', async () => {
+      getOnlineStatusSpy.mockResolvedValueOnce({ isOnline: true, showOnlineStatus: false });
+
+      const res = await supertest(app).get('/api/user/onlineStatus/user1');
+
+      expect(getOnlineStatusSpy).toHaveBeenCalledWith('user1');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ isOnline: true, showOnlineStatus: false });
+    });
+
+    it('GET /onlineStatus/:username should return 500 on error', async () => {
+      getOnlineStatusSpy.mockResolvedValueOnce({ error: 'boom' });
+
+      const res = await supertest(app).get('/api/user/onlineStatus/user1');
+
+      expect(res.status).toBe(500);
+      expect(res.text).toContain('Error when getting online status');
     });
   });
 

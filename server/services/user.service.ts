@@ -32,6 +32,8 @@ export const saveUser = async (user: User): Promise<UserResponse> => {
       biography: result.biography,
       friends: result.friends,
       blockedUsers: result.blockedUsers,
+      isOnline: result.isOnline,
+      showOnlineStatus: result.showOnlineStatus,
     };
 
     return safeUser;
@@ -291,5 +293,76 @@ export const getUsersWhoBlocked = async (
     return users.map(u => u.username);
   } catch (error) {
     return { error: `Error when fetching users who blocked ${username}: ${error}` };
+  }
+};
+
+/**
+ * Toggles the user's online status visibility preference.
+ */
+export const toggleOnlineStatusVisibility = async (username: string): Promise<UserResponse> => {
+  try {
+    const user = await UserModel.findOne({ username });
+    if (!user) {
+      throw Error('User not found');
+    }
+
+    const newShowOnlineStatus = !(user.showOnlineStatus ?? true);
+    const updatedUser: SafeDatabaseUser | null = await UserModel.findOneAndUpdate(
+      { username },
+      { $set: { showOnlineStatus: newShowOnlineStatus } },
+      { new: true },
+    ).select('-password');
+
+    if (!updatedUser) {
+      throw Error('Error updating online status visibility');
+    }
+
+    return updatedUser;
+  } catch (error) {
+    return { error: `Error when toggling online status visibility: ${error}` };
+  }
+};
+
+/**
+ * Updates a user's online status.
+ */
+export const updateOnlineStatus = async (
+  username: string,
+  isOnline: boolean,
+): Promise<UserResponse> => {
+  try {
+    const updatedUser: SafeDatabaseUser | null = await UserModel.findOneAndUpdate(
+      { username },
+      { $set: { isOnline } },
+      { new: true },
+    ).select('-password');
+
+    if (!updatedUser) {
+      throw Error('Error updating online status');
+    }
+
+    return updatedUser;
+  } catch (error) {
+    return { error: `Error when updating online status: ${error}` };
+  }
+};
+
+/**
+ * Gets the online status for a user.
+ */
+export const getOnlineStatus = async (
+  username: string,
+): Promise<{ isOnline: boolean; showOnlineStatus: boolean } | { error: string }> => {
+  try {
+    const user = await UserModel.findOne({ username }).select('isOnline showOnlineStatus');
+    if (!user) {
+      throw Error('User not found');
+    }
+    return {
+      isOnline: user.isOnline ?? false,
+      showOnlineStatus: user.showOnlineStatus ?? true,
+    };
+  } catch (error) {
+    return { error: `Error when fetching online status: ${error}` };
   }
 };

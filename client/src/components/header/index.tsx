@@ -173,10 +173,19 @@ const Header = () => {
 
           {/* User Profile Dropdown */}
           <div className='user-profile-section'>
-            <div className='user-avatar'>
+            <div className='user-avatar' style={{ position: 'relative' }}>
               <span className='avatar-text'>
                 {currentUser?.username?.charAt(0).toUpperCase() || 'U'}
               </span>
+              {/* Online Status Indicator */}
+              <div
+                className={`user-avatar__online-status ${
+                  currentUser?.showOnlineStatus !== false
+                    ? 'user-avatar__online-status--online'
+                    : 'user-avatar__online-status--offline'
+                }`}
+                title={currentUser.isOnline ? 'Online' : 'Offline'}
+              />
             </div>
             <div className='user-menu'>
               <button

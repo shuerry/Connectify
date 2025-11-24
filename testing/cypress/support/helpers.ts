@@ -13,12 +13,24 @@ export const loginUser = (
   password: string = "securePass123!",
 ) => {
   cy.visit("http://localhost:4530");
-  cy.contains("Welcome to FakeStackOverflow!");
-  cy.get("#username-input").type(username);
-  cy.get("#password-input").type(password);
-  cy.contains("Submit").click();
+  cy.contains(".auth-title", "Welcome Back!").should("be.visible");
+  cy.get("#username-input").clear().type(username);
+  cy.get("#password-input").clear().type(password);
+  cy.contains("button", "Sign In").click();
   // Wait for redirect to home page
   cy.url().should("include", "/home");
+};
+
+/**
+ * Logs out by clearing stored user state and returning to the login screen.
+ */
+export const logoutUser = () => {
+  cy.window().then((win) => {
+    win.localStorage.removeItem("currentUser");
+    win.localStorage.removeItem("rememberedUser");
+  });
+  cy.visit("http://localhost:4530/login");
+  cy.contains(".auth-title", "Welcome Back!").should("be.visible");
 };
 
 /**
@@ -59,7 +71,7 @@ export const teardownTest = () => {
  * Navigates to the Ask Question page
  */
 export const goToAskQuestion = () => {
-  cy.contains("Ask a Question").click();
+  cy.contains("button", "Ask a Question").click();
   cy.url().should("include", "/new/question");
 };
 
@@ -74,7 +86,9 @@ export const createQuestion = (title: string, text: string, tags: string) => {
   cy.get("#formTitleInput").type(title);
   cy.get("#formTextInput").type(text);
   cy.get("#formTagInput").type(tags);
-  cy.contains("Post Question").click();
+  cy.contains(".reddit-btn-primary", "Post").click();
+  cy.url({ timeout: 10000 }).should("include", "/home");
+  waitForQuestionsToLoad();
 };
 
 /**
@@ -82,8 +96,9 @@ export const createQuestion = (title: string, text: string, tags: string) => {
  * @param questionTitle - The title of the question to click on
  */
 export const goToAnswerQuestion = (questionTitle: string) => {
-  cy.contains(questionTitle).click();
-  cy.contains("Answer Question").click();
+  waitForQuestionsToLoad();
+  cy.contains(".reddit-question-title", questionTitle, { timeout: 10000 }).click();
+  cy.contains(".reddit-answer-button", "Add an Answer", { timeout: 10000 }).click();
   cy.url().should("include", "/new/answer");
 };
 
@@ -116,15 +131,17 @@ export const clickFilter = (filterName: string) => {
  * Navigates back to the Questions page
  */
 export const goToQuestions = () => {
-  cy.contains("Questions").click();
+  cy.contains(".nav-item-text", "Questions").click();
   cy.url().should("include", "/home");
+  waitForQuestionsToLoad();
 };
 
 /**
  * Navigates back to the Collections page
  */
 export const goToCollections = () => {
-  cy.contains("Collections").click();
+  cy.contains(".nav-item-text", "My Collections").click();
+  cy.url().should("include", "/collections");
 };
 
 /**
@@ -152,7 +169,19 @@ export const createCommunity = (
  * Navigates back to the Communities page
  */
 export const goToCommunities = () => {
-  cy.contains("Communities").click();
+  cy.contains(".nav-item-text", "Communities").click();
+  cy.url().should("include", "/communities");
+};
+
+/**
+ * Navigates to the Connect Four lobby via the Games page.
+ */
+export const goToConnectFourPage = () => {
+  cy.contains(".nav-item-text", "Games").click();
+  cy.url().should("include", "/games");
+  cy.get(".btn-connect-four", { timeout: 10000 }).should("be.visible").click();
+  cy.url().should("include", "/games/connectfour");
+  cy.get(".connect-four-page").should("exist");
 };
 
 /**
@@ -169,7 +198,13 @@ export const viewCommunityCard = (CommunityName: string) => {
  * Waits for questions to load and verifies the page is ready
  */
 export const waitForQuestionsToLoad = () => {
-  cy.get(".postTitle").should("exist");
+  cy.get("body", { timeout: 10000 }).then($body => {
+    if ($body.find(".reddit-question-title").length) {
+      cy.get(".reddit-question-title").should("exist");
+    } else {
+      cy.get(".empty-state").should("exist");
+    }
+  });
 };
 
 /**
@@ -177,12 +212,11 @@ export const waitForQuestionsToLoad = () => {
  * @param questionTitle - The title of the question to click on
  */
 export const openSaveToCollectionModal = (questionTitle: string) => {
-  cy.get(".question_mid")
-    .contains(".postTitle", questionTitle)
-    .parents(".question_mid")
-    .parents(".question")
-    .find(".collections-btn")
-    .click();
+  cy.contains(".reddit-question-title", questionTitle, { timeout: 10000 })
+    .closest(".reddit-question-card")
+    .within(() => {
+      cy.contains(".reddit-action-btn", "Save").click();
+    });
 };
 
 /**
@@ -190,10 +224,8 @@ export const openSaveToCollectionModal = (questionTitle: string) => {
  * @param collectionTitle - The title of the question to click on
  */
 export const toggleSaveQuestion = (collectionTitle: string) => {
-  cy.get(".collection-list")
-    .contains(".collection-name", collectionTitle)
-    .parents(".collection-row")
-    .find(".save-btn")
+  cy.contains(".collection-item-dropdown", collectionTitle)
+    .find(".save-btn-dropdown")
     .click();
 };
 
@@ -223,8 +255,8 @@ export const verifyCommunityDetailsDisplayed = (
 ) => {
   cy.contains(".community-title", communityName).should("be.visible");
   cy.contains(".community-description", communityDesc).should("be.visible");
-  cy.get(".member-item").each(($el, index, $list) => {
-    cy.wrap($el).should("contain", communityMembers[index]);
+  communityMembers.forEach(member => {
+    cy.contains(".member-item", member).should("exist");
   });
 };
 
@@ -249,11 +281,10 @@ export const verifyCommunityDetailsNotDisplayed = (
  * @param collectionTitle - The title of the collection to click on
  */
 export const verifyQuestionSaved = (collectionTitle: string) => {
-  cy.get(".collection-list")
-    .contains(".collection-name", collectionTitle)
-    .parents(".collection-row")
-    .get(".status-tag")
-    .should("have.class", "saved");
+  cy.contains(".collection-item-dropdown", collectionTitle)
+    .find(".save-btn-dropdown")
+    .should("have.class", "saved")
+    .and("contain", "Unsave");
 };
 
 /**
@@ -261,11 +292,10 @@ export const verifyQuestionSaved = (collectionTitle: string) => {
  * @param collectionTitle - The title of the collection to click on
  */
 export const verifyQuestionUnsaved = (collectionTitle: string) => {
-  cy.get(".collection-list")
-    .contains(".collection-name", collectionTitle)
-    .parents(".collection-row")
-    .get(".status-tag")
-    .should("have.class", "unsaved");
+  cy.contains(".collection-item-dropdown", collectionTitle)
+    .find(".save-btn-dropdown")
+    .should("have.class", "unsaved")
+    .and("contain", "Save");
 };
 
 /**
@@ -273,8 +303,8 @@ export const verifyQuestionUnsaved = (collectionTitle: string) => {
  * @param expectedTitles - Array of question titles in expected order
  */
 export const verifyQuestionOrder = (expectedTitles: string[]) => {
-  cy.get(".postTitle").should("have.length", expectedTitles.length);
-  cy.get(".postTitle").each(($el, index) => {
+  cy.get(".reddit-question-title").should("have.length", expectedTitles.length);
+  cy.get(".reddit-question-title").each(($el, index) => {
     cy.wrap($el).should("contain", expectedTitles[index]);
   });
 };
@@ -288,12 +318,17 @@ export const verifyQuestionStats = (
   expectedAnswers: string[],
   expectedViews: string[],
 ) => {
-  cy.get(".postStats").each(($el, index) => {
+  cy.get(".reddit-question-card").each(($card, index) => {
     if (index < expectedAnswers.length) {
-      cy.wrap($el).should("contain", expectedAnswers[index]);
+      const match = expectedAnswers[index].match(/\d+/);
+      const count = match ? match[0] : expectedAnswers[index];
+      cy.wrap($card)
+        .find(".reddit-action-btn")
+        .first()
+        .should("contain", `${count} Comments`);
     }
     if (index < expectedViews.length) {
-      cy.wrap($el).should("contain", expectedViews[index]);
+      cy.wrap($card).find(".views-count").should("contain", expectedViews[index]);
     }
   });
 };
@@ -311,10 +346,10 @@ export const verifyErrorMessage = (errorMessage: string) => {
  * @param count - Expected number of questions
  */
 export const verifyQuestionCount = (count: number) => {
-  cy.get("#question_count").should(
-    "contain",
-    `${count} question${count !== 1 ? "s" : ""}`,
-  );
+  cy.get(".question-count").within(() => {
+    cy.get(".count-number").should("contain", count);
+    cy.get(".count-label").should("contain", count === 1 ? "question" : "questions");
+  });
 };
 
 /**
@@ -335,7 +370,7 @@ export const verifyElementsInOrder = (selector: string, texts: string[]) => {
  * Navigates to the My Collections page
  */
 export const goToMyCollections = () => {
-  cy.contains("My Collections").click();
+  cy.contains(".nav-item-text", "My Collections").click();
   cy.url().should("include", "/collections");
 };
 
@@ -412,8 +447,7 @@ export const verifyCollectionVisible = (name: string) => {
  * @param collectionName - Name of the collection to verify.
  */
 export const verifyCollectionExists = (collectionName: string) => {
-  cy.get(".collections-list").should("exist");
-  cy.get(".collection-card").should("exist");
+  cy.get(".collection-card", { timeout: 10000 }).should("exist");
   cy.get(".collection-name").contains(collectionName).should("be.visible");
 };
 
@@ -447,4 +481,286 @@ export const verifyCollectionPageDetails = (
   if (username) {
     cy.get(".collection-meta").should("contain", username);
   }
+};
+
+type MockQuestionInput = {
+  _id?: string;
+  title: string;
+  text?: string;
+  askedBy?: string;
+  askDateTime?: string;
+  tags?: Array<{ _id?: string; name: string } | string>;
+  answers?: Array<{
+    _id?: string;
+    text: string;
+    ansBy: string;
+    ansDateTime?: string;
+    comments?: Array<Record<string, unknown>>;
+  }>;
+  comments?: Array<Record<string, unknown>>;
+  views?: string[];
+  followers?: string[];
+};
+
+const buildMockQuestion = (question: MockQuestionInput, prefix: string) => {
+  const normalizeTags = (tags?: MockQuestionInput['tags']) => {
+    if (!tags || tags.length === 0) {
+      return [{ _id: `${prefix}-tag`, name: 'mock' }];
+    }
+    return tags.map((tag, index) =>
+      typeof tag === 'string'
+        ? { _id: `${prefix}-tag-${index}`, name: tag }
+        : { _id: tag._id || `${prefix}-tag-${index}`, name: tag.name },
+    );
+  };
+
+  return {
+    _id: question._id || `${prefix}-question`,
+    title: question.title,
+    text: question.text || 'Mock question body',
+    tags: normalizeTags(question.tags),
+    askedBy: question.askedBy || 'user123',
+    askDateTime: question.askDateTime || new Date().toISOString(),
+    answers:
+      question.answers?.map((answer, index) => ({
+        _id: answer._id || `${prefix}-answer-${index}`,
+        text: answer.text,
+        ansBy: answer.ansBy,
+        ansDateTime: answer.ansDateTime || new Date().toISOString(),
+        comments: answer.comments || [],
+      })) || [],
+    comments: question.comments || [],
+    views: question.views || [],
+    followers: question.followers || [],
+  };
+};
+
+type MockCollectionInput = {
+  _id?: string;
+  name: string;
+  description: string;
+  username?: string;
+  isPrivate?: boolean;
+  questions?: MockQuestionInput[];
+};
+
+export const mockCollectionsApi = ({
+  ownerUsername,
+  collections,
+}: {
+  ownerUsername: string;
+  collections: MockCollectionInput[];
+}) => {
+  const normalized = collections.map((collection, index) => ({
+    _id: collection._id || `mock-collection-${index}`,
+    name: collection.name,
+    description: collection.description,
+    username: collection.username || ownerUsername,
+    isPrivate: collection.isPrivate ?? false,
+    questions: (collection.questions || []).map((question, qIndex) =>
+      buildMockQuestion(question, `mock-col-${index}-${qIndex}`),
+    ),
+  }));
+
+  cy.intercept("GET", /\/api\/collection\/getCollectionsByUsername\/[^?]+/, req => {
+    req.reply(normalized);
+  }).as("getCollectionsByUsername");
+
+  cy.intercept("GET", /\/api\/collection\/getCollectionById\/[^?]+/, req => {
+    const idMatch = req.url.match(/getCollectionById\/([^?]+)/);
+    const collectionId = idMatch ? idMatch[1] : '';
+    const match = normalized.find(col => col._id === collectionId);
+    if (match) {
+      req.reply(match);
+    } else {
+      req.reply({ statusCode: 404, body: { error: 'Collection not found' } });
+    }
+  }).as("getCollectionById");
+
+  cy.intercept("DELETE", /\/api\/collection\/delete\/[^?]+/, req => {
+    const idMatch = req.url.match(/delete\/([^?]+)/);
+    const collectionId = idMatch ? idMatch[1] : '';
+    const index = normalized.findIndex(col => col._id === collectionId);
+    if (index >= 0) {
+      normalized.splice(index, 1);
+    }
+    req.reply({ ok: true });
+  }).as("deleteCollectionApi");
+};
+
+type MockCommunityInput = {
+  _id?: string;
+  name: string;
+  description: string;
+  participants?: string[];
+  visibility?: 'PUBLIC' | 'PRIVATE';
+  admin?: string;
+};
+
+export const mockCommunitiesApi = (communities: MockCommunityInput[]) => {
+  const normalized = communities.map((community, index) => ({
+    _id: community._id || `mock-community-${index}`,
+    name: community.name,
+    description: community.description,
+    participants: community.participants ? [...community.participants] : [],
+    visibility: community.visibility || 'PUBLIC',
+    admin: community.admin || community.participants?.[0] || 'adminUser',
+  }));
+
+  cy.intercept("GET", "**/api/community/getAllCommunities", req => {
+    req.reply(normalized);
+  }).as("getAllCommunities");
+
+  cy.intercept("GET", /\/api\/community\/getCommunity\/[^?]+/, req => {
+    const idMatch = req.url.match(/getCommunity\/([^?]+)/);
+    const communityId = idMatch ? idMatch[1] : '';
+    const match = normalized.find(com => com._id === communityId);
+    if (match) {
+      req.reply(match);
+    } else {
+      req.reply({ statusCode: 404, body: { error: 'Community not found' } });
+    }
+  }).as("getCommunityById");
+
+  cy.intercept("POST", "**/api/community/toggleMembership", req => {
+    const { communityId, username } = req.body as { communityId: string; username: string };
+    const match = normalized.find(com => com._id === communityId);
+
+    if (!match) {
+      req.reply({ statusCode: 404, body: { error: 'Community not found' } });
+      return;
+    }
+
+    if (match.participants.indexOf(username) >= 0) {
+      match.participants = match.participants.filter(participant => participant !== username);
+    } else {
+      match.participants.push(username);
+    }
+    req.reply(match);
+  }).as("toggleCommunityMembership");
+};
+
+type ConnectFourColor = "RED" | "YELLOW";
+type ConnectFourStatus = "WAITING_TO_START" | "IN_PROGRESS" | "OVER";
+type ConnectFourPrivacy = "PUBLIC" | "PRIVATE" | "FRIENDS_ONLY";
+
+export type MockConnectFourGameInput = {
+  gameID?: string;
+  roomName: string;
+  status?: ConnectFourStatus;
+  privacy?: ConnectFourPrivacy;
+  allowSpectators?: boolean;
+  player1?: string;
+  player2?: string;
+  player1Color?: ConnectFourColor;
+  player2Color?: ConnectFourColor;
+  currentTurn?: ConnectFourColor;
+  spectators?: string[];
+  board?: Array<Array<ConnectFourColor | null>>;
+  totalMoves?: number;
+  lastMoveColumn?: number;
+  roomCode?: string;
+  winners?: string[];
+  moves?: Array<{ column: number; playerID: string }>;
+  winningPositions?: Array<{ row: number; col: number }>;
+};
+
+export type MockConnectFourGameInstance = {
+  gameID: string;
+  gameType: "Connect Four";
+  players: string[];
+  state: {
+    status: ConnectFourStatus;
+    board: Array<Array<ConnectFourColor | null>>;
+    currentTurn: ConnectFourColor;
+    player1: string | null;
+    player2: string | null;
+    player1Color: ConnectFourColor;
+    player2Color: ConnectFourColor;
+    moves: Array<{ column: number; playerID: string }>;
+    winningPositions?: Array<{ row: number; col: number }>;
+    totalMoves: number;
+    roomSettings: {
+      roomName: string;
+      privacy: ConnectFourPrivacy;
+      allowSpectators: boolean;
+      roomCode?: string;
+    };
+    spectators: string[];
+    lastMoveColumn?: number;
+    winners?: string[];
+  };
+};
+
+const createEmptyConnectFourBoard = () =>
+  Array.from({ length: 6 }, () => Array.from({ length: 7 }, () => null as ConnectFourColor | null));
+
+export const buildMockConnectFourGame = (
+  config: MockConnectFourGameInput,
+  index: number = 0,
+): MockConnectFourGameInstance => {
+  const player1 = config.player1 || "playerOne";
+  const player2 = config.player2 ?? null;
+  const clonedBoard = (config.board || createEmptyConnectFourBoard()).map(row => [...row]);
+  const players = [player1, player2].filter((p): p is string => Boolean(p));
+
+  return {
+    gameID: config.gameID || `mock-connect-four-${index}`,
+    gameType: "Connect Four",
+    players,
+    state: {
+      status: config.status || (player2 ? "IN_PROGRESS" : "WAITING_TO_START"),
+      board: clonedBoard,
+      currentTurn: config.currentTurn || "RED",
+      player1,
+      player2,
+      player1Color: config.player1Color || "RED",
+      player2Color: config.player2Color || "YELLOW",
+      moves: config.moves || [],
+      winningPositions: config.winningPositions,
+      totalMoves: config.totalMoves ?? 0,
+      roomSettings: {
+        roomName: config.roomName,
+        privacy: config.privacy || "PUBLIC",
+        allowSpectators: config.allowSpectators ?? true,
+        roomCode: config.roomCode,
+      },
+      spectators: config.spectators || [],
+      lastMoveColumn: config.lastMoveColumn,
+      winners: config.winners,
+    },
+  };
+};
+
+export const mockConnectFourLobby = ({
+  username,
+  games,
+  friends = [],
+}: {
+  username: string;
+  games: MockConnectFourGameInstance[];
+  friends?: string[];
+}) => {
+  cy.intercept("GET", "**/api/games/games*", req => {
+    if (req.url.includes("Connect%20Four") || req.url.includes("Connect+Four")) {
+      req.reply(games);
+    } else {
+      req.continue();
+    }
+  }).as("getConnectFourGames");
+
+  cy.intercept("GET", `**/api/user/relations/${username}`, {
+    friends,
+    blockedUsers: [],
+  }).as("getUserRelations");
+};
+
+export const mockConnectFourJoinResponse = (game: MockConnectFourGameInstance) => {
+  cy.intercept("POST", "**/api/games/connectfour/join", req => {
+    req.reply(game);
+  }).as("joinConnectFourRoom");
+
+  cy.intercept("POST", "**/api/games/connectfour/join-by-code", req => {
+    req.reply(game);
+  }).as("joinConnectFourByCode");
 };
