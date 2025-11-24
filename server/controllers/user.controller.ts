@@ -22,7 +22,6 @@ import {
   unblockUser,
   getRelations,
   toggleOnlineStatusVisibility,
-  updateOnlineStatus,
   getOnlineStatus,
 } from '../services/user.service';
 import {

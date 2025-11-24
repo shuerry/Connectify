@@ -96,13 +96,12 @@ const Avatar: React.FC<AvatarProps> = ({
           <div className='avatar__status-dot'></div>
         </div>
       )}
-      
+
       {/* Online Status Indicator - positioned at lower left */}
       {showOnlineStatus !== false && isOnline !== undefined && (
-        <div 
+        <div
           className={`avatar__online-status ${isOnline ? 'avatar__online-status--online' : 'avatar__online-status--offline'}`}
-          title={isOnline ? 'Online' : 'Offline'}>
-        </div>
+          title={isOnline ? 'Online' : 'Offline'}></div>
       )}
     </div>
   );

@@ -299,9 +299,7 @@ export const getUsersWhoBlocked = async (
 /**
  * Toggles the user's online status visibility preference.
  */
-export const toggleOnlineStatusVisibility = async (
-  username: string,
-): Promise<UserResponse> => {
+export const toggleOnlineStatusVisibility = async (username: string): Promise<UserResponse> => {
   try {
     const user = await UserModel.findOne({ username });
     if (!user) {

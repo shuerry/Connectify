@@ -35,4 +35,3 @@ const OnlineStatusIndicator: React.FC<OnlineStatusIndicatorProps> = ({
 };
 
 export default OnlineStatusIndicator;
-

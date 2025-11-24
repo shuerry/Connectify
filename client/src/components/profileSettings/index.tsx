@@ -182,7 +182,12 @@ const ProfileSettings: React.FC = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <label
                       htmlFor='online-status-toggle'
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                      }}>
                       <input
                         id='online-status-toggle'
                         type='checkbox'

@@ -100,50 +100,50 @@ socket.on('connection', clientSocket => {
     if (!username) return;
     clientSocket.join(`user:${username}`);
     socketToUsername.set(clientSocket.id, username);
-    
+
     // Increment socket count for this username
     const currentCount = usernameToSocketCount.get(username) || 0;
     usernameToSocketCount.set(username, currentCount + 1);
-    
+
     // If this is the first socket for this user, set them as online
     if (currentCount === 0) {
       try {
         const result = await updateOnlineStatus(username, true);
-          if (!('error' in result)) {
-            const payload = {
-              username: result.username,
-              isOnline: true,
-              showOnlineStatus: result.showOnlineStatus ?? true,
-            };
-            socket.emit('userStatusUpdate', payload);
-            const relations = await getRelations(username);
-            if (!('error' in relations) && relations.friends && relations.friends.length > 0) {
-              relations.friends.forEach(friendUsername => {
-                socket.to(`user:${friendUsername}`).emit('userStatusUpdate', payload);
-              });
-            }
+        if (!('error' in result)) {
+          const payload = {
+            username: result.username,
+            isOnline: true,
+            showOnlineStatus: result.showOnlineStatus ?? true,
+          };
+          socket.emit('userStatusUpdate', payload);
+          const relations = await getRelations(username);
+          if (!('error' in relations) && relations.friends && relations.friends.length > 0) {
+            relations.friends.forEach(friendUsername => {
+              socket.to(`user:${friendUsername}`).emit('userStatusUpdate', payload);
+            });
           }
+        }
       } catch (err) {
         error('Error updating online status on join:', err);
       }
     }
-    
+
     info(`Socket ${clientSocket.id} joined user room user:${username}`);
   });
 
   clientSocket.on('leaveUserRoom', async (username: string) => {
     if (!username) return;
     clientSocket.leave(`user:${username}`);
-    
+
     const socketUsername = socketToUsername.get(clientSocket.id);
     if (socketUsername === username) {
       socketToUsername.delete(clientSocket.id);
-      
+
       // Decrement socket count for this username
       const currentCount = usernameToSocketCount.get(username) || 0;
       const newCount = Math.max(0, currentCount - 1);
       usernameToSocketCount.set(username, newCount);
-      
+
       // If this was the last socket for this user, set them as offline
       if (newCount === 0) {
         try {
@@ -167,22 +167,22 @@ socket.on('connection', clientSocket => {
         }
       }
     }
-    
+
     info(`Socket ${clientSocket.id} left user room user:${username}`);
   });
 
   clientSocket.on('disconnect', async () => {
     const username = socketToUsername.get(clientSocket.id);
     info(`User disconnected -> socket: ${clientSocket.id}, username: ${username || 'unknown'}`);
-    
+
     if (username) {
       socketToUsername.delete(clientSocket.id);
-      
+
       // Decrement socket count for this username
       const currentCount = usernameToSocketCount.get(username) || 0;
       const newCount = Math.max(0, currentCount - 1);
       usernameToSocketCount.set(username, newCount);
-      
+
       // If this was the last socket for this user, set them as offline
       if (newCount === 0) {
         try {

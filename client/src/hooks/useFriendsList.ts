@@ -79,4 +79,3 @@ const useFriendsList = () => {
 };
 
 export default useFriendsList;
-

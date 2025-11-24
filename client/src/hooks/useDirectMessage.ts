@@ -18,8 +18,7 @@ import {
   markMessagesAsRead,
 } from '../services/chatService';
 import { getDirectMessages } from '../services/messageService';
-import { getRelations } from '../services/userService';
-import { getUserByUsername } from '../services/userService';
+import { getRelations, getUserByUsername } from '../services/userService';
 
 /**
  * useDirectMessage is a custom hook that provides state and functions for direct messaging between users.
@@ -455,7 +454,9 @@ const useDirectMessage = () => {
       });
 
       // Determine which usernames we still need to fetch
-      const usernamesToFetch = Array.from(usernames).filter(username => !participantUsers.has(username));
+      const usernamesToFetch = Array.from(usernames).filter(
+        username => !participantUsers.has(username),
+      );
       if (usernamesToFetch.length === 0) {
         return;
       }

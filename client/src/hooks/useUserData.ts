@@ -67,4 +67,3 @@ const useUserData = (username: string | null | undefined) => {
 };
 
 export default useUserData;
-
