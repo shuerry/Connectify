@@ -265,7 +265,7 @@ describe('GET /games', () => {
 
       expect(response.status).toEqual(200);
       expect(response.body).toEqual([gameState]);
-      expect(findGamesSpy).toHaveBeenCalledWith('Nim', 'WAITING_TO_START');
+      expect(findGamesSpy).toHaveBeenCalledWith('Nim', 'WAITING_TO_START', undefined);
     });
 
     it('should return 200 with an empty game state array when successful', async () => {
@@ -277,7 +277,7 @@ describe('GET /games', () => {
 
       expect(response.status).toEqual(200);
       expect(response.body).toEqual([]);
-      expect(findGamesSpy).toHaveBeenCalledWith('Nim', 'IN_PROGRESS');
+      expect(findGamesSpy).toHaveBeenCalledWith('Nim', 'IN_PROGRESS', undefined);
     });
   });
 
