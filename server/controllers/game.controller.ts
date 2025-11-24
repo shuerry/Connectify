@@ -4,11 +4,12 @@ import {
   CreateGameRequest,
   GameMovePayload,
   GameRequest,
-  GetGamesRequest,
   CreateConnectFourRoomRequest,
   JoinConnectFourRoomRequest,
   GameInstanceID,
   ConnectFourGameState,
+  GameType,
+  GameStatus,
 } from '../types/types';
 import findGames from '../services/game.service';
 import GameManager from '../services/games/gameManager';
@@ -25,7 +26,12 @@ const gameController = (socket: FakeSOSocket) => {
   const router = express.Router();
 
   //  gather public Connect Four rooms from memory
-  const getPublicConnectFourRooms = () => {
+  /**
+   * Returns Connect Four rooms visible to a user (PUBLIC, and FRIENDS_ONLY if user is a friend/creator)
+   * @param username The requesting user's username
+   * @param friends The requesting user's friends list
+   */
+  const getPublicConnectFourRooms = (username?: string, friends?: string[]) => {
     try {
       const activeInstances = GameManager.getInstance()
         .getActiveGameInstances()
@@ -34,8 +40,12 @@ const gameController = (socket: FakeSOSocket) => {
       return activeInstances
         .filter(g => {
           const privacy = g.state.roomSettings.privacy;
-          // Include PUBLIC and FRIENDS_ONLY rooms in the lobby
-          return privacy === 'PUBLIC' || privacy === 'FRIENDS_ONLY';
+          if (privacy === 'PUBLIC') return true;
+          if (privacy === 'FRIENDS_ONLY') {
+            const creator = g.state.player1;
+            return username === creator || (friends && creator && friends.includes(creator));
+          }
+          return false;
         })
         .map(g => g.getPublicRoomInfo());
     } catch (error) {
@@ -334,27 +344,46 @@ const gameController = (socket: FakeSOSocket) => {
    * @param req The request object containing the query parameters for filtering games.
    * @param res The response object to send the result.
    */
-  const getGames = async (req: GetGamesRequest, res: Response) => {
+  // Patch: extend req.query type to allow username
+  const getGames = async (
+    req: express.Request<
+      unknown,
+      unknown,
+      unknown,
+      { gameType?: GameType; status?: GameStatus; username?: string }
+    >,
+    res: Response,
+  ) => {
     try {
-      const { gameType, status } = req.query;
+      const { gameType, status, username } = req.query as {
+        gameType?: GameType;
+        status?: GameStatus;
+        username?: string;
+      };
 
       // For Connect Four rooms, prefer the in-memory registry to reflect live rooms
-      // and exclude private rooms from the public listing
       if (gameType === 'Connect Four') {
-        const activeInstances = GameManager.getInstance()
-          .getActiveGameInstances()
-          .filter(g => g.gameType === 'Connect Four') as unknown as ConnectFourGame[];
-
-        const publicRooms = activeInstances
-          .filter(g => g.state.roomSettings.privacy === 'PUBLIC')
-          .map(g => g.getPublicRoomInfo());
-
+        let friends: string[] = [];
+        if (typeof username === 'string' && username) {
+          try {
+            const relMod = await import('../services/user.service');
+            const relations = await relMod.getRelations(username);
+            if ('friends' in relations && Array.isArray(relations.friends)) {
+              friends = relations.friends;
+            }
+          } catch (e) {
+            logger.warn('Could not fetch friends for user', username, e);
+          }
+        }
+        const publicRooms = getPublicConnectFourRooms(
+          typeof username === 'string' ? username : undefined,
+          friends,
+        );
         res.status(200).json(publicRooms);
         return;
       }
 
       const games = await findGames(gameType, status);
-
       res.status(200).json(games);
     } catch (error) {
       res.status(500).send(`Error when getting games: ${(error as Error).message}`);
@@ -404,7 +433,23 @@ const gameController = (socket: FakeSOSocket) => {
     const presence = new Map<string, { playerID: string; isSpectator?: boolean }>();
 
     // Send current rooms list immediately upon connection
-    conn.emit('connectFourRoomsUpdate', getPublicConnectFourRooms());
+    // Try to get username from handshake query (if provided by client)
+    (async () => {
+      const username = conn.handshake.query?.username as string | undefined;
+      let friends: string[] = [];
+      if (username) {
+        try {
+          const relMod = await import('../services/user.service');
+          const relations = await relMod.getRelations(username);
+          if ('friends' in relations && Array.isArray(relations.friends)) {
+            friends = relations.friends;
+          }
+        } catch (e) {
+          logger.warn('Could not fetch friends for user', username, e);
+        }
+      }
+      conn.emit('connectFourRoomsUpdate', getPublicConnectFourRooms(username, friends));
+    })();
     conn.on('joinGame', (gameID: string) => {
       conn.join(gameID);
       logger.info(`Socket ${conn.id} joined game room ${gameID}`);
@@ -517,8 +562,21 @@ const gameController = (socket: FakeSOSocket) => {
     });
 
     // client requests the latest list of public Connect Four rooms
-    conn.on('requestConnectFourRooms', () => {
-      const rooms = getPublicConnectFourRooms();
+    conn.on('requestConnectFourRooms', async () => {
+      const username = conn.handshake.query?.username as string | undefined;
+      let friends: string[] = [];
+      if (username) {
+        try {
+          const relMod = await import('../services/user.service');
+          const relations = await relMod.getRelations(username);
+          if ('friends' in relations && Array.isArray(relations.friends)) {
+            friends = relations.friends;
+          }
+        } catch (e) {
+          logger.warn('Could not fetch friends for user', username, e);
+        }
+      }
+      const rooms = getPublicConnectFourRooms(username, friends);
       logger.info(`Client ${conn.id} requested Connect Four rooms, sending ${rooms.length} rooms`);
       conn.emit('connectFourRoomsUpdate', rooms);
     });

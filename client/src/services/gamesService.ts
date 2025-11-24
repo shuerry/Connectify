@@ -38,6 +38,7 @@ const createGame = async (gameType: GameType): Promise<GameInstance<GameState>> 
 const getGames = async (
   gameType: GameType | undefined,
   status: GameStatus | undefined,
+  username?: string,
 ): Promise<GameInstance<GameState>[]> => {
   const params = new URLSearchParams();
 
@@ -47,6 +48,11 @@ const getGames = async (
 
   if (status) {
     params.append('status', status);
+  }
+
+  // Always send username for Connect Four so friends-only rooms are included
+  if (gameType === 'Connect Four' && username) {
+    params.append('username', username);
   }
 
   const res = await api.get(`${GAMES_API_URL}/games`, {

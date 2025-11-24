@@ -78,14 +78,16 @@ const useConnectFourPage = () => {
   // Load available games (fallback to HTTP)
   const loadGames = useCallback(async () => {
     try {
-      const allGames = (await getGames('Connect Four', undefined)) as unknown as Array<
-        GameInstance<ConnectFourGameState>
-      >;
+      const allGames = (await getGames(
+        'Connect Four',
+        undefined,
+        user?.username,
+      )) as unknown as Array<GameInstance<ConnectFourGameState>>;
       setGames(allGames);
     } catch (err) {
       setError(null);
     }
-  }, []);
+  }, [user?.username]);
 
   // Initial load and real-time lobby updates
   useEffect(() => {
