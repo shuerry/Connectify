@@ -8,8 +8,10 @@ import { app } from '../../app';
 import * as messageService from '../../services/message.service';
 import * as chatService from '../../services/chat.service';
 import * as databaseUtil from '../../utils/database.util';
-import { DatabaseChat, PopulatedDatabaseChat, Message } from '../../types/types';
+import { DatabaseChat, PopulatedDatabaseChat, Message, DatabaseCommunity } from '../../types/types';
 import chatController from '../../controllers/chat.controller';
+import * as communityService from '../../services/community.service';
+import * as userService from '../../services/user.service';
 
 /**
  * Spies on the service functions
@@ -21,6 +23,9 @@ const getChatSpy = jest.spyOn(chatService, 'getChat');
 const addParticipantSpy = jest.spyOn(chatService, 'addParticipantToChat');
 const populateDocumentSpy = jest.spyOn(databaseUtil, 'populateDocument');
 const getChatsByParticipantsSpy = jest.spyOn(chatService, 'getChatsByParticipants');
+const getCommunitySpy = jest.spyOn(communityService, 'getCommunity');
+const getCommunityChatSpy = jest.spyOn(chatService, 'getCommunityChat');
+const getRelationsSpy = jest.spyOn(userService, 'getRelations');
 
 /**
  * Sample test suite for the /chat endpoints
@@ -150,6 +155,85 @@ describe('Chat Controller', () => {
 
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error creating a chat: Provided ID is undefined.');
+    });
+
+    it('should return existing community chat if one already exists', async () => {
+      const communityId = new mongoose.Types.ObjectId().toString();
+      const createPayload = {
+        participants: { admin_user: true, user1: true },
+        messages: [],
+        isCommunityChat: true,
+        communityId,
+      };
+
+      const community: DatabaseCommunity = {
+        _id: new mongoose.Types.ObjectId(communityId),
+        name: 'React Fans',
+        description: 'test',
+        admin: 'admin_user',
+        participants: ['admin_user', 'user1'],
+        visibility: 'PUBLIC',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const existingChat: DatabaseChat = {
+        _id: new mongoose.Types.ObjectId(),
+        participants: { admin_user: true, user1: true },
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isCommunityChat: true,
+        communityId: community._id,
+      };
+
+      const populatedChat: PopulatedDatabaseChat = {
+        ...existingChat,
+        messages: [],
+      };
+
+      getCommunitySpy.mockResolvedValueOnce(community);
+      getCommunityChatSpy.mockResolvedValueOnce(existingChat);
+      populateDocumentSpy.mockResolvedValueOnce(populatedChat);
+
+      const response = await supertest(app).post('/api/chat/createChat').send(createPayload);
+
+      expect(response.status).toBe(200);
+      expect(saveChatSpy).not.toHaveBeenCalled();
+      expect(getCommunityChatSpy).toHaveBeenCalledWith(communityId);
+      expect(populateDocumentSpy).toHaveBeenCalledWith(existingChat._id.toString(), 'chat');
+      expect(response.body._id).toBe(populatedChat._id.toString());
+    });
+
+    it('should return existing group chat when participants match', async () => {
+      const createPayload = {
+        participants: { alice: true, bob: true, carol: true },
+        messages: [],
+      };
+
+      const existingChat: DatabaseChat = {
+        _id: new mongoose.Types.ObjectId(),
+        participants: { alice: true, bob: true, carol: true },
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const populatedChat: PopulatedDatabaseChat = {
+        ...existingChat,
+        messages: [],
+      };
+
+      getChatsByParticipantsSpy.mockResolvedValueOnce([existingChat]);
+      populateDocumentSpy.mockResolvedValueOnce(populatedChat);
+
+      const response = await supertest(app).post('/api/chat/createChat').send(createPayload);
+
+      expect(response.status).toBe(200);
+      expect(saveChatSpy).not.toHaveBeenCalled();
+      expect(getChatsByParticipantsSpy).toHaveBeenCalledWith(['alice', 'bob', 'carol']);
+      expect(populateDocumentSpy).toHaveBeenCalledWith(existingChat._id.toString(), 'chat');
+      expect(response.body._id).toBe(populatedChat._id.toString());
     });
   });
 
@@ -438,9 +522,27 @@ describe('Chat Controller', () => {
   });
 
   describe('POST /chat/:chatId/addParticipant', () => {
+    let baseChat: DatabaseChat;
+
+    beforeEach(() => {
+      baseChat = {
+        _id: new mongoose.Types.ObjectId(),
+        participants: { user1: true, user2: true },
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      getChatSpy.mockResolvedValue({ ...baseChat });
+      getRelationsSpy.mockResolvedValue({
+        friends: ['user1', 'user2', 'newUser'],
+        blockedUsers: [],
+      });
+    });
+
     it('should add a participant to an existing chat', async () => {
       const chatId = new mongoose.Types.ObjectId().toString();
-      const userId = new mongoose.Types.ObjectId().toString();
+      const userId = 'newUser';
 
       const updatedChat: DatabaseChat = {
         _id: new mongoose.Types.ObjectId(),
@@ -489,7 +591,22 @@ describe('Chat Controller', () => {
 
     it('should return 500 if addParticipantToChat fails', async () => {
       const chatId = new mongoose.Types.ObjectId().toString();
-      const userId = new mongoose.Types.ObjectId().toString();
+      const userId = 'newUser';
+
+      addParticipantSpy.mockResolvedValue({ error: 'Service error' });
+
+      const response = await supertest(app)
+        .post(`/api/chat/${chatId}/addParticipant`)
+        .send({ username: userId });
+
+      expect(response.status).toBe(500);
+      expect(response.text).toBe('Error adding participant to chat: Service error');
+      expect(populateDocumentSpy).not.toHaveBeenCalled();
+    });
+
+    it('should return 500 if populateDocument fails', async () => {
+      const chatId = new mongoose.Types.ObjectId().toString();
+      const userId = 'newUser';
 
       const updatedChat: DatabaseChat = {
         _id: new mongoose.Types.ObjectId(),
@@ -508,20 +625,6 @@ describe('Chat Controller', () => {
 
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error adding participant to chat: Provided ID is undefined.');
-    });
-
-    it('should return 500 if populateDocument has an error fails', async () => {
-      const chatId = new mongoose.Types.ObjectId().toString();
-      const userId = new mongoose.Types.ObjectId().toString();
-
-      addParticipantSpy.mockResolvedValue({ error: 'Service error' });
-
-      const response = await supertest(app)
-        .post(`/api/chat/${chatId}/addParticipant`)
-        .send({ username: userId });
-
-      expect(response.status).toBe(500);
-      expect(response.text).toBe('Error adding participant to chat: Service error');
     });
   });
 

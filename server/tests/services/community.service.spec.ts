@@ -7,7 +7,8 @@ import {
   createCommunity,
   deleteCommunity,
 } from '../../services/community.service';
-import { Community, DatabaseCommunity } from '../../types/types';
+import { Community, DatabaseChat, DatabaseCommunity } from '../../types/types';
+import * as chatService from '../../services/chat.service';
 
 describe('Community Service', () => {
   beforeEach(() => {
@@ -90,6 +91,26 @@ describe('Community Service', () => {
   });
 
   describe('toggleCommunityMembership', () => {
+    const mockCommunityChat: DatabaseChat = {
+      _id: new mongoose.Types.ObjectId(),
+      participants: { admin_user: true, user1: true },
+      messages: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isCommunityChat: true,
+      communityId: mockCommunity._id,
+      name: 'Community chat for Test Community',
+    };
+
+    const getCommunityChatSpy = jest.spyOn(chatService, 'getCommunityChat');
+    const addParticipantToChatSpy = jest.spyOn(chatService, 'addParticipantToChat');
+    const removeParticipantFromChatSpy = jest.spyOn(chatService, 'removeParticipantFromChat');
+
+    beforeEach(() => {
+      getCommunityChatSpy.mockResolvedValue({ error: 'Community chat not found' });
+      addParticipantToChatSpy.mockResolvedValue(mockCommunityChat);
+      removeParticipantFromChatSpy.mockResolvedValue(mockCommunityChat);
+    });
     test('should add user to community when not a participant', async () => {
       // user3 is not in the participants array
       const communityWithoutUser = {
@@ -112,6 +133,30 @@ describe('Community Service', () => {
         { $addToSet: { participants: 'user3' } },
         { new: true },
       );
+      expect(getCommunityChatSpy).toHaveBeenCalledWith('65e9b58910afe6e94fc6e6dc');
+      expect(addParticipantToChatSpy).not.toHaveBeenCalled();
+    });
+
+    test('should add user to community chat when chat exists', async () => {
+      const communityWithoutUser = {
+        ...mockCommunity,
+        participants: ['admin_user', 'user1'],
+      };
+      const updatedCommunity = {
+        ...mockCommunity,
+        participants: ['admin_user', 'user1', 'user3'],
+      };
+
+      jest.spyOn(CommunityModel, 'findById').mockResolvedValueOnce(communityWithoutUser);
+      jest.spyOn(CommunityModel, 'findByIdAndUpdate').mockResolvedValueOnce(updatedCommunity);
+      getCommunityChatSpy.mockResolvedValueOnce(mockCommunityChat);
+
+      await toggleCommunityMembership('65e9b58910afe6e94fc6e6dc', 'user3');
+
+      expect(addParticipantToChatSpy).toHaveBeenCalledWith(
+        mockCommunityChat._id.toString(),
+        'user3',
+      );
     });
 
     test('should remove user from community when already a participant', async () => {
@@ -131,6 +176,26 @@ describe('Community Service', () => {
         '65e9b58910afe6e94fc6e6dc',
         { $pull: { participants: 'user2' } },
         { new: true },
+      );
+      expect(getCommunityChatSpy).toHaveBeenCalledWith('65e9b58910afe6e94fc6e6dc');
+      expect(removeParticipantFromChatSpy).not.toHaveBeenCalled();
+    });
+
+    test('should remove user from community chat when chat exists', async () => {
+      const updatedCommunity = {
+        ...mockCommunity,
+        participants: ['admin_user', 'user1'],
+      };
+
+      jest.spyOn(CommunityModel, 'findById').mockResolvedValueOnce(mockCommunity);
+      jest.spyOn(CommunityModel, 'findByIdAndUpdate').mockResolvedValueOnce(updatedCommunity);
+      getCommunityChatSpy.mockResolvedValueOnce(mockCommunityChat);
+
+      await toggleCommunityMembership('65e9b58910afe6e94fc6e6dc', 'user2');
+
+      expect(removeParticipantFromChatSpy).toHaveBeenCalledWith(
+        mockCommunityChat._id.toString(),
+        'user2',
       );
     });
 
