@@ -383,7 +383,7 @@ const gameController = (socket: FakeSOSocket) => {
         return;
       }
 
-      const games = await findGames(gameType, status);
+      const games = await findGames(gameType, status, username);
       res.status(200).json(games);
     } catch (error) {
       res.status(500).send(`Error when getting games: ${(error as Error).message}`);
