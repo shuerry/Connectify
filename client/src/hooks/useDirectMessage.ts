@@ -589,8 +589,7 @@ const useDirectMessage = () => {
           })),
         ...directMessages.filter(
           dm =>
-            !dm.isDeleted &&
-            !selectedChat.messages.some(cm => String(cm._id) === String(dm._id)),
+            !dm.isDeleted && !selectedChat.messages.some(cm => String(cm._id) === String(dm._id)),
         ),
       ].sort((a, b) => new Date(a.msgDateTime).getTime() - new Date(b.msgDateTime).getTime())
     : [];

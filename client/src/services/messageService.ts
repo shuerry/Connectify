@@ -92,7 +92,10 @@ const editMessage = async (
 /**
  * Deletes a message authored by the given user.
  */
-const deleteMessage = async (messageId: string, username: string): Promise<{ success: boolean }> => {
+const deleteMessage = async (
+  messageId: string,
+  username: string,
+): Promise<{ success: boolean }> => {
   const res = await api.delete(`${MESSAGE_API_URL}/${messageId}`, {
     data: { username },
   });

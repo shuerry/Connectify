@@ -402,7 +402,9 @@ const GroupChat = () => {
                       const latestSentMessage = messages
                         .filter(
                           msg =>
-                            msg.msgFrom === user.username && msg.type === 'direct' && !msg.isDeleted,
+                            msg.msgFrom === user.username &&
+                            msg.type === 'direct' &&
+                            !msg.isDeleted,
                         )
                         .sort(
                           (a, b) =>

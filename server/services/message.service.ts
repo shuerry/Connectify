@@ -319,10 +319,7 @@ export const deleteMessageById = async (
       .select('_id')
       .lean();
 
-    await ChatModel.updateMany(
-      { messages: message._id },
-      { $pull: { messages: message._id } },
-    );
+    await ChatModel.updateMany({ messages: message._id }, { $pull: { messages: message._id } });
 
     message.isDeleted = true;
     message.deletedAt = new Date();

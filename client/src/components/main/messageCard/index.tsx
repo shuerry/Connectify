@@ -52,7 +52,8 @@ const MessageCard = ({
   const messageId = message._id.toString();
   const isSentByCurrentUser = message.msgFrom === currentUser.username;
   const isCurrentUser = isSentByCurrentUser;
-  const canModifyMessage = isCurrentUser && (message.type === 'direct' || message.type === 'global');
+  const canModifyMessage =
+    isCurrentUser && (message.type === 'direct' || message.type === 'global');
 
   const historyEntries = message.editHistory ?? [];
   const hasHistory = historyEntries.length > 0;
@@ -167,7 +168,9 @@ const MessageCard = ({
         <div className='message-time'>
           {getMetaData(new Date(message.msgDateTime))}
           {message.lastEditedAt && (
-            <span className='message-edited-pill' title={`Edited ${getMetaData(new Date(message.lastEditedAt))}`}>
+            <span
+              className='message-edited-pill'
+              title={`Edited ${getMetaData(new Date(message.lastEditedAt))}`}>
               Edited
             </span>
           )}
