@@ -33,7 +33,7 @@ const MessageCard = ({
 
   // Check if this message is from the current user and has been read
   const isSentByCurrentUser = message.msgFrom === currentUser.username;
-  
+
   // For group chats: check if all participants (except sender) have read
   // For direct messages: check if the other participant has read
   let isRead = false;
@@ -174,26 +174,26 @@ const MessageCard = ({
         )}
         {isLatestSentMessage && isSentByCurrentUser && (
           <div className='read-receipt'>
-            {allParticipants && allParticipants.length > 2 ? (
-              // Group chat: show read count or "Read by all"
-              (() => {
-                const participantsToRead = allParticipants.filter(p => p !== message.msgFrom);
-                const readCount = message.readBy
-                  ? message.readBy.filter(reader => participantsToRead.includes(reader)).length
-                  : 0;
-                const totalCount = participantsToRead.length;
-                if (isRead) {
-                  return 'Read by all';
-                } else if (readCount > 0) {
-                  return `Read by ${readCount}/${totalCount}`;
-                } else {
-                  return 'Delivered';
-                }
-              })()
-            ) : (
-              // Direct message: show Read or Delivered
-              isRead ? 'Read' : 'Delivered'
-            )}
+            {allParticipants && allParticipants.length > 2
+              ? // Group chat: show read count or "Read by all"
+                (() => {
+                  const participantsToRead = allParticipants.filter(p => p !== message.msgFrom);
+                  const readCount = message.readBy
+                    ? message.readBy.filter(reader => participantsToRead.includes(reader)).length
+                    : 0;
+                  const totalCount = participantsToRead.length;
+                  if (isRead) {
+                    return 'Read by all';
+                  } else if (readCount > 0) {
+                    return `Read by ${readCount}/${totalCount}`;
+                  } else {
+                    return 'Delivered';
+                  }
+                })()
+              : // Direct message: show Read or Delivered
+                isRead
+                ? 'Read'
+                : 'Delivered'}
           </div>
         )}
       </div>

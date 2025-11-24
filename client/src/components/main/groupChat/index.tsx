@@ -46,7 +46,6 @@ const GroupChat = () => {
   const getChatDisplayName = () => {
     if (!selectedChat) return null;
     if (selectedChat.name) {
-      console.log('selected chat name', selectedChat.name);
       return selectedChat.name;
     }
     return `${participants.length} participants`;
@@ -195,9 +194,7 @@ const GroupChat = () => {
                   )}
                 </div>
                 {selectedCommunity && (
-                  <button
-                    className='create-chat-confirm-btn'
-                    onClick={handleCreateCommunityChat}>
+                  <button className='create-chat-confirm-btn' onClick={handleCreateCommunityChat}>
                     Create Community Chat
                   </button>
                 )}
@@ -307,7 +304,8 @@ const GroupChat = () => {
               {/* Chat Header */}
               <div className='gc-chat-header'>
                 <div className='chat-participant-info'>
-                  <div className={`participant-avatar ${isCommunityChat ? 'community-avatar' : 'group-avatar'}`}>
+                  <div
+                    className={`participant-avatar ${isCommunityChat ? 'community-avatar' : 'group-avatar'}`}>
                     <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
                       {isCommunityChat ? (
                         <path
@@ -330,9 +328,7 @@ const GroupChat = () => {
                   </div>
                   <div className='participant-details'>
                     <h2>{getChatDisplayName()}</h2>
-                    {isCommunityChat && (
-                      <p className='community-badge'>Community Chat</p>
-                    )}
+                    {isCommunityChat && <p className='community-badge'>Community Chat</p>}
                     <p className='participants-list'>
                       {participants.filter(p => p !== user.username).join(', ')}
                     </p>
@@ -375,7 +371,10 @@ const GroupChat = () => {
                       // Find the latest message sent by the current user
                       const latestSentMessage = messages
                         .filter(msg => msg.msgFrom === user.username && msg.type === 'direct')
-                        .sort((a, b) => new Date(b.msgDateTime).getTime() - new Date(a.msgDateTime).getTime())[0];
+                        .sort(
+                          (a, b) =>
+                            new Date(b.msgDateTime).getTime() - new Date(a.msgDateTime).getTime(),
+                        )[0];
 
                       return messages.map(message => (
                         <MessageCard
@@ -457,4 +456,3 @@ const GroupChat = () => {
 };
 
 export default GroupChat;
-

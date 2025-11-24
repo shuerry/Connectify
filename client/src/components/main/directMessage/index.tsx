@@ -43,7 +43,7 @@ const DirectMessage = () => {
   const otherParticipant = !isSelectedGroupChat
     ? participants.find(username => username !== user.username)
     : null;
-  
+
   const getChatDisplayName = () => {
     if (!selectedChat) return null;
     if (selectedChat.name) return selectedChat.name;
@@ -119,12 +119,14 @@ const DirectMessage = () => {
         <div className='create-chat-panel'>
           <div className='create-chat-header'>
             <h3>Start a New Conversation</h3>
-            <button className='close-panel-btn' onClick={() => {
-              setShowCreatePanel(false);
-              setIsGroupChat(false);
-              setSelectedUsersForGroup(new Set());
-              setGroupChatName('');
-            }}>
+            <button
+              className='close-panel-btn'
+              onClick={() => {
+                setShowCreatePanel(false);
+                setIsGroupChat(false);
+                setSelectedUsersForGroup(new Set());
+                setGroupChatName('');
+              }}>
               <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
                 <path
                   d='M18 6L6 18M6 6l12 12'
@@ -135,7 +137,7 @@ const DirectMessage = () => {
               </svg>
             </button>
           </div>
-          
+
           {/* Chat Type Toggle */}
           <div className='chat-type-toggle'>
             <button
@@ -377,7 +379,11 @@ const DirectMessage = () => {
                         </svg>
                       </div>
                       <h3>Start the conversation</h3>
-                      <p>{isSelectedGroupChat ? `Send a message to ${getChatDisplayName()}` : `Send a message to ${otherParticipant}`}</p>
+                      <p>
+                        {isSelectedGroupChat
+                          ? `Send a message to ${getChatDisplayName()}`
+                          : `Send a message to ${otherParticipant}`}
+                      </p>
                     </div>
                   ) : (
                     messages.map(message => (
@@ -420,7 +426,11 @@ const DirectMessage = () => {
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder={isSelectedGroupChat ? `Message ${getChatDisplayName()}...` : `Message ${otherParticipant}...`}
+                      placeholder={
+                        isSelectedGroupChat
+                          ? `Message ${getChatDisplayName()}...`
+                          : `Message ${otherParticipant}...`
+                      }
                     />
                     <button
                       className={`dm-send-button ${newMessage.trim() ? 'active' : ''}`}

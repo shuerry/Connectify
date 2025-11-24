@@ -187,7 +187,9 @@ const chatController = (socket: FakeSOSocket) => {
           // Check that creator is friends with all other participants
           for (const participant of participantUsernames.slice(1)) {
             if (!creatorRelations.friends.includes(participant)) {
-              res.status(403).send(`You must be friends with ${participant} to add them to a group chat`);
+              res
+                .status(403)
+                .send(`You must be friends with ${participant} to add them to a group chat`);
               return;
             }
           }
@@ -374,7 +376,7 @@ const chatController = (socket: FakeSOSocket) => {
       }
 
       const participantUsernames = Object.keys(chat.participants);
-      
+
       // Only allow adding participants to group chats (3+ participants)
       if (participantUsernames.length < 2) {
         res.status(400).send('Cannot add participants to this chat');

@@ -97,9 +97,7 @@ export const createChat = async (
  * @returns The community chat data.
  * @throws Throws an error if the fetch fails or if the status code is not 200.
  */
-export const getCommunityChat = async (
-  communityId: string,
-): Promise<PopulatedDatabaseChat> => {
+export const getCommunityChat = async (communityId: string): Promise<PopulatedDatabaseChat> => {
   const res = await api.get(`${CHAT_API_URL}/getCommunityChat?communityId=${communityId}`);
 
   if (res.status !== 200) {

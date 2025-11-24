@@ -19,7 +19,7 @@ const ChatsListCard = ({
   const { user } = useUserContext();
   const participants = Object.keys(chat.participants);
   const isGroupChat = participants.length > 2;
-  
+
   const getChatDisplayName = () => {
     if (chat.name) {
       return chat.name;

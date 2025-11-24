@@ -5,6 +5,7 @@ import {
   CreateCommunityRequest,
   ToggleMembershipRequest,
   DeleteCommunityRequest,
+  PopulatedDatabaseChat,
 } from '../types/types';
 import {
   getCommunity,
@@ -15,7 +16,7 @@ import {
 } from '../services/community.service';
 import { getCommunityChat } from '../services/chat.service';
 import { populateDocument } from '../utils/database.util';
-import { PopulatedDatabaseChat } from '../types/types';
+import { error as logError } from '../utils/logger';
 
 /**
  * This controller handles community-related routes.
@@ -107,10 +108,7 @@ const communityController = (socket: FakeSOSocket) => {
       try {
         const communityChat = await getCommunityChat(communityId);
         if (!('error' in communityChat)) {
-          const populatedChat = await populateDocument(
-            communityChat._id.toString(),
-            'chat',
-          );
+          const populatedChat = await populateDocument(communityChat._id.toString(), 'chat');
           if (!('error' in populatedChat)) {
             socket.emit('chatUpdate', {
               chat: populatedChat as PopulatedDatabaseChat,
@@ -120,7 +118,7 @@ const communityController = (socket: FakeSOSocket) => {
         }
       } catch (err) {
         // Log error but don't fail the response
-        console.error('Error emitting chat update:', err);
+        logError('Error emitting chat update:', err);
       }
 
       res.json(result);

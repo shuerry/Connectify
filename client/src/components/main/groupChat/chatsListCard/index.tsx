@@ -22,7 +22,6 @@ const ChatsListCard = ({
 
   const getChatDisplayName = () => {
     if (chat.name) {
-      console.log('chat name', chat.name);
       return chat.name;
     }
     return `${participants.length} participants`;
@@ -53,7 +52,10 @@ const ChatsListCard = ({
           {isCommunityChat && <p className='chat-card-badge'>Community</p>}
           {!chat.name && (
             <p className='chat-card-subtitle'>
-              {participants.filter(p => p !== user.username).slice(0, 3).join(', ')}
+              {participants
+                .filter(p => p !== user.username)
+                .slice(0, 3)
+                .join(', ')}
               {participants.length > 4 && ` +${participants.length - 4} more`}
             </p>
           )}
@@ -65,4 +67,3 @@ const ChatsListCard = ({
 };
 
 export default ChatsListCard;
-

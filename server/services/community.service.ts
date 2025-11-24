@@ -1,6 +1,7 @@
 import CommunityModel from '../models/community.model';
 import { Community, CommunityResponse, DatabaseCommunity } from '../types/types';
 import { getCommunityChat, addParticipantToChat, removeParticipantFromChat } from './chat.service';
+import { error as logError } from '../utils/logger';
 
 /**
  * Retrieves a community by its ID.
@@ -101,7 +102,7 @@ export const toggleCommunityMembership = async (
       }
     } catch (err) {
       // Log error but don't fail the membership update
-      console.error('Error updating community chat participants:', err);
+      logError('Error updating community chat participants:', err);
     }
 
     // At this point, updatedCommunity is guaranteed to be non-null due to the check above

@@ -239,7 +239,7 @@ const useGroupChat = () => {
         );
         setCommunities(adminCommunities);
       } catch (err) {
-        console.error('Error fetching communities:', err);
+        throw new Error('Error fetching communities');
       }
     };
 
@@ -472,4 +472,3 @@ const useGroupChat = () => {
 };
 
 export default useGroupChat;
-
