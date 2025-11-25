@@ -153,7 +153,7 @@ describe('Chat service', () => {
           recipient: 'bob',
           kind: 'chat',
           title: expect.stringContaining('alice'),
-          link: `/messaging/direct-message`,
+          link: `/messaging/group-chat`,
           actorUsername: 'alice',
           meta: { chatId: chatIdString, isMention: false },
         }),
