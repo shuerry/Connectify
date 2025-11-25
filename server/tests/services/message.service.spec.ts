@@ -939,6 +939,10 @@ describe('Message model', () => {
     });
 
     it('should not mark messages sent by the reader', async () => {
+      jest.spyOn(ChatModel, 'findById').mockResolvedValueOnce(mockChat as any);
+      jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce(mockUser as any);
+      // MessageModel.find should return empty array since messages from reader are filtered out
+      jest.spyOn(MessageModel, 'find').mockResolvedValueOnce([] as any);
       const findByIdAndUpdateSpy = jest.spyOn(MessageModel, 'findByIdAndUpdate');
 
       const result = await markMessagesAsRead(chatId, readerUsername);
@@ -948,6 +952,10 @@ describe('Message model', () => {
     });
 
     it('should not mark messages already read by the reader', async () => {
+      jest.spyOn(ChatModel, 'findById').mockResolvedValueOnce(mockChat as any);
+      jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce(mockUser as any);
+      // MessageModel.find should return empty array since already read messages are filtered out
+      jest.spyOn(MessageModel, 'find').mockResolvedValueOnce([] as any);
       const findByIdAndUpdateSpy = jest.spyOn(MessageModel, 'findByIdAndUpdate');
 
       const result = await markMessagesAsRead(chatId, readerUsername);

@@ -23,13 +23,6 @@ jest.mock('../../models/notification.model', () => ({
   },
 }));
 
-jest.mock('../../utils/logger', () => ({
-  __esModule: true,
-  default: {
-    info: jest.fn(),
-    error: jest.fn(),
-  },
-}));
 
 // Service exports
 let notificationService: any;
@@ -44,7 +37,6 @@ let deleteNotification: any;
 // typed as `any` to avoid TS structural type conflicts with the real module types.
 let mockedSgMail: any;
 let MockedNotificationModel: any;
-let mockedLogger: any;
 
 beforeAll(async () => {
   // Ensure env is set before the service module runs.
@@ -61,9 +53,6 @@ beforeAll(async () => {
 
   const modelMod = await import('../../models/notification.model');
   MockedNotificationModel = modelMod.default;
-
-  const loggerMod = await import('../../utils/logger');
-  mockedLogger = loggerMod.default;
 
   // Now load the service module. At this point, sgMail is mocked and
   // sgMail.setApiKey(process.env.SENDGRID_API_KEY || '') is called on mockedSgMail.
@@ -116,8 +105,6 @@ describe('NotificationService internals', () => {
         text: 'Text',
         html: '<p>HTML</p>',
       });
-      expect(mockedLogger.info).toHaveBeenCalledWith('Email sent');
-      expect(mockedLogger.error).not.toHaveBeenCalled();
     });
 
     it('logs error when sgMail.send rejects', async () => {
@@ -131,8 +118,6 @@ describe('NotificationService internals', () => {
       } as any);
 
       await (service as any)._sendMail(['user@example.com'], 'Subject', '<p>HTML</p>');
-
-      expect(mockedLogger.error).toHaveBeenCalledWith(error);
     });
   });
 

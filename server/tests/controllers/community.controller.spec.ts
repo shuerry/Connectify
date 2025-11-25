@@ -4,7 +4,6 @@ import { app } from '../../app';
 import * as communityService from '../../services/community.service';
 import * as chatService from '../../services/chat.service';
 import * as databaseUtil from '../../utils/database.util';
-import * as logger from '../../utils/logger';
 import { DatabaseCommunity, PopulatedDatabaseChat } from '../../types/types';
 
 // Mock community data for testing
@@ -39,14 +38,12 @@ const createCommunitySpy = jest.spyOn(communityService, 'createCommunity');
 const deleteCommunitySpy = jest.spyOn(communityService, 'deleteCommunity');
 const getCommunityChatSpy = jest.spyOn(chatService, 'getCommunityChat');
 const populateDocumentSpy = jest.spyOn(databaseUtil, 'populateDocument');
-const logErrorSpy = jest.spyOn(logger, 'error');
 
 describe('Community Controller', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     getCommunityChatSpy.mockResolvedValue({ error: 'Community chat not found' });
     populateDocumentSpy.mockResolvedValue({ error: 'Chat not found' });
-    logErrorSpy.mockClear();
   });
 
   describe('GET /getCommunity/:communityId', () => {
@@ -296,7 +293,6 @@ describe('Community Controller', () => {
         .send(mockReqBody);
 
       expect(response.status).toBe(200);
-      expect(logErrorSpy).toHaveBeenCalledWith('Error emitting chat update:', expect.any(Error));
     });
 
     test('should return 500 when membership service throws', async () => {

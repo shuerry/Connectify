@@ -150,6 +150,23 @@ describe('ConnectFourGame tests', () => {
 
       expect(() => connectFourGame.join('player2')).toThrow('Cannot join game: already started');
     });
+
+    it('throws error when player already in _players array but not player1 or player2', () => {
+      // Manually add player to _players array to simulate edge case
+      (connectFourGame as any)._players.push('player3');
+      expect((connectFourGame as any)._players).toContain('player3');
+
+      expect(() => connectFourGame.join('player3')).toThrow('You are already in this game');
+    });
+
+    it('throws error when trying to join a full game (player2 already exists)', () => {
+      connectFourGame.join('player2');
+      // Manually set player2 to simulate edge case where someone tries to join
+      connectFourGame.state.player2 = 'player2';
+      connectFourGame.state.status = 'WAITING_TO_START'; // Reset status to allow join check
+
+      expect(() => connectFourGame.join('player3')).toThrow('Cannot join game: game is full');
+    });
   });
 
   describe('leave', () => {
@@ -159,6 +176,23 @@ describe('ConnectFourGame tests', () => {
       connectFourGame.leave('player1');
 
       expect(connectFourGame.state.player1).toBeUndefined();
+      expect(connectFourGame.state.status).toBe('WAITING_TO_START');
+    });
+
+    it('swaps player2 to player1 when player1 leaves in waiting state', () => {
+      connectFourGame.join('player2');
+      expect(connectFourGame.state.player1).toBe('player1');
+      expect(connectFourGame.state.player2).toBe('player2');
+      expect(connectFourGame.state.status).toBe('IN_PROGRESS');
+
+      // Reset to waiting state
+      connectFourGame.state.status = 'WAITING_TO_START';
+
+      connectFourGame.leave('player1');
+
+      // player2 should become player1, player2 should be undefined
+      expect(connectFourGame.state.player1).toBe('player2');
+      expect(connectFourGame.state.player2).toBeUndefined();
       expect(connectFourGame.state.status).toBe('WAITING_TO_START');
     });
 
@@ -297,6 +331,18 @@ describe('ConnectFourGame tests', () => {
       expect(game.verifyAccess(undefined, ['player1'])).toBe(true);
       expect(game.verifyAccess('wrong-code', ['other-friend'])).toBe(false);
       expect(game.verifyAccess()).toBe(false);
+    });
+
+    it('returns false for invalid privacy type', () => {
+      const game = new ConnectFourGame('player1', {
+        privacy: 'PUBLIC',
+      });
+      // Manually set an invalid privacy type to test fallback
+      (game.state.roomSettings as any).privacy = 'INVALID_TYPE' as any;
+
+      expect(game.verifyAccess()).toBe(false);
+      expect(game.verifyAccess('any-code')).toBe(false);
+      expect(game.verifyAccess(undefined, ['player1'])).toBe(false);
     });
   });
 
@@ -586,6 +632,28 @@ describe('ConnectFourGame tests', () => {
       // that we haven't accounted for - let's see what the result is first
       expect(connectFourGame.state.winners).toEqual([]);
     });
+
+    it('checks for board full condition (tests _isBoardFull method)', () => {
+      // Test the _isBoardFull method by directly accessing it
+      // This ensures line 162 is covered
+      const isBoardFull = (connectFourGame as any)._isBoardFull.bind(connectFourGame);
+      
+      // Initially, board is not full
+      expect(isBoardFull()).toBe(false);
+      
+      // Fill the top row completely
+      for (let col = 0; col < 7; col += 1) {
+        connectFourGame.state.board[0][col] = 'RED';
+      }
+      
+      // Now the board should be considered full (top row is full)
+      expect(isBoardFull()).toBe(true);
+      
+      // Reset for other tests
+      for (let col = 0; col < 7; col += 1) {
+        connectFourGame.state.board[0][col] = null;
+      }
+    });
   });
 
   describe('getPublicRoomInfo', () => {
@@ -605,6 +673,43 @@ describe('ConnectFourGame tests', () => {
 
       const publicInfo = game.getPublicRoomInfo();
       expect(publicInfo.state.roomSettings.roomCode).toBeUndefined();
+    });
+  });
+
+  describe('_getPlayerByColor (private method)', () => {
+    it('returns correct player for matching colors', () => {
+      const game = new ConnectFourGame('player1', {});
+      game.join('player2');
+
+      // Access the private method to test it directly
+      const getPlayerByColor = (game as any)._getPlayerByColor.bind(game);
+      expect(getPlayerByColor(game.state.player1Color)).toBe('player1');
+      expect(getPlayerByColor(game.state.player2Color)).toBe('player2');
+    });
+
+    it('returns undefined when color does not match any player', () => {
+      const game = new ConnectFourGame('player1', {});
+      game.join('player2');
+
+      // Access the private method
+      const getPlayerByColor = (game as any)._getPlayerByColor.bind(game);
+
+      // Temporarily set both player colors to the same value to test undefined branch
+      // This simulates an edge case where a color check would fail
+      const originalPlayer1Color = game.state.player1Color;
+      const originalPlayer2Color = game.state.player2Color;
+      
+      // Set both to RED, so checking for YELLOW should return undefined
+      game.state.player1Color = 'RED';
+      game.state.player2Color = 'RED';
+      
+      // Now YELLOW should return undefined since neither player has YELLOW
+      const result = getPlayerByColor('YELLOW');
+      expect(result).toBeUndefined();
+      
+      // Restore original colors
+      game.state.player1Color = originalPlayer1Color;
+      game.state.player2Color = originalPlayer2Color;
     });
   });
 
