@@ -78,7 +78,12 @@ const QuestionView = ({ question }: QuestionProps) => {
 
   return (
     <>
-      <div className='reddit-question-card'>
+      <div
+        className='reddit-question-card'
+        data-cy='question-card'
+        data-question-id={question._id ? question._id.toString() : ''}
+        data-question-author={question.askedBy}
+      >
         {/* Voting sidebar */}
         <div className='vote-sidebar'>
           <button
@@ -126,7 +131,9 @@ const QuestionView = ({ question }: QuestionProps) => {
           </div>
 
           {/* Question title */}
-          <h3 className='reddit-question-title'>{question.title}</h3>
+          <h3 className='reddit-question-title' data-cy='question-title'>
+            {question.title}
+          </h3>
 
           {/* Tags */}
           <div className='question-tags-reddit'>
