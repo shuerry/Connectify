@@ -23,7 +23,7 @@ const AllCommunitiesPage = () => {
         <NewCommunityButton />
       </div>
       {error && <p className='community-error'>{error}</p>}
-      <div className='communities-list'>
+      <div className='communities-list-container'>
         {communities
           .filter(community => community.name.toLowerCase().includes(search))
           .map(community => (

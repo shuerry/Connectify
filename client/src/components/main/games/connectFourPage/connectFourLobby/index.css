@@ -80,7 +80,7 @@
 .code-hint {
   font-size: var(--text-xs);
   color: var(--gray-500);
-  text-align: center;
+  text-align: left;
   margin-top: 8px;
   line-height: 1.4;
 }
