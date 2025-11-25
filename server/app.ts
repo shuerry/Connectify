@@ -311,9 +311,26 @@ app.use('/api/comment', commentController(socket));
 app.use('/api/message', messageController(socket));
 app.use('/api/user', userController(socket));
 app.use('/api/chat', chatController(socket));
-app.use('/api/games', gameController(socket));
-app.use('/api/collection', collectionController(socket));
-app.use('/api/community', communityController(socket));
+
+// Fix: gameController, collectionController, communityController might be returning void if socket is missing or incorrectly used.
+// Make sure they always return a compatible Express Router/Application object.
+// Here we check if the controller actually returns a value before passing to app.use
+
+const gamesRouter = gameController(socket);
+if (gamesRouter) {
+  app.use('/api/games', gamesRouter);
+}
+
+const collectionRouter = collectionController(socket);
+if (collectionRouter) {
+  app.use('/api/collection', collectionRouter);
+}
+
+const communityRouter = communityController(socket);
+if (communityRouter) {
+  app.use('/api/community', communityRouter);
+}
+
 app.use('/api/report', reportController());
 app.use('/api/notification', notificationController(socket));
 
