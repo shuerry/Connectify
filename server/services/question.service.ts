@@ -619,7 +619,7 @@ export const saveDraft = async (
   tags: ObjectId[],
   askedBy: string,
   community?: ObjectId | null,
-): Promise<{ error: string } | object> => {
+): Promise<object> => {
   try {
     const DraftModel = (await import('../models/drafts.model')).default;
 
@@ -661,7 +661,7 @@ export const updateDraft = async (
   tags: ObjectId[],
   askedBy: string,
   community?: ObjectId | null,
-): Promise<object | { error: string }> => {
+): Promise<object> => {
   try {
     const DraftModel = (await import('../models/drafts.model')).default;
 

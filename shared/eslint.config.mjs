@@ -1,10 +1,14 @@
 /* eslint import/no-extraneous-dependencies: "off" */
 
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginImport from 'eslint-plugin-import';
+
+const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig([
   globalIgnores(['build/*', 'dist/*', '.stryker-tmp/*', 'coverage/*']),
@@ -15,6 +19,13 @@ export default defineConfig([
       eslintPluginImport.flatConfigs.recommended,
       eslintPluginImport.flatConfigs.typescript,
     ],
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir,
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
     settings: {
       'import/resolver': {
         typescript: true,
@@ -44,8 +55,10 @@ export default defineConfig([
     extends: tseslint.configs.recommendedTypeChecked,
     languageOptions: {
       parserOptions: {
-        projectService: true,
-        tsconfigRootDir: '.',
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        project: true,
+        tsconfigRootDir,
       },
     },
     rules: {

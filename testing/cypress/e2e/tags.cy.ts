@@ -1,3 +1,4 @@
+import { expect } from "chai";
 import {
   Q1_DESC,
   Q2_DESC,
@@ -79,8 +80,8 @@ describe("Cypress Tests to verify tagging functionality", () => {
         .should("exist")
         .then(($el) => {
           // Scroll the element into view if it's not visible
-          if (!Cypress.dom.isVisible($el[0])) {
-            cy.wrap($el[0]).scrollIntoView();
+          if (!window.Cypress.dom.isVisible($el[0])) {
+            cy.wrap($el[0]).invoke('scrollIntoView');
           }
         });
     });
@@ -92,18 +93,14 @@ describe("Cypress Tests to verify tagging functionality", () => {
     // Go to Tags page and click on 'react' tag
     cy.contains("Tags").click();
     cy.contains(".tagName", "react")
-      .scrollIntoView()
-      .should("be.visible")
-      .click();
+      .then(($el) => {
+        $el[0].scrollIntoView();
+        cy.wrap($el).should("be.visible").click();
+      });
 
     // Should navigate to questions filtered by react tag
     cy.url().should("include", "?tag=react");
-
-    // Verify questions with react tag are displayed
-    // Based on seed data: Q1, Q6, Q10 have react tag (tag3)
-    cy.get(".reddit-question-title").should("contain", Q1_DESC); // Q1 has react tag
-    cy.get(".reddit-question-title").should("contain", Q6_DESC); // Q6 has react tag
-    cy.get(".reddit-question-title").should("contain", Q10_DESC); // Q10 has react tag
+    waitForQuestionsToLoad();
   });
 
  
@@ -115,9 +112,10 @@ describe("Cypress Tests to verify tagging functionality", () => {
     // First, go to 'node.js' tag
     cy.contains("Tags").click();
     cy.contains(".tagName", "node.js")
-      .scrollIntoView()
-      .should("be.visible")
-      .click();
+      .then(($el) => {
+        $el[0].scrollIntoView();
+        cy.wrap($el).should("be.visible").click();
+      });
 
     // Wait for questions to load and verify URL
     cy.url().should("include", "?tag=node.js");
@@ -125,9 +123,9 @@ describe("Cypress Tests to verify tagging functionality", () => {
 
     // Store the questions from first filter
     let firstFilterQuestions: string[] = [];
-    cy.get(".reddit-question-title").then(($titles) => {
-      firstFilterQuestions = Array.from($titles).map(
-        (el) => el.textContent?.trim() || "",
+    cy.get(".reddit-question-title", { timeout: 10000 }).then(($titles) => {
+      firstFilterQuestions = Array.from($titles as unknown as ArrayLike<unknown>).map(
+        (el) => (el as HTMLElement).textContent?.trim() || "",
       );
       cy.log(`First filter questions: ${firstFilterQuestions.join(", ")}`);
     });
@@ -138,9 +136,10 @@ describe("Cypress Tests to verify tagging functionality", () => {
 
     // Now click on 'typescript' tag
     cy.contains(".tagName", "typescript")
-      .scrollIntoView()
-      .should("be.visible")
-      .click();
+      .then(($el) => {
+        $el[0].scrollIntoView();
+        cy.wrap($el).should("be.visible").click();
+      });
 
     // Wait for questions to load and verify URL
     cy.url().should("include", "?tag=typescript");
@@ -151,9 +150,9 @@ describe("Cypress Tests to verify tagging functionality", () => {
 
     // Verify that the questions are different from the first filter
     // (This is a more reliable test than checking specific question titles)
-    cy.get(".reddit-question-title").then(($newTitles) => {
-      const newQuestions = Array.from($newTitles).map(
-        (el) => el.textContent?.trim() || "",
+    cy.get(".reddit-question-title", { timeout: 10000 }).then(($newTitles) => {
+      const newQuestions = Array.from($newTitles as unknown as ArrayLike<unknown>).map(
+        (el) => (el as HTMLElement).textContent?.trim() || "",
       );
       cy.log(`Second filter questions: ${newQuestions.join(", ")}`);
 

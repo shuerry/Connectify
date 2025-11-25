@@ -1,3 +1,5 @@
+/// <reference types="cypress" />
+
 import {
   createAnswer,
   createQuestion,
@@ -58,16 +60,15 @@ describe("Cypress Tests to verify order of questions displayed", () => {
       buildMockQuestion("Newest Question B", { askDateTime: "2024-01-02T00:00:00.000Z" }),
       buildMockQuestion("Newest Question A", { askDateTime: "2024-01-01T00:00:00.000Z" }),
     ];
-
-    cy.intercept("GET", "**/api/question/getQuestion*order=newest*", {
-      statusCode: 200,
-      body: newestQuestions,
+    cy.intercept("GET", /\/api\/question\/getQuestion\?order=newest.*/, req => {
+      req.reply(newestQuestions);
     }).as("mockNewest");
-
     loginUser("user123");
     cy.wait("@mockNewest");
-
     cy.get(".reddit-question-title").each(($el, index) => {
+      if (index >= newestQuestions.length) {
+        return false;
+      }
       cy.wrap($el).should("contain", newestQuestions[index].title);
     });
   });
@@ -78,17 +79,17 @@ describe("Cypress Tests to verify order of questions displayed", () => {
       buildMockQuestion("Most Viewed Question 2", { views: ["a", "b", "c"] }),
       buildMockQuestion("Most Viewed Question 3", { views: ["a", "b"] }),
     ];
-
-    cy.intercept("GET", "**/api/question/getQuestion*order=mostViewed*", {
-      statusCode: 200,
-      body: mostViewed,
+    cy.intercept("GET", /\/api\/question\/getQuestion\?order=mostViewed.*/, req => {
+      req.reply(mostViewed);
     }).as("mockMostViewed");
-
     loginUser("user123");
 
     cy.contains("Most Viewed").click();
     cy.wait("@mockMostViewed");
     cy.get(".reddit-question-title").each(($el, index) => {
+      if (index >= mostViewed.length) {
+        return false;
+      }
       cy.wrap($el).should("contain", mostViewed[index].title);
     });
   });

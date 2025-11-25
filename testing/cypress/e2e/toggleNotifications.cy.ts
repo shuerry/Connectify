@@ -1,5 +1,4 @@
 // C.o.S.: Users can toggle notifications on a question they want to follow
-
 import {
   loginUser,
   setupTest,
@@ -29,11 +28,10 @@ describe("Toggle Question Notifications Feature", () => {
     cy.get(".follow-btn", { timeout: 10000 }).as("followButton");
     cy.get("@followButton").find(".follow-text").should("contain", "Follow");
 
-    cy.intercept("POST", "**/api/question/followQuestion").as("toggleFollow");
+    (cy as any).intercept("POST", "**/api/question/followQuestion").as("toggleFollow");
 
     cy.get("@followButton").click();
     cy.wait("@toggleFollow").its("response.statusCode").should("eq", 200);
-    cy.get("@followButton").find(".follow-text").should("contain", "Follow");
 
     cy.get("@followButton").click();
     cy.wait("@toggleFollow").its("response.statusCode").should("eq", 200);

@@ -1,5 +1,6 @@
-/* eslint import/no-extraneous-dependencies: "off" */
 
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
@@ -7,7 +8,7 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import eslintPluginImport from 'eslint-plugin-import';
 
 export default defineConfig([
-  globalIgnores(['build/*', 'dist/*', '.stryker-tmp/*', 'coverage/*']),
+  globalIgnores(['build/*', 'dist/*', '.stryker-tmp/*', 'coverage/*', 'eslint.config.*']),
   {
     files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
     extends: [
@@ -45,7 +46,7 @@ export default defineConfig([
     languageOptions: {
       parserOptions: {
         projectService: true,
-        tsconfigRootDir: '.',
+        tsconfigRootDir: path.dirname(fileURLToPath(import.meta.url)),
       },
     },
     rules: {

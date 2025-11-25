@@ -1,20 +1,21 @@
-const { defineConfig } = require("cypress");
-require("dotenv").config();
+import { defineConfig } from "cypress";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const baseUrl = process.env.CLIENT_URL || "http://localhost:4530";
 
 export default defineConfig({
-  // setupNodeEvents can be defined in either
-  // the e2e or component configuration
   e2e: {
-    setupNodeEvents(on, config) {
-      require("@cypress/code-coverage/task")(on, config);
+    baseUrl,
+    specPattern: "cypress/e2e/**/*.cy.ts",
+    supportFile: "cypress/support/e2e.js",
+    setupNodeEvents(_on: Cypress.PluginEvents, config: Cypress.PluginConfigOptions) {
       config.env = {
         ...process.env,
         ...config.env,
       };
-      // include any other plugin code...
 
-      // It's IMPORTANT to return the config object
-      // with any changed environment variables
       return config;
     },
   },
