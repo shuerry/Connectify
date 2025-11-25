@@ -1225,3 +1225,664 @@ describe('Test questionController', () => {
     });
   });
 });
+
+describe('POST /followQuestion', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should follow a question successfully', async () => {
+    const mockResult = { followers: ['alice'], msg: 'Followed successfully' } as any;
+
+    jest.spyOn(questionUtil, 'addFollowerToQuestion').mockResolvedValueOnce(mockResult);
+
+    const response = await supertest(app).post('/api/question/followQuestion').send({
+      qid: '65e9b5a995b6c7045a30d823',
+      username: 'alice',
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(mockResult);
+  });
+
+  it('should return 500 when addFollowerToQuestion returns error', async () => {
+    jest
+      .spyOn(questionUtil, 'addFollowerToQuestion')
+      .mockResolvedValueOnce({ error: 'Unauthorized' } as any);
+
+    const response = await supertest(app).post('/api/question/followQuestion').send({
+      qid: '65e9b5a995b6c7045a30d823',
+      username: 'alice',
+    });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toContain('Error when following question: Unauthorized');
+  });
+
+  it('should return 500 when addFollowerToQuestion throws', async () => {
+    jest
+      .spyOn(questionUtil, 'addFollowerToQuestion')
+      .mockRejectedValueOnce(new Error('DB failure'));
+
+    const response = await supertest(app).post('/api/question/followQuestion').send({
+      qid: '65e9b5a995b6c7045a30d823',
+      username: 'alice',
+    });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toContain('Error when following question: DB failure');
+  });
+});
+
+describe('GET /getQuestionVersions/:qid', () => {
+  const validQid = '65e9b58910afe6e94fc6e6dc';
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return 400 for invalid question ID format', async () => {
+    const response = await supertest(app).get('/api/question/getQuestionVersions/invalid-id');
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Invalid question ID format');
+  });
+
+  it('should return 404 when question not found', async () => {
+    jest
+      .spyOn(questionUtil, 'getQuestionVersions')
+      .mockResolvedValueOnce({ error: 'Question not found' } as any);
+
+    const response = await supertest(app)
+      .get(`/api/question/getQuestionVersions/${validQid}`)
+      .query({ username: 'user1' });
+
+    expect(response.status).toBe(404);
+    expect(response.text).toBe('Question not found');
+  });
+
+  it('should return 403 when user not authorized', async () => {
+    jest.spyOn(questionUtil, 'getQuestionVersions').mockResolvedValueOnce({
+      error: 'Unauthorized: Only the author can view versions',
+    } as any);
+
+    const response = await supertest(app)
+      .get(`/api/question/getQuestionVersions/${validQid}`)
+      .query({ username: 'user1' });
+
+    expect(response.status).toBe(403);
+    expect(response.text).toBe('Unauthorized: Only the author can view versions');
+  });
+
+  it('should return 400 for other errors from service', async () => {
+    jest
+      .spyOn(questionUtil, 'getQuestionVersions')
+      .mockResolvedValueOnce({ error: 'Something else went wrong' } as any);
+
+    const response = await supertest(app)
+      .get(`/api/question/getQuestionVersions/${validQid}`)
+      .query({ username: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Something else went wrong');
+  });
+
+  it('should return versions successfully', async () => {
+    const mockVersions = [{ versionNumber: 1, title: 'v1' }] as any;
+
+    jest.spyOn(questionUtil, 'getQuestionVersions').mockResolvedValueOnce(mockVersions);
+
+    const response = await supertest(app)
+      .get(`/api/question/getQuestionVersions/${validQid}`)
+      .query({ username: 'user1' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(JSON.parse(JSON.stringify(mockVersions)));
+  });
+
+  it('should return 500 with generic message when non-Error is thrown', async () => {
+    jest.spyOn(questionUtil, 'getQuestionVersions').mockRejectedValueOnce('string failure' as any);
+
+    const response = await supertest(app)
+      .get(`/api/question/getQuestionVersions/${validQid}`)
+      .query({ username: 'user1' });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toBe('Error when fetching question versions');
+  });
+});
+
+describe('POST /rollbackQuestion/:qid/:versionId', () => {
+  const validQid = '65e9b58910afe6e94fc6e6dc';
+  const validVid = '65e9b58910afe6e94fc6e6dd';
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return 400 for invalid question ID format', async () => {
+    const response = await supertest(app)
+      .post(`/api/question/rollbackQuestion/invalid-qid/${validVid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Invalid question ID format');
+  });
+
+  it('should return 400 for invalid version ID format', async () => {
+    const response = await supertest(app)
+      .post(`/api/question/rollbackQuestion/${validQid}/invalid-vid`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Invalid version ID format');
+  });
+
+  it('should return 404 when question not found', async () => {
+    jest
+      .spyOn(questionUtil, 'rollbackQuestion')
+      .mockResolvedValueOnce({ error: 'Question not found' } as any);
+
+    const response = await supertest(app)
+      .post(`/api/question/rollbackQuestion/${validQid}/${validVid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(404);
+    expect(response.text).toBe('Question not found');
+  });
+
+  it('should return 404 when version not found', async () => {
+    jest
+      .spyOn(questionUtil, 'rollbackQuestion')
+      .mockResolvedValueOnce({ error: 'Version not found' } as any);
+
+    const response = await supertest(app)
+      .post(`/api/question/rollbackQuestion/${validQid}/${validVid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(404);
+    expect(response.text).toBe('Version not found');
+  });
+
+  it('should return 403 when user not authorized', async () => {
+    jest.spyOn(questionUtil, 'rollbackQuestion').mockResolvedValueOnce({
+      error: 'Unauthorized: Only the author can rollback',
+    } as any);
+
+    const response = await supertest(app)
+      .post(`/api/question/rollbackQuestion/${validQid}/${validVid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(403);
+    expect(response.text).toBe('Unauthorized: Only the author can rollback');
+  });
+
+  it('should return 400 for other errors from service', async () => {
+    jest
+      .spyOn(questionUtil, 'rollbackQuestion')
+      .mockResolvedValueOnce({ error: 'Some other error' } as any);
+
+    const response = await supertest(app)
+      .post(`/api/question/rollbackQuestion/${validQid}/${validVid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Some other error');
+  });
+
+  it('should rollback successfully and emit update', async () => {
+    const mockQuestion: PopulatedDatabaseQuestion = {
+      _id: new mongoose.Types.ObjectId(validQid),
+      title: 'Rolled back title',
+      text: 'Rolled back text',
+      tags: [],
+      askedBy: 'user1',
+      askDateTime: new Date(),
+      answers: [],
+      views: [],
+      upVotes: [],
+      downVotes: [],
+      comments: [],
+      community: null,
+      followers: [],
+    };
+
+    jest.spyOn(questionUtil, 'rollbackQuestion').mockResolvedValueOnce(mockQuestion);
+
+    const response = await supertest(app)
+      .post(`/api/question/rollbackQuestion/${validQid}/${validVid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(JSON.parse(JSON.stringify(mockQuestion)));
+  });
+
+  it('should return 500 with detailed message when Error is thrown', async () => {
+    jest.spyOn(questionUtil, 'rollbackQuestion').mockRejectedValueOnce(new Error('DB failure'));
+
+    const response = await supertest(app)
+      .post(`/api/question/rollbackQuestion/${validQid}/${validVid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toContain('Error when rolling back question: DB failure');
+  });
+
+  it('should return 500 with generic message when non-Error is thrown', async () => {
+    jest.spyOn(questionUtil, 'rollbackQuestion').mockRejectedValueOnce('string failure' as any);
+
+    const response = await supertest(app)
+      .post(`/api/question/rollbackQuestion/${validQid}/${validVid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toBe('Error when rolling back question');
+  });
+});
+
+describe('Draft endpoints - extra branches', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('POST /saveDraft should return 400 when title is missing', async () => {
+    const response = await supertest(app).post('/api/question/saveDraft').send({});
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Title is required');
+  });
+
+  it('POST /saveDraft should return 500 when processTags throws', async () => {
+    jest.spyOn(tagUtil, 'processTags').mockRejectedValueOnce(new Error('Tag failure'));
+
+    const response = await supertest(app)
+      .post('/api/question/saveDraft')
+      .send({
+        title: 'Draft Title',
+        tags: [{ name: 't1', description: '' }],
+      });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toContain('Error when saving draft: Tag failure');
+  });
+
+  it('PUT /updateDraft/:draftId should return 400 for invalid draft ID', async () => {
+    const response = await supertest(app)
+      .put('/api/question/updateDraft/invalid-id')
+      .send({ title: 'Updated', text: 'text', tags: [], askedBy: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Invalid draft ID format');
+  });
+
+  it('PUT /updateDraft/:draftId should return 400 when title is missing', async () => {
+    const validDraftId = '65e9b58910afe6e94fc6e6de';
+
+    const response = await supertest(app)
+      .put(`/api/question/updateDraft/${validDraftId}`)
+      .send({ title: '   ' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Title is required');
+  });
+
+  it('PUT /updateDraft/:draftId should map Draft not found -> 404', async () => {
+    const validDraftId = '65e9b58910afe6e94fc6e6de';
+
+    jest
+      .spyOn(questionUtil, 'updateDraft')
+      .mockResolvedValueOnce({ error: 'Draft not found' } as any);
+    jest.spyOn(tagUtil, 'processTags').mockResolvedValueOnce([]);
+
+    const response = await supertest(app)
+      .put(`/api/question/updateDraft/${validDraftId}`)
+      .send({ title: 'Updated', text: 'text', tags: [], askedBy: 'user1' });
+
+    expect(response.status).toBe(404);
+    expect(response.text).toBe('Draft not found');
+  });
+
+  it('PUT /updateDraft/:draftId should map Unauthorized -> 403', async () => {
+    const validDraftId = '65e9b58910afe6e94fc6e6de';
+
+    jest.spyOn(tagUtil, 'processTags').mockResolvedValueOnce([]);
+    jest.spyOn(questionUtil, 'updateDraft').mockResolvedValueOnce({
+      error: 'Unauthorized: Only the author can edit a draft',
+    } as any);
+
+    const response = await supertest(app)
+      .put(`/api/question/updateDraft/${validDraftId}`)
+      .send({ title: 'Updated', text: 'text', tags: [], askedBy: 'user1' });
+
+    expect(response.status).toBe(403);
+    expect(response.text).toBe('Unauthorized: Only the author can edit a draft');
+  });
+
+  it('PUT /updateDraft/:draftId should map other errors -> 400', async () => {
+    const validDraftId = '65e9b58910afe6e94fc6e6de';
+
+    jest.spyOn(tagUtil, 'processTags').mockResolvedValueOnce([]);
+    jest
+      .spyOn(questionUtil, 'updateDraft')
+      .mockResolvedValueOnce({ error: 'Some other draft error' } as any);
+
+    const response = await supertest(app)
+      .put(`/api/question/updateDraft/${validDraftId}`)
+      .send({ title: 'Updated', text: 'text', tags: [], askedBy: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Some other draft error');
+  });
+
+  it('GET /getUserDrafts should return 400 when username is missing', async () => {
+    const response = await supertest(app).get('/api/question/getUserDrafts');
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Username is required');
+  });
+
+  it('GET /getUserDrafts should return 400 when service returns error', async () => {
+    jest
+      .spyOn(questionUtil, 'getUserDrafts')
+      .mockResolvedValueOnce({ error: 'Error when retrieving drafts' } as any);
+
+    const response = await supertest(app)
+      .get('/api/question/getUserDrafts')
+      .query({ username: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Error when retrieving drafts');
+  });
+
+  it('GET /getUserDrafts should return 500 when service throws', async () => {
+    jest.spyOn(questionUtil, 'getUserDrafts').mockRejectedValueOnce(new Error('DB failure'));
+
+    const response = await supertest(app)
+      .get('/api/question/getUserDrafts')
+      .query({ username: 'user1' });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toContain('Error when fetching user drafts: DB failure');
+  });
+
+  it('DELETE /deleteDraft/:draftId should return 400 for invalid draft ID', async () => {
+    const response = await supertest(app)
+      .delete('/api/question/deleteDraft/invalid-id')
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Invalid draft ID format');
+  });
+
+  it('DELETE /deleteDraft/:draftId should return 400 when username missing', async () => {
+    const response = await supertest(app).delete(
+      '/api/question/deleteDraft/65e9b58910afe6e94fc6e6df',
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Username is required');
+  });
+
+  it('DELETE /deleteDraft/:draftId should map Draft not found -> 404', async () => {
+    jest
+      .spyOn(questionUtil, 'deleteDraft')
+      .mockResolvedValueOnce({ error: 'Draft not found' } as any);
+
+    const response = await supertest(app)
+      .delete('/api/question/deleteDraft/65e9b58910afe6e94fc6e6df')
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(404);
+    expect(response.text).toBe('Draft not found');
+  });
+
+  it('DELETE /deleteDraft/:draftId should map Unauthorized -> 403', async () => {
+    jest.spyOn(questionUtil, 'deleteDraft').mockResolvedValueOnce({
+      error: 'Unauthorized: Only the author can delete a draft',
+    } as any);
+
+    const response = await supertest(app)
+      .delete('/api/question/deleteDraft/65e9b58910afe6e94fc6e6df')
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(403);
+    expect(response.text).toBe('Unauthorized: Only the author can delete a draft');
+  });
+
+  it('DELETE /deleteDraft/:draftId should map other errors -> 400', async () => {
+    jest
+      .spyOn(questionUtil, 'deleteDraft')
+      .mockResolvedValueOnce({ error: 'Some other delete error' } as any);
+
+    const response = await supertest(app)
+      .delete('/api/question/deleteDraft/65e9b58910afe6e94fc6e6df')
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Some other delete error');
+  });
+
+  it('DELETE /deleteDraft/:draftId should return 500 when service throws', async () => {
+    jest.spyOn(questionUtil, 'deleteDraft').mockRejectedValueOnce(new Error('DB failure'));
+
+    const response = await supertest(app)
+      .delete('/api/question/deleteDraft/65e9b58910afe6e94fc6e6df')
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toContain('Error when deleting draft: DB failure');
+  });
+});
+
+describe('DELETE /deleteQuestion/:qid', () => {
+  const validQid = '65e9b58910afe6e94fc6e6e0';
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return 400 for invalid question ID', async () => {
+    const response = await supertest(app)
+      .delete('/api/question/deleteQuestion/invalid-id')
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Invalid question ID format');
+  });
+
+  it('should return 400 when username is missing', async () => {
+    const response = await supertest(app).delete(`/api/question/deleteQuestion/${validQid}`);
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Username is required');
+  });
+
+  it('should map Question not found -> 404', async () => {
+    jest
+      .spyOn(questionUtil, 'deleteQuestion')
+      .mockResolvedValueOnce({ error: 'Question not found' } as any);
+
+    const response = await supertest(app)
+      .delete(`/api/question/deleteQuestion/${validQid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(404);
+    expect(response.text).toBe('Question not found');
+  });
+
+  it('should map Unauthorized -> 403', async () => {
+    jest.spyOn(questionUtil, 'deleteQuestion').mockResolvedValueOnce({
+      error: 'Unauthorized: You can only delete your own questions',
+    } as any);
+
+    const response = await supertest(app)
+      .delete(`/api/question/deleteQuestion/${validQid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(403);
+    expect(response.text).toBe('Unauthorized: You can only delete your own questions');
+  });
+
+  it('should map other errors -> 400', async () => {
+    jest
+      .spyOn(questionUtil, 'deleteQuestion')
+      .mockResolvedValueOnce({ error: 'Some other delete error' } as any);
+
+    const response = await supertest(app)
+      .delete(`/api/question/deleteQuestion/${validQid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Some other delete error');
+  });
+
+  it('should delete successfully and emit event', async () => {
+    jest
+      .spyOn(questionUtil, 'deleteQuestion')
+      .mockResolvedValueOnce({ msg: 'Question deleted successfully' } as any);
+
+    const response = await supertest(app)
+      .delete(`/api/question/deleteQuestion/${validQid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ message: 'Question deleted successfully' });
+  });
+
+  it('should return 500 when deleteQuestion throws', async () => {
+    jest.spyOn(questionUtil, 'deleteQuestion').mockRejectedValueOnce(new Error('DB failure'));
+
+    const response = await supertest(app)
+      .delete(`/api/question/deleteQuestion/${validQid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toContain('Error when deleting question: DB failure');
+  });
+
+  it('should return 500 with generic message when non-Error thrown', async () => {
+    jest.spyOn(questionUtil, 'deleteQuestion').mockRejectedValueOnce('string failure' as any);
+
+    const response = await supertest(app)
+      .delete(`/api/question/deleteQuestion/${validQid}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toBe('Error when deleting question');
+  });
+});
+
+describe('POST /publishDraft/:draftId', () => {
+  const validDraftId = '65e9b58910afe6e94fc6e6e1';
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return 400 for invalid draft ID format', async () => {
+    const response = await supertest(app)
+      .post('/api/question/publishDraft/invalid-id')
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Invalid draft ID format');
+  });
+
+  it('should return 400 when username is missing', async () => {
+    const response = await supertest(app).post(`/api/question/publishDraft/${validDraftId}`);
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Username is required');
+  });
+
+  it('should map Draft not found -> 404', async () => {
+    jest
+      .spyOn(questionUtil, 'publishDraft')
+      .mockResolvedValueOnce({ error: 'Draft not found' } as any);
+
+    const response = await supertest(app)
+      .post(`/api/question/publishDraft/${validDraftId}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(404);
+    expect(response.text).toBe('Draft not found');
+  });
+
+  it('should map Unauthorized -> 403', async () => {
+    jest.spyOn(questionUtil, 'publishDraft').mockResolvedValueOnce({
+      error: 'Unauthorized: Only the author can publish this draft',
+    } as any);
+
+    const response = await supertest(app)
+      .post(`/api/question/publishDraft/${validDraftId}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(403);
+    expect(response.text).toBe('Unauthorized: Only the author can publish this draft');
+  });
+
+  it('should map other errors -> 400', async () => {
+    jest
+      .spyOn(questionUtil, 'publishDraft')
+      .mockResolvedValueOnce({ error: 'Some other publish error' } as any);
+
+    const response = await supertest(app)
+      .post(`/api/question/publishDraft/${validDraftId}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(400);
+    expect(response.text).toBe('Some other publish error');
+  });
+
+  it('should publish successfully and return 201 with populated question', async () => {
+    const mockQuestion = {
+      _id: new mongoose.Types.ObjectId('65e9b58910afe6e94fc6e6e2'),
+    } as any;
+    const populated = {
+      ...mockQuestion,
+      title: 'Published from draft',
+      text: 'content',
+      tags: [],
+      askedBy: 'user1',
+    } as any;
+
+    jest.spyOn(questionUtil, 'publishDraft').mockResolvedValueOnce(mockQuestion);
+    jest.spyOn(databaseUtil, 'populateDocument').mockResolvedValueOnce(populated);
+
+    const response = await supertest(app)
+      .post(`/api/question/publishDraft/${validDraftId}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual(JSON.parse(JSON.stringify(populated)));
+  });
+
+  it('should return 500 when populateDocument returns error', async () => {
+    const mockQuestion = {
+      _id: new mongoose.Types.ObjectId('65e9b58910afe6e94fc6e6e2'),
+    } as any;
+
+    jest.spyOn(questionUtil, 'publishDraft').mockResolvedValueOnce(mockQuestion);
+    jest
+      .spyOn(databaseUtil, 'populateDocument')
+      .mockResolvedValueOnce({ error: 'Populate error' } as any);
+
+    const response = await supertest(app)
+      .post(`/api/question/publishDraft/${validDraftId}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toContain('Error when publishing draft: Populate error');
+  });
+
+  it('should return 500 with generic message when non-Error thrown', async () => {
+    jest.spyOn(questionUtil, 'publishDraft').mockRejectedValueOnce('string failure' as any);
+
+    const response = await supertest(app)
+      .post(`/api/question/publishDraft/${validDraftId}`)
+      .send({ username: 'user1' });
+
+    expect(response.status).toBe(500);
+    expect(response.text).toBe('Error when publishing draft');
+  });
+});

@@ -245,9 +245,12 @@ const MessageCard = ({
                 <div className='read-receipt'>
                   {allParticipants && allParticipants.length > 2
                     ? (() => {
-                        const participantsToRead = allParticipants.filter(p => p !== message.msgFrom);
+                        const participantsToRead = allParticipants.filter(
+                          p => p !== message.msgFrom,
+                        );
                         const readCount = message.readBy
-                          ? message.readBy.filter(reader => participantsToRead.includes(reader)).length
+                          ? message.readBy.filter(reader => participantsToRead.includes(reader))
+                              .length
                           : 0;
                         const totalCount = participantsToRead.length;
                         if (isRead) {
