@@ -184,7 +184,7 @@ const useProfileSettings = () => {
       });
 
       setEditEmailMode(false);
-      setSuccessMessage('Verification email sent');
+      setSuccessMessage('Verification email sent. Please check your spam folder.');
       setErrorMessage(null);
     } catch (error) {
       logger.error('Error in handleUpdateEmail:', error); // Debugging log
