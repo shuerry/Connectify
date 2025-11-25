@@ -23,7 +23,6 @@ jest.mock('../../models/notification.model', () => ({
   },
 }));
 
-
 // Service exports
 let notificationService: any;
 let setNotificationSocket: any;

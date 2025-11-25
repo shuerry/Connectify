@@ -637,18 +637,18 @@ describe('ConnectFourGame tests', () => {
       // Test the _isBoardFull method by directly accessing it
       // This ensures line 162 is covered
       const isBoardFull = (connectFourGame as any)._isBoardFull.bind(connectFourGame);
-      
+
       // Initially, board is not full
       expect(isBoardFull()).toBe(false);
-      
+
       // Fill the top row completely
       for (let col = 0; col < 7; col += 1) {
         connectFourGame.state.board[0][col] = 'RED';
       }
-      
+
       // Now the board should be considered full (top row is full)
       expect(isBoardFull()).toBe(true);
-      
+
       // Reset for other tests
       for (let col = 0; col < 7; col += 1) {
         connectFourGame.state.board[0][col] = null;
@@ -698,15 +698,15 @@ describe('ConnectFourGame tests', () => {
       // This simulates an edge case where a color check would fail
       const originalPlayer1Color = game.state.player1Color;
       const originalPlayer2Color = game.state.player2Color;
-      
+
       // Set both to RED, so checking for YELLOW should return undefined
       game.state.player1Color = 'RED';
       game.state.player2Color = 'RED';
-      
+
       // Now YELLOW should return undefined since neither player has YELLOW
       const result = getPlayerByColor('YELLOW');
       expect(result).toBeUndefined();
-      
+
       // Restore original colors
       game.state.player1Color = originalPlayer1Color;
       game.state.player2Color = originalPlayer2Color;

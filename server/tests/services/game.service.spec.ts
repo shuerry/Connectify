@@ -155,7 +155,9 @@ describe('findGames', () => {
   });
 
   it('should include only accessible Connect Four rooms and remove room codes', async () => {
-    const mockGetUserByUsername = getUserByUsername as jest.MockedFunction<typeof getUserByUsername>;
+    const mockGetUserByUsername = getUserByUsername as jest.MockedFunction<
+      typeof getUserByUsername
+    >;
     mockGetUserByUsername.mockResolvedValueOnce({
       username: 'requester',
       friends: ['friendlyCreator'],
@@ -224,7 +226,9 @@ describe('findGames', () => {
   });
 
   it('should exclude friends-only rooms when requester is not a friend or lookup fails', async () => {
-    const mockGetUserByUsername = getUserByUsername as jest.MockedFunction<typeof getUserByUsername>;
+    const mockGetUserByUsername = getUserByUsername as jest.MockedFunction<
+      typeof getUserByUsername
+    >;
     mockGetUserByUsername.mockResolvedValueOnce({ error: 'User not found' } as any);
 
     jest.spyOn(GameModel, 'find').mockImplementation(() => {

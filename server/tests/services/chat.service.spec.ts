@@ -565,7 +565,7 @@ describe('Chat service', () => {
       const result = await removeParticipantFromChat(chatId, 'alice');
 
       expect(spy).toHaveBeenCalledWith(
-        { _id: chatId, 'participants.alice': { $exists: true } },
+        { '_id': chatId, 'participants.alice': { $exists: true } },
         { $unset: { 'participants.alice': '' } },
         { new: true },
       );

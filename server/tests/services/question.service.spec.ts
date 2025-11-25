@@ -98,9 +98,7 @@ describe('question.service', () => {
     ])('delegates %s ordering to the matching sorter', async (order, sorterName) => {
       const qlist = [{ _id: order }] as any;
       jest.spyOn(QuestionModel, 'find').mockReturnValue(makePopulateQuery(qlist) as any);
-      const sortSpy = jest
-        .spyOn(sortUtil as any, sorterName)
-        .mockReturnValueOnce(qlist);
+      const sortSpy = jest.spyOn(sortUtil as any, sorterName).mockReturnValueOnce(qlist);
 
       const res = await getQuestionsByOrder(order as any);
 
@@ -163,11 +161,7 @@ describe('question.service', () => {
 
   describe('filterQuestionsByAskedBy', () => {
     it('filters the provided list by author username', () => {
-      const list = [
-        { askedBy: 'alice' },
-        { askedBy: 'bob' },
-        { askedBy: 'alice' },
-      ] as any[];
+      const list = [{ askedBy: 'alice' }, { askedBy: 'bob' }, { askedBy: 'alice' }] as any[];
 
       const res = filterQuestionsByAskedBy(list, 'alice');
 
@@ -275,7 +269,9 @@ describe('question.service', () => {
 
     it('returns question when viewer is allowed to see it', async () => {
       const question = makeQuestion({ askedBy: 'viewer' });
-      jest.spyOn(QuestionModel, 'findOneAndUpdate').mockReturnValue(makePopulateQuery(question) as any);
+      jest
+        .spyOn(QuestionModel, 'findOneAndUpdate')
+        .mockReturnValue(makePopulateQuery(question) as any);
       jest.spyOn(userService, 'getRelations').mockResolvedValueOnce({ error: 'none' } as any);
       jest.spyOn(userService, 'getUsersWhoBlocked').mockResolvedValueOnce({ error: 'none' } as any);
       mockViewerHidden([qid]);
@@ -287,7 +283,9 @@ describe('question.service', () => {
 
     it('returns access denied when viewer blocked the author', async () => {
       const question = makeQuestion({ askedBy: 'author', _id: qid });
-      jest.spyOn(QuestionModel, 'findOneAndUpdate').mockReturnValue(makePopulateQuery(question) as any);
+      jest
+        .spyOn(QuestionModel, 'findOneAndUpdate')
+        .mockReturnValue(makePopulateQuery(question) as any);
       jest.spyOn(userService, 'getRelations').mockResolvedValueOnce({
         blockedUsers: ['author'],
       } as any);
@@ -301,7 +299,9 @@ describe('question.service', () => {
 
     it('returns access denied when viewer hid the question and is not the author', async () => {
       const question = makeQuestion({ askedBy: 'someoneElse', _id: hiddenId });
-      jest.spyOn(QuestionModel, 'findOneAndUpdate').mockReturnValue(makePopulateQuery(question) as any);
+      jest
+        .spyOn(QuestionModel, 'findOneAndUpdate')
+        .mockReturnValue(makePopulateQuery(question) as any);
       jest.spyOn(userService, 'getRelations').mockResolvedValueOnce({ blockedUsers: [] } as any);
       jest.spyOn(userService, 'getUsersWhoBlocked').mockResolvedValueOnce([]);
       mockViewerHidden([hiddenId]);
@@ -312,9 +312,7 @@ describe('question.service', () => {
     });
 
     it('returns generic error when question not found', async () => {
-      jest.spyOn(QuestionModel, 'findOneAndUpdate').mockReturnValue(
-        makePopulateQuery(null) as any,
-      );
+      jest.spyOn(QuestionModel, 'findOneAndUpdate').mockReturnValue(makePopulateQuery(null) as any);
       jest.spyOn(userService, 'getRelations').mockResolvedValueOnce({ blockedUsers: [] } as any);
       jest.spyOn(userService, 'getUsersWhoBlocked').mockResolvedValueOnce([]);
       mockViewerHidden([]);
@@ -560,7 +558,9 @@ describe('question.service', () => {
     const follower = { _id: 'userId' } as any;
 
     it('returns error when user lookup fails', async () => {
-      jest.spyOn(userService, 'getUserByUsername').mockResolvedValueOnce({ error: 'missing' } as any);
+      jest
+        .spyOn(userService, 'getUserByUsername')
+        .mockResolvedValueOnce({ error: 'missing' } as any);
 
       const res = await addFollowerToQuestion('qid', 'user');
 
@@ -604,9 +604,7 @@ describe('question.service', () => {
     it('returns error when update result is null', async () => {
       jest.spyOn(userService, 'getUserByUsername').mockResolvedValueOnce(follower);
       jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce({ followers: [] } as any);
-      (QuestionModel as any).findOneAndUpdate = jest
-        .fn()
-        .mockReturnValue(makePopulateQuery(null));
+      (QuestionModel as any).findOneAndUpdate = jest.fn().mockReturnValue(makePopulateQuery(null));
 
       const res = await addFollowerToQuestion('qid', 'user');
 
