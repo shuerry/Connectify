@@ -90,23 +90,6 @@ export const createChat = async (
   return res.data;
 };
 
-/**
- * Gets a community chat by community ID.
- *
- * @param communityId - The ID of the community.
- * @returns The community chat data.
- * @throws Throws an error if the fetch fails or if the status code is not 200.
- */
-export const getCommunityChat = async (communityId: string): Promise<PopulatedDatabaseChat> => {
-  const res = await api.get(`${CHAT_API_URL}/getCommunityChat?communityId=${communityId}`);
-
-  if (res.status !== 200) {
-    throw new Error('Error when fetching community chat');
-  }
-
-  return res.data;
-};
-
 export const toggleNotify = async (
   chatID: ObjectId,
   username: string,

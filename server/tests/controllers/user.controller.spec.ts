@@ -37,6 +37,7 @@ const unblockUserSpy = jest.spyOn(util, 'unblockUser');
 const getRelationsSpy = jest.spyOn(util, 'getRelations');
 const toggleOnlineStatusSpy = jest.spyOn(util, 'toggleOnlineStatusVisibility');
 const getOnlineStatusSpy = jest.spyOn(util, 'getOnlineStatus');
+const toggleReadReceiptsSpy = jest.spyOn(util, 'toggleReadReceipts');
 
 const startEmailVerificationSpy = jest.spyOn(emailVerificationService, 'startEmailVerification');
 const confirmEmailVerificationSpy = jest.spyOn(
@@ -582,6 +583,24 @@ describe('Test userController', () => {
       expect(res.text).toContain('Error when toggling online status');
     });
 
+    it('POST /toggleOnlineStatus should emit socket events to friends when friends array exists', async () => {
+      toggleOnlineStatusSpy.mockResolvedValueOnce({
+        ...mockSafeUser,
+        showOnlineStatus: false,
+        isOnline: true,
+        friends: ['friend1', 'friend2'],
+      } as any);
+
+      const res = await supertest(app)
+        .post('/api/user/toggleOnlineStatus')
+        .send({ username: 'user1' });
+
+      expect(toggleOnlineStatusSpy).toHaveBeenCalledWith('user1');
+      expect(res.status).toBe(200);
+      expect(res.body.showOnlineStatus).toBe(false);
+      expect(res.body.friends).toEqual(['friend1', 'friend2']);
+    });
+
     it('GET /onlineStatus/:username should return status object', async () => {
       getOnlineStatusSpy.mockResolvedValueOnce({ isOnline: true, showOnlineStatus: false });
 
@@ -779,6 +798,52 @@ describe('Test userController', () => {
 
       expect(res.status).toBe(500);
       expect(res.text).toContain('Error when resetting password');
+    });
+  });
+
+  describe('POST /toggleReadReceipts', () => {
+    it('should toggle read receipts and return 200', async () => {
+      toggleReadReceiptsSpy.mockResolvedValueOnce({
+        ...mockSafeUser,
+        readReceiptsEnabled: false,
+      } as any);
+
+      const res = await supertest(app)
+        .post('/api/user/toggleReadReceipts')
+        .send({ username: 'user1' });
+
+      expect(toggleReadReceiptsSpy).toHaveBeenCalledWith('user1');
+      expect(res.status).toBe(200);
+      expect(res.body.readReceiptsEnabled).toBe(false);
+    });
+
+    it('should return 400 when username is missing', async () => {
+      const res = await supertest(app).post('/api/user/toggleReadReceipts').send({});
+
+      expect(res.status).toBe(400);
+      expect(res.text).toBe('Username is required');
+    });
+
+    it('should return 500 when service returns an error', async () => {
+      toggleReadReceiptsSpy.mockResolvedValueOnce({ error: 'Error toggling read receipts' } as any);
+
+      const res = await supertest(app)
+        .post('/api/user/toggleReadReceipts')
+        .send({ username: 'user1' });
+
+      expect(res.status).toBe(500);
+      expect(res.text).toBe('Error toggling read receipts');
+    });
+
+    it('should return 500 when service throws an error', async () => {
+      toggleReadReceiptsSpy.mockRejectedValueOnce(new Error('Database error'));
+
+      const res = await supertest(app)
+        .post('/api/user/toggleReadReceipts')
+        .send({ username: 'user1' });
+
+      expect(res.status).toBe(500);
+      expect(res.text).toContain('Error when toggling read receipts');
     });
   });
 });

@@ -1,9 +1,11 @@
 import supertest from 'supertest';
 import mongoose from 'mongoose';
+import express from 'express';
 import { app } from '../../app';
 import * as collectionService from '../../services/collection.service';
 import * as databaseUtil from '../../utils/database.util';
-import { DatabaseCollection, PopulatedDatabaseCollection } from '../../types/types';
+import collectionController from '../../controllers/collection.controller';
+import { DatabaseCollection, FakeSOSocket, PopulatedDatabaseCollection } from '../../types/types';
 
 // Mock question IDs for testing
 const mockQuestionId1 = new mongoose.Types.ObjectId('65e9b58910afe6e94fc6e6aa');
@@ -44,6 +46,17 @@ const getCollectionsByUsernameSpy = jest.spyOn(collectionService, 'getCollection
 const getCollectionByIdSpy = jest.spyOn(collectionService, 'getCollectionById');
 const addQuestionToCollectionSpy = jest.spyOn(collectionService, 'addQuestionToCollection');
 const populateDocumentSpy = jest.spyOn(databaseUtil, 'populateDocument');
+
+// Minimal express app without OpenAPI middleware for controller-level validation tests
+const mockSocket = {
+  emit: jest.fn(),
+  to: jest.fn().mockReturnThis(),
+  on: jest.fn(),
+} as unknown as FakeSOSocket;
+
+const bareCollectionApp = express();
+bareCollectionApp.use(express.json());
+bareCollectionApp.use('/api/collection', collectionController(mockSocket));
 
 describe('Collection Controller', () => {
   beforeEach(() => {
@@ -408,6 +421,16 @@ describe('Collection Controller', () => {
       expect(response.status).toBe(500);
       expect(response.text).toContain('Error when adding question to collection: Populate error');
     });
+
+    test('should return 400 when request body is invalid', async () => {
+      const response = await supertest(bareCollectionApp)
+        .patch('/api/collection/toggleSaveQuestion')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Invalid request body');
+      expect(addQuestionToCollectionSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe('GET /getCollectionsByUsername/:username', () => {
@@ -460,6 +483,16 @@ describe('Collection Controller', () => {
 
       expect(response.status).toBe(500);
       expect(response.text).toContain('Error when getting collections by username: Populate error');
+    });
+
+    test('should return 400 when currentUsername missing (controller validation)', async () => {
+      const response = await supertest(bareCollectionApp).get(
+        '/api/collection/getCollectionsByUsername/test_user',
+      );
+
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Invalid collection body');
+      expect(getCollectionsByUsernameSpy).not.toHaveBeenCalled();
     });
   });
 

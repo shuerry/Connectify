@@ -4,6 +4,7 @@ import { app } from '../../app';
 import * as communityService from '../../services/community.service';
 import * as chatService from '../../services/chat.service';
 import * as databaseUtil from '../../utils/database.util';
+import * as logger from '../../utils/logger';
 import { DatabaseCommunity, PopulatedDatabaseChat } from '../../types/types';
 
 // Mock community data for testing
@@ -38,12 +39,14 @@ const createCommunitySpy = jest.spyOn(communityService, 'createCommunity');
 const deleteCommunitySpy = jest.spyOn(communityService, 'deleteCommunity');
 const getCommunityChatSpy = jest.spyOn(chatService, 'getCommunityChat');
 const populateDocumentSpy = jest.spyOn(databaseUtil, 'populateDocument');
+const logErrorSpy = jest.spyOn(logger, 'error');
 
 describe('Community Controller', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     getCommunityChatSpy.mockResolvedValue({ error: 'Community chat not found' });
     populateDocumentSpy.mockResolvedValue({ error: 'Chat not found' });
+    logErrorSpy.mockClear();
   });
 
   describe('GET /getCommunity/:communityId', () => {
@@ -275,6 +278,47 @@ describe('Community Controller', () => {
 
       expect(response.status).toBe(500);
     });
+
+    test('logs but does not fail response when chat updates throw', async () => {
+      const mockReqBody = {
+        communityId: '65e9b58910afe6e94fc6e6dc',
+        username: 'user3',
+      };
+
+      toggleCommunityMembershipSpy.mockResolvedValueOnce({
+        ...mockCommunity,
+        participants: [...mockCommunity.participants, 'user3'],
+      });
+      getCommunityChatSpy.mockRejectedValueOnce(new Error('chat fetch failed'));
+
+      const response = await supertest(app)
+        .post('/api/community/toggleMembership')
+        .send(mockReqBody);
+
+      expect(response.status).toBe(200);
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        'Error emitting chat update:',
+        expect.any(Error),
+      );
+    });
+
+    test('should return 500 when membership service throws', async () => {
+      const mockReqBody = {
+        communityId: '65e9b58910afe6e94fc6e6dc',
+        username: 'user3',
+      };
+
+      toggleCommunityMembershipSpy.mockRejectedValueOnce(new Error('membership failure'));
+
+      const response = await supertest(app)
+        .post('/api/community/toggleMembership')
+        .send(mockReqBody);
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        error: 'Error toggling community membership: membership failure',
+      });
+    });
   });
 
   describe('POST /create', () => {
@@ -488,6 +532,23 @@ describe('Community Controller', () => {
         .send(mockReqBody);
 
       expect(response.status).toBe(500);
+    });
+
+    test('should return 500 when delete service throws', async () => {
+      const mockReqBody = {
+        username: 'admin_user',
+      };
+
+      deleteCommunitySpy.mockRejectedValueOnce(new Error('unexpected failure'));
+
+      const response = await supertest(app)
+        .delete('/api/community/delete/65e9b58910afe6e94fc6e6dc')
+        .send(mockReqBody);
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        error: 'Error deleting community: unexpected failure',
+      });
     });
   });
 });
