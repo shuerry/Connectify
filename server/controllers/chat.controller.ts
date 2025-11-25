@@ -539,33 +539,6 @@ const chatController = (socket: FakeSOSocket) => {
   router.post('/:chatId/toggleNotify', toggleNotifyRoute);
   router.post('/:chatId/markAsRead', markMessagesAsReadRoute);
 
-  /**
-   * Gets a community chat by community ID.
-   */
-  const getCommunityChatRoute = async (req: express.Request, res: Response): Promise<void> => {
-    const { communityId } = req.query as { communityId: string };
-
-    try {
-      const chat = await getCommunityChat(communityId);
-
-      if ('error' in chat) {
-        throw new Error(chat.error);
-      }
-
-      const populatedChat = await populateDocument(chat._id.toString(), 'chat');
-
-      if ('error' in populatedChat) {
-        throw new Error(populatedChat.error);
-      }
-
-      res.json(populatedChat);
-    } catch (err: unknown) {
-      res.status(500).send(`Error retrieving community chat: ${(err as Error).message}`);
-    }
-  };
-
-  router.get('/getCommunityChat', getCommunityChatRoute);
-
   return router;
 };
 

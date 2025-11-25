@@ -118,7 +118,6 @@
   flex-direction: row;
   gap: 6px;
   margin-top: 8px;
-  border-top: 1px solid rgba(156, 163, 175, 0.2);
   flex-wrap: wrap;
   align-items: center;
 }
@@ -136,7 +135,6 @@
   border-radius: 8px;
   font-size: 11px;
   font-weight: 600;
-  margin-right: auto;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -217,7 +215,10 @@
 
 .message-edit-controls {
   display: flex;
-  gap: 8px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: end;
+  gap: 2px;
 }
 
 .message-history-panel {
@@ -432,6 +433,9 @@
   color: #fafafa;
   font-weight: 400;
   display: flex;
+  padding-top: 10px;
+  border-radius: 8px;
+  margin-left: 4px;
   align-items: center;
   gap: 4px;
 }

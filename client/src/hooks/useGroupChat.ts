@@ -17,7 +17,6 @@ import {
   getChatsByUser,
   sendMessage,
   markMessagesAsRead,
-  getCommunityChat,
 } from '../services/chatService';
 import { getRelations, getUserByUsername } from '../services/userService';
 import { getCommunities } from '../services/communityService';
@@ -193,24 +192,8 @@ const useGroupChat = () => {
       return;
     }
 
-    // Check if community chat already exists
     try {
-      const existingChat = await getCommunityChat(selectedCommunity._id.toString());
-      // Chat exists, select it
-      setSelectedChat(existingChat);
-      selectedChatIdRef.current = existingChat._id;
-      handleJoinChat(existingChat._id);
-      setShowCreatePanel(false);
-      setError(null);
-      setSelectedCommunity(null);
-      setIsCreatingCommunityChat(false);
-      return;
-    } catch (err) {
-      // Chat doesn't exist, create it
-    }
-
-    // Create community chat with all community members
-    try {
+      // Create community chat with all community members (server will return existing chat if it already exists)
       const participants: Record<string, boolean> = {};
       selectedCommunity.participants.forEach(username => {
         participants[username] = true;

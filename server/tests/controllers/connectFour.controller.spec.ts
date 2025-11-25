@@ -13,6 +13,12 @@ import {
 } from '../../types/types';
 import gameController from '../../controllers/game.controller';
 import ConnectFourGame from '../../services/games/connectFour';
+import * as userService from '../../services/user.service';
+
+jest.mock('../../services/user.service', () => ({
+  __esModule: true,
+  getRelations: jest.fn(),
+}));
 
 const mockGameManager = GameManager.getInstance();
 
@@ -333,6 +339,36 @@ describe('Connect Four Controller Tests', () => {
           undefined,
         );
       });
+
+      it('should allow creator to rejoin their own game while it is waiting to start', async () => {
+        const roomSettings: ConnectFourRoomSettings = {
+          roomName: 'Test Room',
+          privacy: 'PUBLIC',
+          allowSpectators: true,
+        };
+
+        const existingGame = new ConnectFourGame('creator', roomSettings);
+        existingGame.state.status = 'WAITING_TO_START';
+
+        const gameState: GameInstance<ConnectFourGameState> = {
+          state: existingGame.state as ConnectFourGameState,
+          gameID: 'game123',
+          players: ['creator'],
+          gameType: 'Connect Four',
+        };
+
+        getGameSpy.mockReturnValueOnce(existingGame as unknown as ConnectFourGame);
+        joinGameSpy.mockResolvedValueOnce(gameState);
+
+        const res = await supertest(app).post('/api/games/connectfour/join').send({
+          gameID: 'game123',
+          playerID: 'creator',
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual(gameState);
+        expect(joinGameSpy).toHaveBeenCalledWith('game123', 'creator', undefined, undefined);
+      });
     });
 
     describe('400 Invalid Request', () => {
@@ -380,6 +416,36 @@ describe('Connect Four Controller Tests', () => {
 
         expect(response.status).toEqual(500);
         expect(response.text).toContain('Game requested does not exist');
+      });
+
+      it('should return 500 if player is already in the Connect Four game', async () => {
+        const existingGame = {
+          gameType: 'Connect Four',
+          state: {
+            status: 'IN_PROGRESS',
+            player1: 'player1',
+            player2: 'player2',
+            spectators: [],
+            roomSettings: {
+              roomName: 'Test Room',
+              privacy: 'PUBLIC',
+              allowSpectators: true,
+            },
+          },
+        } as unknown as ConnectFourGame;
+
+        getGameSpy.mockReturnValueOnce(existingGame);
+
+        const res = await supertest(app).post('/api/games/connectfour/join').send({
+          gameID: 'game123',
+          playerID: 'player2',
+        });
+
+        expect(res.status).toBe(500);
+        expect(res.text).toContain(
+          'Error when joining Connect Four room: You are already in this game',
+        );
+        expect(joinGameSpy).not.toHaveBeenCalled();
       });
 
       it('should return 500 if joinGame fails', async () => {
@@ -641,6 +707,159 @@ describe('Connect Four Controller Tests', () => {
     });
   });
 
+  describe('GET /connectfour/:gameID', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return public room info for an existing Connect Four game', async () => {
+      const publicInfo = { id: 'game123', roomName: 'Test Room' };
+
+      const mockGame = {
+        gameType: 'Connect Four',
+        state: {
+          status: 'WAITING_TO_START',
+          roomSettings: {
+            roomName: 'Test Room',
+            privacy: 'PUBLIC',
+            allowSpectators: true,
+          },
+        },
+        getPublicRoomInfo: jest.fn().mockReturnValue(publicInfo),
+      } as unknown as ConnectFourGame;
+
+      jest.spyOn(mockGameManager, 'getGame').mockReturnValueOnce(mockGame);
+
+      const res = await supertest(app).get('/api/games/connectfour/game123');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(publicInfo);
+      expect(mockGame.getPublicRoomInfo).toHaveBeenCalled();
+    });
+
+    it('should return 500 when Connect Four game is not found', async () => {
+      jest.spyOn(mockGameManager, 'getGame').mockReturnValueOnce(undefined);
+
+      const res = await supertest(app).get('/api/games/connectfour/missing');
+
+      expect(res.status).toBe(500);
+      expect(res.text).toContain('Error when getting room: Connect Four game not found');
+    });
+  });
+
+  describe('GET /games (Connect Four rooms)', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return public and friends-only Connect Four rooms for a user and their friends', async () => {
+      const publicRoomInfo = { id: 'public', roomName: 'Public Room' };
+      const friendsRoomInfo = { id: 'friends', roomName: 'Friends Room' };
+
+      const publicGame = {
+        gameType: 'Connect Four',
+        state: {
+          roomSettings: {
+            privacy: 'PUBLIC',
+            roomName: 'Public Room',
+            allowSpectators: true,
+          },
+          player1: 'publicCreator',
+          spectators: [],
+        },
+        getPublicRoomInfo: jest.fn().mockReturnValue(publicRoomInfo),
+      } as unknown as ConnectFourGame;
+
+      const friendsOnlyGame = {
+        gameType: 'Connect Four',
+        state: {
+          roomSettings: {
+            privacy: 'FRIENDS_ONLY',
+            roomName: 'Friends Room',
+            allowSpectators: true,
+          },
+          player1: 'friendCreator',
+          spectators: [],
+        },
+        getPublicRoomInfo: jest.fn().mockReturnValue(friendsRoomInfo),
+      } as unknown as ConnectFourGame;
+
+      const privateGame = {
+        gameType: 'Connect Four',
+        state: {
+          roomSettings: {
+            privacy: 'PRIVATE',
+            roomName: 'Private Room',
+            allowSpectators: false,
+          },
+          player1: 'privateCreator',
+          spectators: [],
+        },
+        getPublicRoomInfo: jest.fn(),
+      } as unknown as ConnectFourGame;
+
+      jest
+        .spyOn(mockGameManager, 'getActiveGameInstances')
+        .mockReturnValueOnce([publicGame, friendsOnlyGame, privateGame]);
+
+      (userService.getRelations as jest.Mock).mockResolvedValueOnce({
+        friends: ['friendCreator'],
+      });
+
+      const res = await supertest(app)
+        .get('/api/games/games')
+        .query({ gameType: 'Connect Four', username: 'alice' });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([publicRoomInfo, friendsRoomInfo]);
+      expect(userService.getRelations).toHaveBeenCalledWith('alice');
+    });
+
+    it('should handle errors from getPublicConnectFourRooms and return empty array', async () => {
+      jest.spyOn(mockGameManager, 'getActiveGameInstances').mockImplementation(() => {
+        throw new Error('boom');
+      });
+
+      const res = await supertest(app)
+        .get('/api/games/games')
+        .query({ gameType: 'Connect Four' });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it('should handle errors when fetching friends list and still return public rooms', async () => {
+      const publicRoomInfo = { id: 'public', roomName: 'Public Room' };
+
+      const publicGame = {
+        gameType: 'Connect Four',
+        state: {
+          roomSettings: {
+            privacy: 'PUBLIC',
+            roomName: 'Public Room',
+            allowSpectators: true,
+          },
+          player1: 'publicCreator',
+          spectators: [],
+        },
+        getPublicRoomInfo: jest.fn().mockReturnValue(publicRoomInfo),
+      } as unknown as ConnectFourGame;
+
+      jest.spyOn(mockGameManager, 'getActiveGameInstances').mockReturnValueOnce([publicGame]);
+
+      (userService.getRelations as jest.Mock).mockRejectedValueOnce(
+        new Error('friends fetch failed'),
+      );
+
+      const res = await supertest(app)
+        .get('/api/games/games')
+        .query({ gameType: 'Connect Four', username: 'alice' });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([publicRoomInfo]);
+    });
+  });
+
   describe('Socket Event Tests', () => {
     let httpServer: HTTPServer;
     let io: FakeSOSocket;
@@ -653,6 +872,7 @@ describe('Connect Four Controller Tests', () => {
     let toModelSpy: jest.SpyInstance;
     let saveGameStateSpy: jest.SpyInstance;
     let removeGameSpy: jest.SpyInstance;
+    let serverPort: number;
 
     beforeAll(done => {
       httpServer = createServer();
@@ -661,6 +881,7 @@ describe('Connect Four Controller Tests', () => {
 
       httpServer.listen(() => {
         const { port } = httpServer.address() as AddressInfo;
+        serverPort = port;
         clientSocket = Client(`http://localhost:${port}`);
         io.on('connection', socket => {
           serverSocket = socket;
@@ -886,7 +1107,7 @@ describe('Connect Four Controller Tests', () => {
       const gameMovePayload = {
         playerID: 'player1',
         gameID: 'game123',
-        move: { column: 0 }, // Assume column 0 is full
+        move: { column: 0 },
       };
 
       const makeMoveEvent = new Promise(resolve => {
@@ -914,6 +1135,340 @@ describe('Connect Four Controller Tests', () => {
       expect(applyMoveSpy).toHaveBeenCalledWith({ column: 0 });
       expect(saveGameStateSpy).not.toHaveBeenCalled();
       expect(removeGameSpy).not.toHaveBeenCalled();
+    });
+
+    describe('Presence tracking and disconnect cleanup', () => {
+      it('should call leaveGame when "leaveGame" event is emitted', async () => {
+        const leaveGameSpy = jest.spyOn(mockGameManager, 'leaveGame');
+
+        const leaveHandled = new Promise<void>(resolve => {
+          leaveGameSpy.mockImplementation(async (gameID, playerID, isSpectator) => {
+            resolve();
+            return mockConnectFourGame.toModel();
+          });
+        });
+
+        const leavePayload = { gameID: 'game123', playerID: 'player1', isSpectator: false };
+        clientSocket.emit('leaveGame', leavePayload);
+
+        await leaveHandled;
+
+        expect(leaveGameSpy).toHaveBeenCalledWith('game123', 'player1', false);
+      });
+
+      it('should emit "gameError" when leaveGame fails', async () => {
+        jest.spyOn(mockGameManager, 'leaveGame').mockRejectedValue(new Error('leave failure'));
+
+        const gameErrorEvent = new Promise(resolve => {
+          clientSocket.once('gameError', arg => resolve(arg));
+        });
+
+        const leavePayload = { gameID: 'game999', playerID: 'player2', isSpectator: true };
+        clientSocket.emit('leaveGame', leavePayload);
+
+        const errorPayload = await gameErrorEvent;
+
+        expect(errorPayload).toStrictEqual({
+          player: 'player2',
+          error: 'leave failure',
+        });
+      });
+
+      it('should swallow non-throwing errors from leaveGame (result with error field)', async () => {
+        const leaveGameSpy = jest
+          .spyOn(mockGameManager, 'leaveGame')
+          .mockResolvedValueOnce({ error: 'cannot leave' });
+
+        const leavePayload = { gameID: 'game123', playerID: 'player1', isSpectator: false };
+
+        clientSocket.emit('leaveGame', leavePayload);
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        expect(leaveGameSpy).toHaveBeenCalledWith('game123', 'player1', false);
+      });
+
+      it('should auto-leave active Connect Four players on disconnect', async () => {
+        mockConnectFourGame.state.status = 'IN_PROGRESS';
+        getGameSpy.mockReturnValue(mockConnectFourGame);
+
+        const leaveGameSpy = jest.spyOn(mockGameManager, 'leaveGame');
+        const leaveHandled = new Promise<{
+          gameID: string;
+          playerID: string;
+          isSpectator?: boolean;
+        }>(resolve => {
+          leaveGameSpy.mockImplementation(async (gameID, playerID, isSpectator) => {
+            resolve({ gameID, playerID, isSpectator });
+            return mockConnectFourGame.toModel();
+          });
+        });
+
+        const originalServerSocket = serverSocket;
+        const newConnectionPromise = new Promise<ServerSocket>(resolve => {
+          io.once('connection', socket => resolve(socket));
+        });
+        const tempClient = Client(`http://localhost:${serverPort}`);
+        const tempServerSocket = await newConnectionPromise;
+        await new Promise<void>(resolve => {
+          tempClient.once('connect', () => resolve());
+        });
+
+        tempClient.emit('registerPresence', {
+          gameID: 'game123',
+          playerID: 'player1',
+          isSpectator: false,
+        });
+        await new Promise(resolve => {
+          tempServerSocket.once('registerPresence', resolve);
+        });
+
+        tempServerSocket.disconnect(true);
+        await new Promise<void>(resolve => {
+          tempClient.once('disconnect', () => resolve());
+        });
+
+        const leaveArgs = await leaveHandled;
+        expect(leaveArgs).toStrictEqual({
+          gameID: 'game123',
+          playerID: 'player1',
+          isSpectator: false,
+        });
+        expect(getGameSpy).toHaveBeenCalledWith('game123');
+
+        tempClient.removeAllListeners();
+        tempServerSocket.removeAllListeners();
+        if (originalServerSocket) {
+          serverSocket = originalServerSocket;
+        }
+      });
+
+      it('should clean up spectators on disconnect without forcing wins', async () => {
+        mockConnectFourGame.state.status = 'IN_PROGRESS';
+        getGameSpy.mockReturnValue(mockConnectFourGame);
+
+        const leaveGameSpy = jest.spyOn(mockGameManager, 'leaveGame');
+        const leaveHandled = new Promise<boolean | undefined>(resolve => {
+          leaveGameSpy.mockImplementation(async (gameID, playerID, isSpectator) => {
+            resolve(isSpectator);
+            return mockConnectFourGame.toModel();
+          });
+        });
+
+        const originalServerSocket = serverSocket;
+        const newConnectionPromise = new Promise<ServerSocket>(resolve => {
+          io.once('connection', socket => resolve(socket));
+        });
+        const tempClient = Client(`http://localhost:${serverPort}`);
+        const tempServerSocket = await newConnectionPromise;
+        await new Promise<void>(resolve => {
+          tempClient.once('connect', () => resolve());
+        });
+
+        tempClient.emit('registerPresence', {
+          gameID: 'game123',
+          playerID: 'spectator1',
+          isSpectator: true,
+        });
+        await new Promise(resolve => {
+          tempServerSocket.once('registerPresence', resolve);
+        });
+
+        tempServerSocket.disconnect(true);
+        await new Promise<void>(resolve => {
+          tempClient.once('disconnect', () => resolve());
+        });
+
+        const spectatorFlag = await leaveHandled;
+        expect(spectatorFlag).toBe(true);
+
+        tempClient.removeAllListeners();
+        tempServerSocket.removeAllListeners();
+        if (originalServerSocket) {
+          serverSocket = originalServerSocket;
+        }
+      });
+
+      it('should perform a normal leave on disconnect when Connect Four game is not in progress', async () => {
+        mockConnectFourGame.state.status = 'WAITING_TO_START';
+        getGameSpy.mockReturnValue(mockConnectFourGame);
+
+        const leaveGameSpy = jest.spyOn(mockGameManager, 'leaveGame');
+        const leaveHandled = new Promise<{
+          gameID: string;
+          playerID: string;
+          isSpectator?: boolean;
+        }>(resolve => {
+          leaveGameSpy.mockImplementation(async (gameID, playerID, isSpectator) => {
+            resolve({ gameID, playerID, isSpectator });
+            return mockConnectFourGame.toModel();
+          });
+        });
+
+        const originalServerSocket = serverSocket;
+        const newConnectionPromise = new Promise<ServerSocket>(resolve => {
+          io.once('connection', socket => resolve(socket));
+        });
+        const tempClient = Client(`http://localhost:${serverPort}`);
+        const tempServerSocket = await newConnectionPromise;
+
+        await new Promise<void>(resolve => {
+          tempClient.once('connect', () => resolve());
+        });
+
+        tempClient.emit('registerPresence', {
+          gameID: 'game123',
+          playerID: 'player1',
+          isSpectator: false,
+        });
+        await new Promise(resolve => {
+          tempServerSocket.once('registerPresence', resolve);
+        });
+
+        tempServerSocket.disconnect(true);
+        await new Promise<void>(resolve => {
+          tempClient.once('disconnect', () => resolve());
+        });
+
+        const leaveArgs = await leaveHandled;
+        expect(leaveArgs).toStrictEqual({
+          gameID: 'game123',
+          playerID: 'player1',
+          isSpectator: false,
+        });
+        expect(getGameSpy).toHaveBeenCalledWith('game123');
+
+        tempClient.removeAllListeners();
+        tempServerSocket.removeAllListeners();
+        if (originalServerSocket) {
+          serverSocket = originalServerSocket;
+        }
+      });
+
+      it('should ignore errors thrown during disconnect cleanup', async () => {
+        mockConnectFourGame.state.status = 'IN_PROGRESS';
+        getGameSpy.mockReturnValue(mockConnectFourGame);
+
+        const leaveGameSpy = jest
+          .spyOn(mockGameManager, 'leaveGame')
+          .mockRejectedValue(new Error('disconnect cleanup failed'));
+
+        const originalServerSocket = serverSocket;
+        const newConnectionPromise = new Promise<ServerSocket>(resolve => {
+          io.once('connection', socket => resolve(socket));
+        });
+        const tempClient = Client(`http://localhost:${serverPort}`);
+        const tempServerSocket = await newConnectionPromise;
+
+        await new Promise<void>(resolve => {
+          tempClient.once('connect', () => resolve());
+        });
+
+        tempClient.emit('registerPresence', {
+          gameID: 'game123',
+          playerID: 'player1',
+          isSpectator: false,
+        });
+        await new Promise(resolve => {
+          tempServerSocket.once('registerPresence', resolve);
+        });
+
+        tempServerSocket.disconnect(true);
+        await new Promise<void>(resolve => {
+          tempClient.once('disconnect', () => resolve());
+        });
+
+        expect(leaveGameSpy).toHaveBeenCalledWith('game123', 'player1', false);
+
+        tempClient.removeAllListeners();
+        tempServerSocket.removeAllListeners();
+        if (originalServerSocket) {
+          serverSocket = originalServerSocket;
+        }
+      });
+    });
+
+    describe('Connect Four lobby room updates', () => {
+      it('should send visible rooms list on socket connect and on requestConnectFourRooms', async () => {
+        const publicRoomInfo = { id: 'public', roomName: 'Public Room' };
+        const friendsRoomInfo = { id: 'friends', roomName: 'Friends Room' };
+
+        const publicGame = {
+          gameType: 'Connect Four',
+          state: {
+            roomSettings: {
+              privacy: 'PUBLIC',
+              roomName: 'Public Room',
+              allowSpectators: true,
+            },
+            player1: 'publicCreator',
+            spectators: [],
+          },
+          getPublicRoomInfo: jest.fn().mockReturnValue(publicRoomInfo),
+        } as unknown as ConnectFourGame;
+
+        const friendsOnlyGame = {
+          gameType: 'Connect Four',
+          state: {
+            roomSettings: {
+              privacy: 'FRIENDS_ONLY',
+              roomName: 'Friends Room',
+              allowSpectators: true,
+            },
+            player1: 'friendCreator',
+            spectators: [],
+          },
+          getPublicRoomInfo: jest.fn().mockReturnValue(friendsRoomInfo),
+        } as unknown as ConnectFourGame;
+
+        jest
+          .spyOn(mockGameManager, 'getActiveGameInstances')
+          .mockReturnValue([publicGame, friendsOnlyGame]);
+
+        (userService.getRelations as jest.Mock).mockResolvedValue({
+          friends: ['friendCreator'],
+        });
+
+        const originalServerSocket = serverSocket;
+
+        const newConnectionPromise = new Promise<ServerSocket>(resolve => {
+          io.once('connection', socket => resolve(socket));
+        });
+
+        const tempClient = Client(`http://localhost:${serverPort}`, {
+          query: { username: 'alice' },
+        });
+
+        const roomsOnConnectPromise = new Promise<any[]>(resolve => {
+          tempClient.once('connectFourRoomsUpdate', data => resolve(data));
+        });
+
+        const tempServerSocket = await newConnectionPromise;
+        const roomsOnConnect = await roomsOnConnectPromise;
+
+        expect(roomsOnConnect).toEqual([publicRoomInfo, friendsRoomInfo]);
+
+        const roomsOnRequestPromise = new Promise<any[]>(resolve => {
+          tempClient.once('connectFourRoomsUpdate', data => resolve(data));
+        });
+
+        tempClient.emit('requestConnectFourRooms');
+        const roomsOnRequest = await roomsOnRequestPromise;
+
+        expect(roomsOnRequest).toEqual([publicRoomInfo, friendsRoomInfo]);
+
+        // ✅ Make sure we fully disconnect this temp client so Jest doesn't keep a TCP handle open
+        const disconnectPromise = new Promise<void>(resolve => {
+          tempClient.once('disconnect', () => resolve());
+        });
+        tempClient.disconnect();
+        await disconnectPromise;
+
+        tempClient.removeAllListeners();
+        tempServerSocket.removeAllListeners();
+        if (originalServerSocket) {
+          serverSocket = originalServerSocket;
+        }
+      });
     });
   });
 });
