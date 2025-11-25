@@ -16,6 +16,7 @@ import {
   toggleOnlineStatusVisibility,
   updateOnlineStatus,
   getOnlineStatus,
+  toggleReadReceipts,
 } from '../../services/user.service';
 import { SafeDatabaseUser, User, UserCredentials } from '../../types/types';
 import { user, safeUser } from '../mockData.models';
@@ -411,6 +412,16 @@ describe('addFriend', () => {
 
     expect('error' in result).toBe(true);
   });
+
+  it('should return an error when findOneAndUpdate returns null with select', async () => {
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue(null),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = await addFriend(user.username, 'friend1');
+
+    expect('error' in result).toBe(true);
+  });
 });
 
 describe('removeFriend', () => {
@@ -472,6 +483,19 @@ describe('removeFriend', () => {
 
     expect('error' in result).toBe(true);
   });
+
+  it('should return an error when findOne returns null with select after removing friend', async () => {
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue({}),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+    jest.spyOn(UserModel, 'findOne').mockReturnValue({
+      select: jest.fn().mockResolvedValue(null),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = await removeFriend(user.username, 'friend1');
+
+    expect('error' in result).toBe(true);
+  });
 });
 
 describe('blockUser', () => {
@@ -517,6 +541,16 @@ describe('blockUser', () => {
 
     expect('error' in result).toBe(true);
   });
+
+  it('should return an error when findOneAndUpdate returns null with select', async () => {
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue(null),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = await blockUser(user.username, 'blockedUser');
+
+    expect('error' in result).toBe(true);
+  });
 });
 
 describe('unblockUser', () => {
@@ -556,6 +590,16 @@ describe('unblockUser', () => {
     jest.spyOn(UserModel, 'findOneAndUpdate').mockImplementation(() => {
       throw new Error('Database error');
     });
+
+    const result = await unblockUser(user.username, 'blockedUser');
+
+    expect('error' in result).toBe(true);
+  });
+
+  it('should return an error when findOneAndUpdate returns null with select', async () => {
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue(null),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
 
     const result = await unblockUser(user.username, 'blockedUser');
 
@@ -612,6 +656,50 @@ describe('getRelations', () => {
     }
   });
 
+  it('should return empty arrays when friends and blockedUsers are null', async () => {
+    const userRelations = {
+      friends: null,
+      blockedUsers: null,
+    };
+
+    jest.spyOn(UserModel, 'findOne').mockImplementation((filter?: any) => {
+      expect(filter.username).toBeDefined();
+      const query: any = {};
+      query.select = jest.fn().mockReturnValue(Promise.resolve(userRelations));
+      return query;
+    });
+
+    const result = await getRelations(user.username);
+
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.friends).toEqual([]);
+      expect(result.blockedUsers).toEqual([]);
+    }
+  });
+
+  it('should return empty arrays when friends and blockedUsers are undefined', async () => {
+    const userRelations = {
+      friends: undefined,
+      blockedUsers: undefined,
+    };
+
+    jest.spyOn(UserModel, 'findOne').mockImplementation((filter?: any) => {
+      expect(filter.username).toBeDefined();
+      const query: any = {};
+      query.select = jest.fn().mockReturnValue(Promise.resolve(userRelations));
+      return query;
+    });
+
+    const result = await getRelations(user.username);
+
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.friends).toEqual([]);
+      expect(result.blockedUsers).toEqual([]);
+    }
+  });
+
   it('should return an error if user not found', async () => {
     jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce(null);
 
@@ -624,6 +712,16 @@ describe('getRelations', () => {
     jest.spyOn(UserModel, 'findOne').mockImplementation(() => {
       throw new Error('Database error');
     });
+
+    const result = await getRelations(user.username);
+
+    expect('error' in result).toBe(true);
+  });
+
+  it('should return an error when findOne returns null with select', async () => {
+    jest.spyOn(UserModel, 'findOne').mockReturnValue({
+      select: jest.fn().mockResolvedValue(null),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
 
     const result = await getRelations(user.username);
 
@@ -727,6 +825,17 @@ describe('toggleOnlineStatusVisibility', () => {
 
     expect('error' in result).toBe(true);
   });
+
+  it('should default to true when showOnlineStatus is null', async () => {
+    jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce({ showOnlineStatus: null } as any);
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue({ ...safeUser, showOnlineStatus: false }),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = (await toggleOnlineStatusVisibility(user.username)) as SafeDatabaseUser;
+
+    expect(result.showOnlineStatus).toBe(false);
+  });
 });
 
 describe('updateOnlineStatus', () => {
@@ -813,6 +922,93 @@ describe('getOnlineStatus', () => {
     });
 
     const result = await getOnlineStatus(user.username);
+
+    expect('error' in result).toBe(true);
+  });
+});
+
+describe('toggleReadReceipts', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('should toggle readReceiptsEnabled and return updated user', async () => {
+    jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce({ readReceiptsEnabled: true } as any);
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue({ ...safeUser, readReceiptsEnabled: false }),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = (await toggleReadReceipts(user.username)) as SafeDatabaseUser;
+
+    expect(result.readReceiptsEnabled).toBe(false);
+    expect(UserModel.findOne).toHaveBeenCalledWith({ username: user.username });
+    expect(UserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      { username: user.username },
+      { $set: { readReceiptsEnabled: false } },
+      { new: true },
+    );
+  });
+
+  it('should toggle from false to true when readReceiptsEnabled is false', async () => {
+    jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce({ readReceiptsEnabled: false } as any);
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue({ ...safeUser, readReceiptsEnabled: true }),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = (await toggleReadReceipts(user.username)) as SafeDatabaseUser;
+
+    expect(result.readReceiptsEnabled).toBe(true);
+  });
+
+  it('should default to true when readReceiptsEnabled is undefined', async () => {
+    jest
+      .spyOn(UserModel, 'findOne')
+      .mockResolvedValueOnce({ readReceiptsEnabled: undefined } as any);
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue({ ...safeUser, readReceiptsEnabled: false }),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = (await toggleReadReceipts(user.username)) as SafeDatabaseUser;
+
+    expect(result.readReceiptsEnabled).toBe(false);
+  });
+
+  it('should default to true when readReceiptsEnabled is null', async () => {
+    jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce({ readReceiptsEnabled: null } as any);
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue({ ...safeUser, readReceiptsEnabled: false }),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = (await toggleReadReceipts(user.username)) as SafeDatabaseUser;
+
+    expect(result.readReceiptsEnabled).toBe(false);
+  });
+
+  it('should return error if user not found', async () => {
+    jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce(null);
+
+    const result = await toggleReadReceipts(user.username);
+
+    expect('error' in result).toBe(true);
+  });
+
+  it('should return error if update fails', async () => {
+    jest.spyOn(UserModel, 'findOne').mockResolvedValueOnce({ readReceiptsEnabled: true } as any);
+    jest.spyOn(UserModel, 'findOneAndUpdate').mockReturnValue({
+      select: jest.fn().mockResolvedValue(null),
+    } as unknown as Query<SafeDatabaseUser, typeof UserModel>);
+
+    const result = await toggleReadReceipts(user.username);
+
+    expect('error' in result).toBe(true);
+  });
+
+  it('should return error if findOne throws', async () => {
+    jest.spyOn(UserModel, 'findOne').mockImplementation(() => {
+      throw new Error('db fail');
+    });
+
+    const result = await toggleReadReceipts(user.username);
 
     expect('error' in result).toBe(true);
   });

@@ -396,13 +396,11 @@ describe('Chat Controller', () => {
       saveMessageSpy.mockResolvedValue(savedMessage);
       addMessageSpy.mockResolvedValue({ error: 'Error updating chat' });
 
-      const response = await supertest(app)
-        .post(`/api/chat/${chatId}/addMessage`)
-        .send({
-          msg: 'Hello',
-          msgFrom: 'user1',
-          msgDateTime: new Date(),
-        });
+      const response = await supertest(app).post(`/api/chat/${chatId}/addMessage`).send({
+        msg: 'Hello',
+        msgFrom: 'user1',
+        msgDateTime: new Date(),
+      });
 
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error adding a message to chat: Error updating chat');
@@ -482,13 +480,11 @@ describe('Chat Controller', () => {
       getChatSpy.mockResolvedValue(chat);
       saveMessageSpy.mockResolvedValue({ error: 'Service error' } as any);
 
-      const response = await supertest(app)
-        .post(`/api/chat/${chatId}/addMessage`)
-        .send({
-          msg: 'Hello',
-          msgFrom: 'user1',
-          msgDateTime: new Date(),
-        });
+      const response = await supertest(app).post(`/api/chat/${chatId}/addMessage`).send({
+        msg: 'Hello',
+        msgFrom: 'user1',
+        msgDateTime: new Date(),
+      });
 
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error adding a message to chat: Service error');
@@ -671,7 +667,6 @@ describe('Chat Controller', () => {
       expect(response.text).toBe('Error adding participant to chat: Provided ID is undefined.');
     });
   });
-
 
   describe('POST /chat/getChatsByUser/:username', () => {
     it('should return 200 with an array of chats', async () => {
@@ -1147,13 +1142,11 @@ describe('Chat Controller', () => {
       const chatId = new mongoose.Types.ObjectId().toString();
       getChatSpy.mockResolvedValue({ error: 'Chat not found' });
 
-      const response = await supertest(app)
-        .post(`/api/chat/${chatId}/addMessage`)
-        .send({
-          msg: 'Hello',
-          msgFrom: 'user1',
-          msgDateTime: new Date(),
-        });
+      const response = await supertest(app).post(`/api/chat/${chatId}/addMessage`).send({
+        msg: 'Hello',
+        msgFrom: 'user1',
+        msgDateTime: new Date(),
+      });
 
       expect(response.status).toBe(500);
       expect(response.text).toContain('Error adding a message to chat: Chat not found');
@@ -1174,13 +1167,11 @@ describe('Chat Controller', () => {
         .mockResolvedValueOnce({ friends: [], blockedUsers: [] })
         .mockResolvedValueOnce({ friends: [], blockedUsers: [] });
 
-      const response = await supertest(app)
-        .post(`/api/chat/${chatId}/addMessage`)
-        .send({
-          msg: 'Hello',
-          msgFrom: 'user1',
-          msgDateTime: new Date(),
-        });
+      const response = await supertest(app).post(`/api/chat/${chatId}/addMessage`).send({
+        msg: 'Hello',
+        msgFrom: 'user1',
+        msgDateTime: new Date(),
+      });
 
       expect(response.status).toBe(403);
       expect(response.text).toBe('You can only send messages to users who are your friends');
@@ -1199,13 +1190,11 @@ describe('Chat Controller', () => {
       getChatSpy.mockResolvedValue(chat);
       getRelationsSpy.mockResolvedValue({ error: 'User not found' });
 
-      const response = await supertest(app)
-        .post(`/api/chat/${chatId}/addMessage`)
-        .send({
-          msg: 'Hello',
-          msgFrom: 'user1',
-          msgDateTime: new Date(),
-        });
+      const response = await supertest(app).post(`/api/chat/${chatId}/addMessage`).send({
+        msg: 'Hello',
+        msgFrom: 'user1',
+        msgDateTime: new Date(),
+      });
 
       expect(response.status).toBe(500);
       expect(response.text).toContain('Error adding a message to chat: User not found');
@@ -1226,13 +1215,11 @@ describe('Chat Controller', () => {
         .mockResolvedValueOnce({ friends: ['user2'], blockedUsers: [] })
         .mockResolvedValueOnce({ error: 'User not found' });
 
-      const response = await supertest(app)
-        .post(`/api/chat/${chatId}/addMessage`)
-        .send({
-          msg: 'Hello',
-          msgFrom: 'user1',
-          msgDateTime: new Date(),
-        });
+      const response = await supertest(app).post(`/api/chat/${chatId}/addMessage`).send({
+        msg: 'Hello',
+        msgFrom: 'user1',
+        msgDateTime: new Date(),
+      });
 
       expect(response.status).toBe(500);
       expect(response.text).toContain('Error adding a message to chat: User not found');
@@ -1281,13 +1268,11 @@ describe('Chat Controller', () => {
       addMessageSpy.mockResolvedValue(updatedChat);
       populateDocumentSpy.mockResolvedValue(populatedChat);
 
-      const response = await supertest(app)
-        .post(`/api/chat/${chatId}/addMessage`)
-        .send({
-          msg: 'Hello',
-          msgFrom: 'user1',
-          msgDateTime: new Date(),
-        });
+      const response = await supertest(app).post(`/api/chat/${chatId}/addMessage`).send({
+        msg: 'Hello',
+        msgFrom: 'user1',
+        msgDateTime: new Date(),
+      });
 
       expect(response.status).toBe(200);
       expect(getRelationsSpy).not.toHaveBeenCalled();
@@ -1323,13 +1308,11 @@ describe('Chat Controller', () => {
       addMessageSpy.mockResolvedValue(updatedChat);
       populateDocumentSpy.mockResolvedValue({ error: 'Populate error' } as any);
 
-      const response = await supertest(app)
-        .post(`/api/chat/${chatId}/addMessage`)
-        .send({
-          msg: 'Hello',
-          msgFrom: 'user1',
-          msgDateTime: new Date(),
-        });
+      const response = await supertest(app).post(`/api/chat/${chatId}/addMessage`).send({
+        msg: 'Hello',
+        msgFrom: 'user1',
+        msgDateTime: new Date(),
+      });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ error: 'Populate error' });
@@ -1593,7 +1576,6 @@ describe('Chat Controller', () => {
       // Give Socket.io a moment to clean up rooms
       setTimeout(done, 50);
     });
-    
 
     it('should join user room when joinUserRoom event is emitted', done => {
       clientSocket1 = Client(serverAddress);
@@ -1620,22 +1602,22 @@ describe('Chat Controller', () => {
 
     it('should leave user room when leaveUserRoom event is emitted', done => {
       clientSocket1 = Client(serverAddress);
-    
+
       clientSocket1.on('connect', () => {
         const beforeRoom = io.sockets.adapter.rooms.get('user:user1');
         const sizeBefore = beforeRoom ? beforeRoom.size : 0;
-    
+
         // Join the room
         clientSocket1.emit('joinUserRoom', 'user1');
-    
+
         setTimeout(() => {
           // Leave the room
           clientSocket1.emit('leaveUserRoom', 'user1');
-    
+
           setTimeout(() => {
             const afterRoom = io.sockets.adapter.rooms.get('user:user1');
             const sizeAfter = afterRoom ? afterRoom.size : 0;
-    
+
             // Our client should have left => size back to what it was
             expect(sizeAfter).toBe(sizeBefore);
             done();
@@ -1643,7 +1625,6 @@ describe('Chat Controller', () => {
         }, 100);
       });
     });
-    
 
     it('should not leave user room when username is empty', done => {
       clientSocket1 = Client(serverAddress);
@@ -1692,7 +1673,7 @@ describe('Chat Controller', () => {
     it('should broadcast typingStop event to chat room when chatID is provided', async () => {
       clientSocket1 = Client(serverAddress);
       clientSocket2 = Client(serverAddress);
-    
+
       await new Promise<void>(resolve => {
         let connected = 0;
         const onConnect = () => {
@@ -1704,38 +1685,37 @@ describe('Chat Controller', () => {
         clientSocket1.on('connect', onConnect);
         clientSocket2.on('connect', onConnect);
       });
-    
+
       clientSocket1.emit('joinChat', 'chat123');
       clientSocket2.emit('joinChat', 'chat123');
-    
+
       await new Promise(resolve => setTimeout(resolve, 100));
-    
+
       const payloadPromise = new Promise<any>(resolve => {
         clientSocket2.once('typingIndicator', data => {
           resolve(data);
         });
       });
-    
+
       clientSocket1.emit('typingStop', {
         chatID: 'chat123',
         username: 'user1',
       });
-    
+
       const data = await payloadPromise;
-    
+
       expect(data).toEqual({
         username: 'user1',
         chatID: 'chat123',
         isTyping: false,
       });
     });
-    
 
     it('should not broadcast typingStart when chatID is not provided', async () => {
       clientSocket1 = Client(serverAddress);
       clientSocket2 = Client(serverAddress);
       let receivedEvent = false;
-    
+
       await new Promise<void>(resolve => {
         let connected = 0;
         const onConnect = () => {
@@ -1747,20 +1727,19 @@ describe('Chat Controller', () => {
         clientSocket1.on('connect', onConnect);
         clientSocket2.on('connect', onConnect);
       });
-    
+
       clientSocket2.on('typingIndicator', () => {
         receivedEvent = true;
       });
-    
+
       clientSocket1.emit('typingStart', {
         username: 'user1',
       });
-    
+
       await new Promise(resolve => setTimeout(resolve, 150));
-    
+
       expect(receivedEvent).toBe(false);
     });
-      
 
     it('should not broadcast typingStop when chatID is not provided', done => {
       clientSocket1 = Client(serverAddress);

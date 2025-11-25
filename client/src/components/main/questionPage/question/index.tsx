@@ -1,6 +1,6 @@
 import './index.css';
 import { getMetaData } from '../../../../tool';
-import { PopulatedDatabaseQuestion } from '../../../../types/types';
+import type { PopulatedDatabaseQuestion } from '../../../../types/types';
 import SaveDropdown from '../../collections/saveDropdown';
 import ReportDropdown from '../../collections/reportDropdown';
 import useQuestionView from '../../../../hooks/useQuestionView';
@@ -82,8 +82,7 @@ const QuestionView = ({ question }: QuestionProps) => {
         className='reddit-question-card'
         data-cy='question-card'
         data-question-id={question._id ? question._id.toString() : ''}
-        data-question-author={question.askedBy}
-      >
+        data-question-author={question.askedBy}>
         {/* Voting sidebar */}
         <div className='vote-sidebar'>
           <button

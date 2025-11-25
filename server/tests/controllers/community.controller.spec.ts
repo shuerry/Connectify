@@ -296,10 +296,7 @@ describe('Community Controller', () => {
         .send(mockReqBody);
 
       expect(response.status).toBe(200);
-      expect(logErrorSpy).toHaveBeenCalledWith(
-        'Error emitting chat update:',
-        expect.any(Error),
-      );
+      expect(logErrorSpy).toHaveBeenCalledWith('Error emitting chat update:', expect.any(Error));
     });
 
     test('should return 500 when membership service throws', async () => {

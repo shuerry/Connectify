@@ -32,10 +32,7 @@ const addFollowerToQuestionSpy: jest.SpyInstance = jest.spyOn(
   questionUtil,
   'addFollowerToQuestion',
 );
-const getQuestionVersionsSpy: jest.SpyInstance = jest.spyOn(
-  questionUtil,
-  'getQuestionVersions',
-);
+const getQuestionVersionsSpy: jest.SpyInstance = jest.spyOn(questionUtil, 'getQuestionVersions');
 const rollbackQuestionSpy: jest.SpyInstance = jest.spyOn(questionUtil, 'rollbackQuestion');
 const deleteQuestionSpy: jest.SpyInstance = jest.spyOn(questionUtil, 'deleteQuestion');
 const publishDraftSpy: jest.SpyInstance = jest.spyOn(questionUtil, 'publishDraft');
@@ -1553,39 +1550,39 @@ describe('Test questionController', () => {
 
     describe('POST /saveDraft', () => {
       it('should save a draft with only title provided', async () => {
-      const mockDraft = {
-        _id: new mongoose.Types.ObjectId('65e9b5a995b6c7045a30d900'),
-        title: 'Draft Title',
-        text: '',
-        tags: [],
-        askedBy: 'testuser',
-        community: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any;
+        const mockDraft = {
+          _id: new mongoose.Types.ObjectId('65e9b5a995b6c7045a30d900'),
+          title: 'Draft Title',
+          text: '',
+          tags: [],
+          askedBy: 'testuser',
+          community: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as any;
 
-      jest.spyOn(tagUtil, 'processTags').mockResolvedValueOnce([]);
+        jest.spyOn(tagUtil, 'processTags').mockResolvedValueOnce([]);
         saveDraftSpy.mockResolvedValueOnce(mockDraft);
 
-      const response = await supertest(app).post('/api/question/saveDraft').send({
-        title: 'Draft Title',
-      });
+        const response = await supertest(app).post('/api/question/saveDraft').send({
+          title: 'Draft Title',
+        });
 
-      expect(response.status).toBe(201);
-      expect(response.body).toEqual(JSON.parse(JSON.stringify(mockDraft)));
-    });
+        expect(response.status).toBe(201);
+        expect(response.body).toEqual(JSON.parse(JSON.stringify(mockDraft)));
+      });
 
       it('should return 400 when service returns error', async () => {
-      jest.spyOn(tagUtil, 'processTags').mockResolvedValueOnce([]);
+        jest.spyOn(tagUtil, 'processTags').mockResolvedValueOnce([]);
         saveDraftSpy.mockResolvedValueOnce({ error: 'Failed to save' } as any);
 
-      const response = await supertest(app).post('/api/question/saveDraft').send({
-        title: 'Draft Title',
-      });
+        const response = await supertest(app).post('/api/question/saveDraft').send({
+          title: 'Draft Title',
+        });
 
-      expect(response.status).toBe(400);
+        expect(response.status).toBe(400);
         expect(response.text).toBe('Failed to save');
-    });
+      });
 
       it('should return 400 when title is missing', async () => {
         const response = await supertest(app).post('/api/question/saveDraft').send({
@@ -1742,28 +1739,28 @@ describe('Test questionController', () => {
 
     describe('GET /getUserDrafts', () => {
       it('should return drafts for a user', async () => {
-      const mockDrafts = [
-        {
-          _id: new mongoose.Types.ObjectId('65e9b5a995b6c7045a30d901'),
-          title: 'Draft 1',
-          text: '',
-          tags: [],
-          askedBy: 'testuser',
-          community: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ] as any;
+        const mockDrafts = [
+          {
+            _id: new mongoose.Types.ObjectId('65e9b5a995b6c7045a30d901'),
+            title: 'Draft 1',
+            text: '',
+            tags: [],
+            askedBy: 'testuser',
+            community: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ] as any;
 
         getUserDraftsSpy.mockResolvedValueOnce(mockDrafts);
 
-      const response = await supertest(app)
-        .get('/api/question/getUserDrafts')
-        .query({ username: 'testuser' });
+        const response = await supertest(app)
+          .get('/api/question/getUserDrafts')
+          .query({ username: 'testuser' });
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(JSON.parse(JSON.stringify(mockDrafts)));
-    });
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual(JSON.parse(JSON.stringify(mockDrafts)));
+      });
 
       it('should return 400 when username is missing', async () => {
         const response = await supertest(app).get('/api/question/getUserDrafts');
@@ -1775,7 +1772,7 @@ describe('Test questionController', () => {
       it('should return 400 when service returns error', async () => {
         getUserDraftsSpy.mockResolvedValueOnce({ error: 'Unable to fetch drafts' });
 
-      const response = await supertest(app)
+        const response = await supertest(app)
           .get('/api/question/getUserDrafts')
           .query({ username: 'testuser' });
 
@@ -1814,11 +1811,11 @@ describe('Test questionController', () => {
 
         const response = await supertest(app)
           .delete(`/api/question/deleteDraft/${validDraftId}`)
-        .send({ username: 'testuser' });
+          .send({ username: 'testuser' });
 
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({ message: 'Draft deleted successfully' });
-    });
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ message: 'Draft deleted successfully' });
+      });
 
       it('should return 400 when draft id is invalid', async () => {
         const response = await supertest(app)

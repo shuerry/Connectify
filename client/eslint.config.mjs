@@ -1,5 +1,7 @@
 /* eslint import/no-extraneous-dependencies: "off" */
 
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
 import js from '@eslint/js';
@@ -9,8 +11,19 @@ import eslintPluginImport from 'eslint-plugin-import';
 import eslintReactHooks from 'eslint-plugin-react-hooks';
 import eslintReactRefresh from 'eslint-plugin-react-refresh';
 
+const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig([
-  globalIgnores(['build/*', 'dist/*', '.stryker-tmp/*', 'coverage/*']),
+  globalIgnores(['build/**', 'dist/**', '.stryker-tmp/**', 'coverage/**']),
+  {
+    files: ['**/*.config.mjs'],
+    languageOptions: {
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
+  },
   {
     files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
     extends: [
@@ -18,6 +31,11 @@ export default defineConfig([
       eslintPluginImport.flatConfigs.recommended,
       eslintPluginImport.flatConfigs.typescript,
     ],
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir,
+      },
+    },
     settings: {
       'import/resolver': {
         typescript: true,
@@ -59,6 +77,9 @@ export default defineConfig([
     extends: tseslint.configs.recommended,
     languageOptions: {
       globals: globals.browser,
+      parserOptions: {
+        tsconfigRootDir,
+      },
     },
     plugins: {
       'react-hooks': eslintReactHooks,

@@ -35,11 +35,16 @@ const getRouteHandler = (method: 'post' | 'delete', path: string) => {
   } as unknown as FakeSOSocket;
 
   const router = commentController(fakeSocket);
-  const routerStack = (router as unknown as {
-    stack: Array<{ route?: { path: string; methods: Record<string, boolean>; stack: { handle: unknown }[] } }>;
-  }).stack;
+  const routerStack = (
+    router as unknown as {
+      stack: Array<{
+        route?: { path: string; methods: Record<string, boolean>; stack: { handle: unknown }[] };
+      }>;
+    }
+  ).stack;
   const layer = routerStack.find(
-    stackLayer => stackLayer.route && stackLayer.route.path === path && stackLayer.route.methods[method],
+    stackLayer =>
+      stackLayer.route && stackLayer.route.path === path && stackLayer.route.methods[method],
   );
 
   if (!layer || !layer.route) {

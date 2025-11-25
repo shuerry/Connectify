@@ -3,6 +3,8 @@ import QuestionModel from '../../models/questions.model';
 import AnswerModel from '../../models/answers.model';
 import ChatModel from '../../models/chat.model';
 import UserModel from '../../models/users.model';
+import CollectionModel from '../../models/collection.model';
+import { ObjectId } from 'mongodb';
 
 jest.mock('../../models/questions.model');
 jest.mock('../../models/answers.model');
@@ -11,6 +13,7 @@ jest.mock('../../models/messages.model');
 jest.mock('../../models/users.model');
 jest.mock('../../models/tags.model');
 jest.mock('../../models/comments.model');
+jest.mock('../../models/collection.model');
 
 describe('populateDocument', () => {
   afterEach(() => {
@@ -186,6 +189,100 @@ describe('populateDocument', () => {
     const result = await populateDocument('someId', invalidType);
     expect(result).toEqual({
       error: 'Error when fetching and populating a document: Invalid type provided.',
+    });
+  });
+
+  it('should return an error when id is undefined', async () => {
+    const result = await populateDocument(undefined as unknown as string, 'question');
+    expect(result).toEqual({
+      error: 'Error when fetching and populating a document: Provided ID is undefined.',
+    });
+  });
+
+  it('should fetch and populate a collection document', async () => {
+    const questionId = new ObjectId();
+    const mockQuestion = {
+      _id: questionId.toString(),
+      title: 'Test Question',
+      tags: [],
+      answers: [],
+      comments: [],
+    };
+
+    const collectionDoc = {
+      _id: new ObjectId(),
+      name: 'Favorites',
+      questions: [questionId],
+      toObject: jest.fn().mockReturnValue({
+        _id: 'collectionId',
+        name: 'Favorites',
+        questions: [mockQuestion],
+      }),
+    };
+
+    (CollectionModel.findOne as jest.Mock).mockResolvedValue(collectionDoc);
+    (QuestionModel.findOne as jest.Mock).mockReturnValue({
+      populate: jest.fn().mockResolvedValue(mockQuestion),
+    });
+
+    const result = await populateDocument('collectionId', 'collection');
+
+    expect(CollectionModel.findOne).toHaveBeenCalledWith({ _id: 'collectionId' });
+    expect(QuestionModel.findOne).toHaveBeenCalledWith({ _id: questionId.toString() });
+    expect(result).toEqual(
+      expect.objectContaining({
+        _id: 'collectionId',
+        name: 'Favorites',
+        questions: [mockQuestion],
+      }),
+    );
+  });
+
+  it('should return null when collection is not found', async () => {
+    (CollectionModel.findOne as jest.Mock).mockResolvedValue(null);
+
+    const result = await populateDocument('invalidCollectionId', 'collection');
+
+    expect(result).toEqual({
+      error:
+        'Error when fetching and populating a document: Failed to fetch and populate collection with ID: invalidCollectionId',
+    });
+  });
+
+  it('should return an error when a question in the collection is not found', async () => {
+    const questionId = new ObjectId();
+    const collectionDoc = {
+      _id: new ObjectId(),
+      name: 'Favorites',
+      questions: [questionId],
+      toObject: jest.fn().mockReturnValue({
+        _id: 'collectionId',
+        name: 'Favorites',
+        questions: [questionId],
+      }),
+    };
+
+    (CollectionModel.findOne as jest.Mock).mockResolvedValue(collectionDoc);
+    (QuestionModel.findOne as jest.Mock).mockReturnValue({
+      populate: jest.fn().mockResolvedValue(null),
+    });
+
+    const result = await populateDocument('collectionId', 'collection');
+
+    expect(result).toEqual({
+      error: 'Error when fetching and populating a document: Question not found',
+    });
+  });
+
+  it('should return an error when fetching a collection document throws an error', async () => {
+    (CollectionModel.findOne as jest.Mock).mockImplementation(() => {
+      throw new Error('Database error');
+    });
+
+    const result = await populateDocument('collectionId', 'collection');
+
+    expect(result).toEqual({
+      error: 'Error when fetching and populating a document: Database error',
     });
   });
 });

@@ -1,10 +1,31 @@
 import QuestionModel from '../../models/questions.model';
 import AnswerModel from '../../models/answers.model';
-import QuestionVersionModel from '../../models/questionVersions.model';
 import CommentModel from '../../models/comments.model';
 import DraftModel from '../../models/drafts.model';
 
+jest.mock('../../services/user.service', () => ({
+  getRelations: jest.fn(),
+  getUsersWhoBlocked: jest.fn(),
+  getUserByUsername: jest.fn(),
+}));
+
+jest.mock('../../models/questionVersions.model', () => ({
+  __esModule: true,
+  default: {
+    countDocuments: jest.fn(),
+    create: jest.fn(),
+    findById: jest.fn(),
+    find: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+}));
+
+import { getUserByUsername } from '../../services/user.service';
+const mockedGetUserByUsername = getUserByUsername as jest.MockedFunction<typeof getUserByUsername>;
+
 import * as questionService from '../../services/question.service';
+import QuestionVersionModel from '../../models/questionVersions.model';
+const MockedQuestionVersionModel = QuestionVersionModel as jest.Mocked<typeof QuestionVersionModel>;
 
 const {
   deleteQuestion,
@@ -15,6 +36,8 @@ const {
   getUserDrafts,
   deleteDraft,
   publishDraft,
+  addFollowerToQuestion,
+  updateQuestion,
 } = questionService;
 
 // Helper to mock Mongoose-style query chains that are awaited
@@ -45,6 +68,88 @@ describe('question.service', () => {
     expect(res).toEqual({ error: 'Question not found' });
   });
 
+  //
+  // updateQuestion
+  //
+  describe('updateQuestion', () => {
+    const qid = '64b0f0c7dfb09bb8b6f0a001';
+    const username = 'author';
+    const baseQuestion = {
+      _id: qid,
+      askedBy: username,
+      title: 'Old title',
+      text: 'Old text',
+      tags: [{ _id: 'tag-old' }],
+    } as any;
+
+    it('returns error when question is not found', async () => {
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce(null as any);
+
+      const res = await updateQuestion(qid, 'Title', 'Body', [{ _id: 'tag1' } as any], username);
+      expect(res).toEqual({ error: 'Question not found' });
+    });
+
+    it('returns unauthorized when user is not author', async () => {
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce({ askedBy: 'other' } as any);
+
+      const res = await updateQuestion(qid, 'Title', 'Body', [{ _id: 'tag1' } as any], username);
+      expect(res).toEqual({ error: 'Unauthorized: You can only edit your own questions' });
+    });
+
+    it('validates blank title/text', async () => {
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce(baseQuestion);
+
+      const res = await updateQuestion(qid, '   ', 'Body', [{ _id: 'tag1' } as any], username);
+      expect(res).toEqual({ error: 'Title and text cannot be empty' });
+    });
+
+    it('validates max title length', async () => {
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce(baseQuestion);
+
+      const res = await updateQuestion(
+        qid,
+        'x'.repeat(101),
+        'Body',
+        [{ _id: 'tag1' } as any],
+        username,
+      );
+      expect(res).toEqual({ error: 'Title must be 100 characters or less' });
+    });
+
+    it('requires between 1 and 5 tags', async () => {
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(baseQuestion);
+
+      let res = await updateQuestion(qid, 'Title', 'Body', [], username);
+      expect(res).toEqual({ error: 'At least one tag is required' });
+
+      const tooManyTags = Array.from({ length: 6 }, (_, idx) => ({ _id: `t${idx}` })) as any;
+      res = await updateQuestion(qid, 'Title', 'Body', tooManyTags, username);
+      expect(res).toEqual({ error: 'Maximum 5 tags allowed' });
+    });
+
+    it('saves version snapshot and updates question', async () => {
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce(baseQuestion);
+      MockedQuestionVersionModel.countDocuments.mockResolvedValueOnce(2 as any);
+      MockedQuestionVersionModel.create.mockResolvedValueOnce({} as any);
+
+      const populatedQuestion = { _id: qid, title: 'New title' } as any;
+      const populateMock = jest.fn().mockResolvedValue(populatedQuestion);
+      jest.spyOn(QuestionModel, 'findByIdAndUpdate').mockReturnValue({
+        populate: populateMock,
+      } as any);
+
+      const res = await updateQuestion(
+        qid,
+        ' New title ',
+        ' New text ',
+        [{ _id: 'tag1' } as any],
+        username,
+      );
+
+      expect(res).toBe(populatedQuestion);
+    });
+  });
+
   it('deleteQuestion returns error when user is not the author', async () => {
     const mockQuestion = { askedBy: 'otherUser' } as any;
 
@@ -67,7 +172,7 @@ describe('question.service', () => {
 
     jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce(mockQuestion);
     jest.spyOn(AnswerModel, 'deleteMany').mockResolvedValueOnce({} as any);
-    jest.spyOn(QuestionVersionModel, 'deleteMany').mockResolvedValueOnce({} as any);
+    MockedQuestionVersionModel.deleteMany.mockResolvedValueOnce({} as any);
     jest.spyOn(CommentModel, 'deleteMany').mockResolvedValueOnce({} as any);
     jest.spyOn(QuestionModel, 'findByIdAndDelete').mockResolvedValueOnce({} as any);
 
@@ -75,7 +180,7 @@ describe('question.service', () => {
 
     expect(res).toHaveProperty('msg');
     expect(AnswerModel.deleteMany).toHaveBeenCalled();
-    expect(QuestionVersionModel.deleteMany).toHaveBeenCalled();
+    expect(MockedQuestionVersionModel.deleteMany).toHaveBeenCalled();
     expect(CommentModel.deleteMany).toHaveBeenCalled();
     expect(QuestionModel.findByIdAndDelete).toHaveBeenCalledWith('qid');
   });
@@ -92,10 +197,11 @@ describe('question.service', () => {
   // getQuestionVersions
   //
   describe('getQuestionVersions', () => {
+    const qid = '64b0f0c7dfb09bb8b6f0a002';
     it('returns error when question not found', async () => {
       jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce(null as any);
 
-      const res = await getQuestionVersions('qid', 'user1');
+      const res = await getQuestionVersions(qid, 'user1');
 
       expect(res).toEqual({ error: 'Question not found' });
     });
@@ -103,7 +209,7 @@ describe('question.service', () => {
     it('returns unauthorized error when user is not author', async () => {
       jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce({ askedBy: 'otherUser' } as any);
 
-      const res = await getQuestionVersions('qid', 'user1');
+      const res = await getQuestionVersions(qid, 'user1');
 
       expect(res).toEqual({
         error: 'Unauthorized: Only the question author can view version history',
@@ -113,9 +219,92 @@ describe('question.service', () => {
     it('returns error when an exception is thrown', async () => {
       jest.spyOn(QuestionModel, 'findById').mockRejectedValueOnce(new Error('DB failure'));
 
-      const res = await getQuestionVersions('qid', 'user1');
+      const res = await getQuestionVersions(qid, 'user1');
 
       expect(res).toEqual({ error: 'Error when fetching question versions' });
+    });
+
+    it('returns versions when user is the author', async () => {
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce({ askedBy: 'user1' } as any);
+
+      const versions = [{ versionNumber: 1 }];
+      MockedQuestionVersionModel.find.mockReturnValue(makeQueryThenable(versions) as any);
+
+      const res = await getQuestionVersions(qid, 'user1');
+
+      expect(res).toEqual(versions);
+    });
+  });
+
+  //
+  // addFollowerToQuestion
+  //
+  describe('addFollowerToQuestion', () => {
+    const followerId = 'user-object-id';
+
+    beforeEach(() => {
+      mockedGetUserByUsername.mockReset();
+    });
+
+    it('returns error when user is not found', async () => {
+      mockedGetUserByUsername.mockResolvedValueOnce({ error: 'no user' } as any);
+
+      const res = await addFollowerToQuestion('qid', 'alice');
+      expect(res).toEqual({ error: 'User not found' });
+    });
+
+    it('follows a question when not already following', async () => {
+      mockedGetUserByUsername.mockResolvedValueOnce({ _id: followerId } as any);
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce({ followers: [] } as any);
+      const resultDoc = { followers: [{ username: 'alice' }] } as any;
+      jest.spyOn(QuestionModel, 'findOneAndUpdate').mockReturnValue({
+        populate: jest.fn().mockResolvedValue(resultDoc),
+      } as any);
+
+      const res = await addFollowerToQuestion('qid', 'alice');
+      expect(res).toEqual({
+        msg: 'Question followed successfully',
+        followers: resultDoc.followers,
+      });
+    });
+
+    it('unfollows a question when already following', async () => {
+      mockedGetUserByUsername.mockResolvedValueOnce({ _id: followerId } as any);
+      jest
+        .spyOn(QuestionModel, 'findById')
+        .mockResolvedValueOnce({ followers: [followerId] } as any);
+      const resultDoc = { followers: [] } as any;
+      jest.spyOn(QuestionModel, 'findOneAndUpdate').mockReturnValue({
+        populate: jest.fn().mockResolvedValue(resultDoc),
+      } as any);
+
+      const res = await addFollowerToQuestion('qid', 'alice');
+      expect(res).toEqual({
+        msg: 'Question unfollowed successfully',
+        followers: [],
+      });
+    });
+
+    it('returns error when update result is null', async () => {
+      mockedGetUserByUsername.mockResolvedValueOnce({ _id: followerId } as any);
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce({ followers: [] } as any);
+      jest
+        .spyOn(QuestionModel, 'findOneAndUpdate')
+        .mockReturnValue({ populate: jest.fn().mockResolvedValue(null) } as any);
+
+      const res = await addFollowerToQuestion('qid', 'alice');
+      expect(res).toEqual({ error: 'Error adding follower!' });
+    });
+
+    it('returns error when operation throws', async () => {
+      mockedGetUserByUsername.mockResolvedValueOnce({ _id: followerId } as any);
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce({ followers: [] } as any);
+      jest.spyOn(QuestionModel, 'findOneAndUpdate').mockImplementation(() => {
+        throw new Error('boom');
+      });
+
+      const res = await addFollowerToQuestion('qid', 'alice');
+      expect(res).toEqual({ error: 'Error when following question' });
     });
   });
 
@@ -123,13 +312,13 @@ describe('question.service', () => {
   // rollbackQuestion
   //
   describe('rollbackQuestion', () => {
-    const qid = 'question-id';
+    const qid = '64b0f0c7dfb09bb8b6f0a003';
     const username = 'author';
 
     it('returns error when question not found', async () => {
       jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce(null as any);
 
-      const res = await rollbackQuestion(qid, 'version-id', username);
+      const res = await rollbackQuestion(qid, '64b0f0c7dfb09bb8b6f0a004', username);
 
       expect(res).toEqual({ error: 'Question not found' });
     });
@@ -137,7 +326,7 @@ describe('question.service', () => {
     it('returns unauthorized when user is not author', async () => {
       jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce({ askedBy: 'other' } as any);
 
-      const res = await rollbackQuestion(qid, 'version-id', username);
+      const res = await rollbackQuestion(qid, '64b0f0c7dfb09bb8b6f0a004', username);
 
       expect(res).toEqual({
         error: 'Unauthorized: You can only rollback your own questions',
@@ -147,9 +336,9 @@ describe('question.service', () => {
     it('returns error when version not found', async () => {
       jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce({ askedBy: username } as any);
 
-      (QuestionVersionModel as any).findById = jest.fn().mockReturnValue(makeQueryThenable(null));
+      MockedQuestionVersionModel.findById.mockReturnValue(makeQueryThenable(null));
 
-      const res = await rollbackQuestion(qid, 'version-id', username);
+      const res = await rollbackQuestion(qid, '64b0f0c7dfb09bb8b6f0a004', username);
 
       expect(res).toEqual({ error: 'Version not found' });
     });
@@ -161,11 +350,9 @@ describe('question.service', () => {
         questionId: { toString: () => 'other-question-id' },
       } as any;
 
-      (QuestionVersionModel as any).findById = jest
-        .fn()
-        .mockReturnValue(makeQueryThenable(versionDoc));
+      MockedQuestionVersionModel.findById.mockReturnValue(makeQueryThenable(versionDoc));
 
-      const res = await rollbackQuestion(qid, 'version-id', username);
+      const res = await rollbackQuestion(qid, '64b0f0c7dfb09bb8b6f0a004', username);
 
       expect(res).toEqual({ error: 'Version does not belong to this question' });
     });
@@ -173,9 +360,36 @@ describe('question.service', () => {
     it('returns error when an exception is thrown', async () => {
       jest.spyOn(QuestionModel, 'findById').mockRejectedValueOnce(new Error('DB failure'));
 
-      const res = await rollbackQuestion(qid, 'version-id', username);
+      const res = await rollbackQuestion(qid, '64b0f0c7dfb09bb8b6f0a004', username);
 
       expect(res).toEqual({ error: 'Error when rolling back question' });
+    });
+
+    it('rolls back question successfully', async () => {
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValueOnce({
+        askedBy: username,
+        title: 'Old',
+        text: 'Old text',
+        tags: [{ _id: 'old-tag' }],
+      } as any);
+
+      const versionDoc = {
+        questionId: { toString: () => qid },
+        title: 'Version title',
+        text: 'Version text',
+        tags: [{ _id: 'new-tag' }],
+      } as any;
+      MockedQuestionVersionModel.findById.mockReturnValue(makeQueryThenable(versionDoc));
+      MockedQuestionVersionModel.countDocuments.mockResolvedValueOnce(1 as any);
+      MockedQuestionVersionModel.create.mockResolvedValueOnce({} as any);
+      const populateMock = jest.fn().mockResolvedValue({ _id: qid, title: 'Version title' });
+      jest.spyOn(QuestionModel, 'findByIdAndUpdate').mockReturnValue({
+        populate: populateMock,
+      } as any);
+
+      const res = await rollbackQuestion(qid, '64b0f0c7dfb09bb8b6f0a004', username);
+
+      expect(res).toEqual({ _id: qid, title: 'Version title' });
     });
   });
 

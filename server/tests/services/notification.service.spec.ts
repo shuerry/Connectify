@@ -191,6 +191,92 @@ describe('NotificationService internals', () => {
       expect(msg.text).toContain('Hi');
       expect(msg.text).toContain('https://example.com'); // falls back to site URL
     });
+
+    it('sends mention notification with fromName and groupName', async () => {
+      await service.sendChatNotification({
+        toEmail: ['user@example.com'],
+        toName: 'Alice',
+        fromName: 'Bob',
+        messagePreview: 'Hey there!',
+        groupName: 'Team Chat',
+        isMention: true,
+        chatId: 'chat123',
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.subject).toBe('Bob mentioned you in Team Chat');
+      expect(msg.text).toContain('Bob wrote: Hey there!');
+      expect(msg.html).toContain('Hi Alice,');
+      expect(msg.html).toContain('Team Chat');
+      expect(msg.html).toContain('/messaging/direct-message');
+    });
+
+    it('sends mention notification without fromName but with groupName', async () => {
+      await service.sendChatNotification({
+        toEmail: ['user@example.com'],
+        toName: undefined,
+        fromName: undefined,
+        messagePreview: 'Mentioned!',
+        groupName: 'Group',
+        isMention: true,
+        chatId: undefined,
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.subject).toBe('You were mentioned in Group');
+      expect(msg.text).toContain('Mentioned!');
+      expect(msg.text).not.toContain('wrote:'); // fromName is undefined
+      expect(msg.html).toContain('Hello,');
+    });
+
+    it('sends mention notification without groupName (falls back to "chat")', async () => {
+      await service.sendChatNotification({
+        toEmail: ['user@example.com'],
+        toName: 'User',
+        fromName: 'Sender',
+        messagePreview: 'Test',
+        groupName: undefined,
+        isMention: true,
+        chatId: 'chat456',
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.subject).toBe('Sender mentioned you in chat');
+      expect(msg.html).toContain('Hi User,');
+    });
+
+    it('sends non-mention notification with groupName', async () => {
+      await service.sendChatNotification({
+        toEmail: ['user@example.com'],
+        toName: 'Alice',
+        fromName: 'Bob',
+        messagePreview: 'Hello',
+        groupName: 'Project Team',
+        isMention: false,
+        chatId: undefined,
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.subject).toBe('Bob sent a message in Project Team');
+      expect(msg.html).toContain('Project Team');
+      expect(msg.text).toContain('https://example.com');
+    });
+
+    it('handles empty messagePreview gracefully', async () => {
+      await service.sendChatNotification({
+        toEmail: ['user@example.com'],
+        toName: 'User',
+        fromName: 'Sender',
+        messagePreview: '',
+        groupName: 'Group',
+        isMention: false,
+        chatId: undefined,
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.html).toContain('Sender');
+      expect(msg.text).toContain('Sender wrote:');
+    });
   });
 
   describe('sendAnswerNotification', () => {
@@ -223,6 +309,36 @@ describe('NotificationService internals', () => {
       const msg = mockedSgMail.send.mock.calls[0][0];
       expect(msg.subject).toBe('New answer');
       expect(msg.text).toContain('New answer: Some answer');
+    });
+
+    it('handles missing answerPreview gracefully', async () => {
+      await service.sendAnswerNotification({
+        toEmail: ['user@example.com'],
+        authorName: 'Author',
+        questionTitle: 'Question',
+        answerPreview: undefined,
+        questionId: 'q3',
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.html).toContain('Author');
+      expect(msg.html).toContain('Question');
+      expect(msg.text).toContain('Author posted an answer:');
+      expect(msg.text).not.toContain('undefined');
+    });
+
+    it('handles missing authorName in text when answerPreview is present', async () => {
+      await service.sendAnswerNotification({
+        toEmail: ['user@example.com'],
+        authorName: undefined,
+        questionTitle: 'Title',
+        answerPreview: 'Answer text',
+        questionId: 'q4',
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.text).toContain('New answer: Answer text');
+      expect(msg.text).not.toContain('posted an answer');
     });
   });
 
@@ -259,6 +375,20 @@ describe('NotificationService internals', () => {
       expect(msg.to).toEqual(['a@example.com', 'b@example.com']); // already array
       expect(msg.text).toContain('token-123');
       expect(msg.text).toContain('expires on');
+    });
+
+    it('falls back to empty token value when not provided', async () => {
+      await service.sendEmailVerification({
+        toEmail: 'user@example.com',
+        username: 'testuser',
+        token: undefined,
+        verifyUrl: undefined,
+        expiresAt: undefined,
+      });
+
+      const msg = mockedSgMail.send.mock.calls[0][0];
+      expect(msg.text).toContain('/verify-email?token=');
+      expect(msg.text).not.toContain('token=undefined');
     });
   });
 
@@ -381,6 +511,22 @@ describe('socket wiring + exported CRUD helpers', () => {
       expect(query.createdAt.$lt.toISOString()).toBe(cursor);
 
       expect(result).toEqual([{ id: '3' }]);
+    });
+
+    it('defaults the limit when not provided', async () => {
+      const docs = [{ toObject: jest.fn(() => ({ id: '4' })) }];
+
+      const limitMock = jest.fn().mockResolvedValue(docs);
+      const sortMock = jest.fn().mockReturnValue({ limit: limitMock });
+      MockedNotificationModel.find.mockReturnValue({ sort: sortMock });
+
+      const result = await listNotifications('charlie');
+
+      expect(MockedNotificationModel.find).toHaveBeenCalledWith({
+        recipient: 'charlie',
+      });
+      expect(limitMock).toHaveBeenCalledWith(20); // default limit
+      expect(result).toEqual([{ id: '4' }]);
     });
   });
 

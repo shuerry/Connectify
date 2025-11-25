@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import supertest from 'supertest';
-import { Server, type Socket as ServerSocket } from 'socket.io';
+import { Server } from 'socket.io';
 import { createServer } from 'http';
 import { io as Client, type Socket as ClientSocket } from 'socket.io-client';
 import { AddressInfo } from 'net';
@@ -575,13 +575,11 @@ describe('POST /respondToFriendRequest', () => {
 
     updateFriendRequestStatusSpy.mockResolvedValue(updatedMessage);
 
-    const response = await supertest(app)
-      .post('/api/message/respondToFriendRequest')
-      .send({
-        messageId,
-        status: 'accepted',
-        responderUsername: 'user2',
-      });
+    const response = await supertest(app).post('/api/message/respondToFriendRequest').send({
+      messageId,
+      status: 'accepted',
+      responderUsername: 'user2',
+    });
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
@@ -594,13 +592,11 @@ describe('POST /respondToFriendRequest', () => {
     const messageId = new mongoose.Types.ObjectId().toString();
     updateFriendRequestStatusSpy.mockResolvedValue({ error: 'Friend request not found' });
 
-    const response = await supertest(app)
-      .post('/api/message/respondToFriendRequest')
-      .send({
-        messageId,
-        status: 'accepted',
-        responderUsername: 'user2',
-      });
+    const response = await supertest(app).post('/api/message/respondToFriendRequest').send({
+      messageId,
+      status: 'accepted',
+      responderUsername: 'user2',
+    });
 
     expect(response.status).toBe(500);
     expect(response.text).toContain('Error when responding to friend request');
@@ -631,15 +627,13 @@ describe('POST /sendGameInvitation', () => {
 
     sendGameInvitationSpy.mockResolvedValue(gameInvitation);
 
-    const response = await supertest(app)
-      .post('/api/message/sendGameInvitation')
-      .send({
-        fromUsername: 'user1',
-        toUsername: 'user2',
-        gameID: 'game123',
-        roomName: 'Test Room',
-        gameType: 'Connect Four',
-      });
+    const response = await supertest(app).post('/api/message/sendGameInvitation').send({
+      fromUsername: 'user1',
+      toUsername: 'user2',
+      gameID: 'game123',
+      roomName: 'Test Room',
+      gameType: 'Connect Four',
+    });
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
@@ -668,16 +662,14 @@ describe('POST /sendGameInvitation', () => {
 
     sendGameInvitationSpy.mockResolvedValue(gameInvitation);
 
-    const response = await supertest(app)
-      .post('/api/message/sendGameInvitation')
-      .send({
-        fromUsername: 'user1',
-        toUsername: 'user2',
-        gameID: 'game123',
-        roomName: 'Test Room',
-        gameType: 'Connect Four',
-        roomCode: 'ABC123',
-      });
+    const response = await supertest(app).post('/api/message/sendGameInvitation').send({
+      fromUsername: 'user1',
+      toUsername: 'user2',
+      gameID: 'game123',
+      roomName: 'Test Room',
+      gameType: 'Connect Four',
+      roomCode: 'ABC123',
+    });
 
     expect(response.status).toBe(200);
     expect(response.body.gameInvitation.roomCode).toBe('ABC123');
@@ -686,15 +678,13 @@ describe('POST /sendGameInvitation', () => {
   it('should return error if sendGameInvitation fails', async () => {
     sendGameInvitationSpy.mockResolvedValue({ error: 'Sender does not exist' });
 
-    const response = await supertest(app)
-      .post('/api/message/sendGameInvitation')
-      .send({
-        fromUsername: 'user1',
-        toUsername: 'user2',
-        gameID: 'game123',
-        roomName: 'Test Room',
-        gameType: 'Connect Four',
-      });
+    const response = await supertest(app).post('/api/message/sendGameInvitation').send({
+      fromUsername: 'user1',
+      toUsername: 'user2',
+      gameID: 'game123',
+      roomName: 'Test Room',
+      gameType: 'Connect Four',
+    });
 
     expect(response.status).toBe(500);
     expect(response.text).toContain('Error when sending game invitation');
@@ -725,13 +715,11 @@ describe('POST /respondToGameInvitation', () => {
 
     updateGameInvitationStatusSpy.mockResolvedValue(updatedMessage);
 
-    const response = await supertest(app)
-      .post('/api/message/respondToGameInvitation')
-      .send({
-        messageId,
-        status: 'accepted',
-        responderUsername: 'user2',
-      });
+    const response = await supertest(app).post('/api/message/respondToGameInvitation').send({
+      messageId,
+      status: 'accepted',
+      responderUsername: 'user2',
+    });
 
     expect(response.status).toBe(200);
     expect(response.body.gameInvitation.status).toBe('accepted');
@@ -741,13 +729,11 @@ describe('POST /respondToGameInvitation', () => {
     const messageId = new mongoose.Types.ObjectId().toString();
     updateGameInvitationStatusSpy.mockResolvedValue({ error: 'Game invitation not found' });
 
-    const response = await supertest(app)
-      .post('/api/message/respondToGameInvitation')
-      .send({
-        messageId,
-        status: 'accepted',
-        responderUsername: 'user2',
-      });
+    const response = await supertest(app).post('/api/message/respondToGameInvitation').send({
+      messageId,
+      status: 'accepted',
+      responderUsername: 'user2',
+    });
 
     expect(response.status).toBe(500);
     expect(response.text).toContain('Error when responding to game invitation');
@@ -773,12 +759,10 @@ describe('PATCH /:messageId', () => {
 
     editMessageContentSpy.mockResolvedValue(updatedMessage);
 
-    const response = await supertest(app)
-      .patch(`/api/message/${messageId}`)
-      .send({
-        newMessage: 'Updated message',
-        editorUsername: 'user1',
-      });
+    const response = await supertest(app).patch(`/api/message/${messageId}`).send({
+      newMessage: 'Updated message',
+      editorUsername: 'user1',
+    });
 
     expect(response.status).toBe(200);
     expect(response.body.msg).toBe('Updated message');
@@ -787,11 +771,9 @@ describe('PATCH /:messageId', () => {
   it('should return 400 if newMessage is missing', async () => {
     const messageId = new mongoose.Types.ObjectId().toString();
 
-    const response = await supertest(app)
-      .patch(`/api/message/${messageId}`)
-      .send({
-        editorUsername: 'user1',
-      });
+    const response = await supertest(app).patch(`/api/message/${messageId}`).send({
+      editorUsername: 'user1',
+    });
 
     expect(response.status).toBe(400);
     expect(response.text).toBe('Updated message is required');
@@ -800,12 +782,10 @@ describe('PATCH /:messageId', () => {
   it('should return 400 if newMessage is not a string', async () => {
     const messageId = new mongoose.Types.ObjectId().toString();
 
-    const response = await supertest(app)
-      .patch(`/api/message/${messageId}`)
-      .send({
-        newMessage: 123,
-        editorUsername: 'user1',
-      });
+    const response = await supertest(app).patch(`/api/message/${messageId}`).send({
+      newMessage: 123,
+      editorUsername: 'user1',
+    });
 
     expect(response.status).toBe(400);
     expect(response.text).toBe('Updated message is required');
@@ -814,11 +794,9 @@ describe('PATCH /:messageId', () => {
   it('should return 400 if editorUsername is missing', async () => {
     const messageId = new mongoose.Types.ObjectId().toString();
 
-    const response = await supertest(app)
-      .patch(`/api/message/${messageId}`)
-      .send({
-        newMessage: 'Updated message',
-      });
+    const response = await supertest(app).patch(`/api/message/${messageId}`).send({
+      newMessage: 'Updated message',
+    });
 
     expect(response.status).toBe(400);
     expect(response.text).toBe('Editor username is required');
@@ -828,12 +806,10 @@ describe('PATCH /:messageId', () => {
     const messageId = new mongoose.Types.ObjectId().toString();
     editMessageContentSpy.mockResolvedValue({ error: 'Message not found' });
 
-    const response = await supertest(app)
-      .patch(`/api/message/${messageId}`)
-      .send({
-        newMessage: 'Updated message',
-        editorUsername: 'user1',
-      });
+    const response = await supertest(app).patch(`/api/message/${messageId}`).send({
+      newMessage: 'Updated message',
+      editorUsername: 'user1',
+    });
 
     expect(response.status).toBe(400);
     expect(response.text).toBe('Message not found');
@@ -843,12 +819,10 @@ describe('PATCH /:messageId', () => {
     const messageId = new mongoose.Types.ObjectId().toString();
     editMessageContentSpy.mockRejectedValue(new Error('Database error'));
 
-    const response = await supertest(app)
-      .patch(`/api/message/${messageId}`)
-      .send({
-        newMessage: 'Updated message',
-        editorUsername: 'user1',
-      });
+    const response = await supertest(app).patch(`/api/message/${messageId}`).send({
+      newMessage: 'Updated message',
+      editorUsername: 'user1',
+    });
 
     expect(response.status).toBe(500);
     expect(response.text).toContain('Error when editing message');
@@ -895,15 +869,11 @@ describe('DELETE /:messageId', () => {
       message: deletedMessage,
       chatIds: [chatId1, chatId2],
     });
-    populateDocumentSpy
-      .mockResolvedValueOnce(populatedChat1)
-      .mockResolvedValueOnce(populatedChat2);
+    populateDocumentSpy.mockResolvedValueOnce(populatedChat1).mockResolvedValueOnce(populatedChat2);
 
-    const response = await supertest(app)
-      .delete(`/api/message/${messageId}`)
-      .send({
-        username: 'user1',
-      });
+    const response = await supertest(app).delete(`/api/message/${messageId}`).send({
+      username: 'user1',
+    });
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
@@ -926,11 +896,9 @@ describe('DELETE /:messageId', () => {
     const messageId = new mongoose.Types.ObjectId().toString();
     deleteMessageByIdSpy.mockResolvedValue({ error: 'Message not found' });
 
-    const response = await supertest(app)
-      .delete(`/api/message/${messageId}`)
-      .send({
-        username: 'user1',
-      });
+    const response = await supertest(app).delete(`/api/message/${messageId}`).send({
+      username: 'user1',
+    });
 
     expect(response.status).toBe(400);
     expect(response.text).toBe('Message not found');
@@ -940,11 +908,9 @@ describe('DELETE /:messageId', () => {
     const messageId = new mongoose.Types.ObjectId().toString();
     deleteMessageByIdSpy.mockRejectedValue(new Error('Database error'));
 
-    const response = await supertest(app)
-      .delete(`/api/message/${messageId}`)
-      .send({
-        username: 'user1',
-      });
+    const response = await supertest(app).delete(`/api/message/${messageId}`).send({
+      username: 'user1',
+    });
 
     expect(response.status).toBe(500);
     expect(response.text).toContain('Error when deleting message');
@@ -970,11 +936,9 @@ describe('DELETE /:messageId', () => {
     });
     populateDocumentSpy.mockResolvedValue({ error: 'Chat not found' });
 
-    const response = await supertest(app)
-      .delete(`/api/message/${messageId}`)
-      .send({
-        username: 'user1',
-      });
+    const response = await supertest(app).delete(`/api/message/${messageId}`).send({
+      username: 'user1',
+    });
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);

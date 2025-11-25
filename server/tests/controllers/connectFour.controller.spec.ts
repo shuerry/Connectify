@@ -820,9 +820,7 @@ describe('Connect Four Controller Tests', () => {
         throw new Error('boom');
       });
 
-      const res = await supertest(app)
-        .get('/api/games/games')
-        .query({ gameType: 'Connect Four' });
+      const res = await supertest(app).get('/api/games/games').query({ gameType: 'Connect Four' });
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual([]);
@@ -1175,16 +1173,21 @@ describe('Connect Four Controller Tests', () => {
       });
 
       it('should swallow non-throwing errors from leaveGame (result with error field)', async () => {
-        const leaveGameSpy = jest
-          .spyOn(mockGameManager, 'leaveGame')
-          .mockResolvedValueOnce({ error: 'cannot leave' });
+        const leaveHandled = new Promise<void>(resolve => {
+          jest
+            .spyOn(mockGameManager, 'leaveGame')
+            .mockImplementation(async (gameID, playerID, isSpectator) => {
+              resolve();
+              return { error: 'cannot leave' };
+            });
+        });
 
         const leavePayload = { gameID: 'game123', playerID: 'player1', isSpectator: false };
 
         clientSocket.emit('leaveGame', leavePayload);
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await leaveHandled;
 
-        expect(leaveGameSpy).toHaveBeenCalledWith('game123', 'player1', false);
+        expect(mockGameManager.leaveGame).toHaveBeenCalledWith('game123', 'player1', false);
       });
 
       it('should auto-leave active Connect Four players on disconnect', async () => {
