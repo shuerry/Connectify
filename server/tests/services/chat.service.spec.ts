@@ -9,6 +9,9 @@ import {
   addParticipantToChat,
   getChatsByParticipants,
   toggleNotify,
+  removeParticipantFromChat,
+  syncCommunityChatParticipants,
+  getCommunityChat,
 } from '../../services/chat.service';
 import { Chat, DatabaseChat } from '../../types/types';
 import { user } from '../mockData.models';
@@ -19,6 +22,24 @@ describe('Chat service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
+
+  class ParticipantsContainer {
+    constructor(initial: Record<string, boolean>) {
+      Object.assign(this, initial);
+    }
+    get(username: string) {
+      return (this as unknown as Record<string, boolean>)[username];
+    }
+    set(username: string, value: boolean) {
+      (this as unknown as Record<string, boolean>)[username] = value;
+    }
+    has(username: string) {
+      return Object.prototype.hasOwnProperty.call(this, username);
+    }
+    delete(username: string) {
+      delete (this as unknown as Record<string, boolean>)[username];
+    }
+  }
 
   describe('saveChat', () => {
     const mockChatPayload: Chat = {
@@ -511,6 +532,141 @@ describe('Chat service', () => {
       expect(result).toHaveProperty('error');
       if ('error' in result) {
         expect(result.error).toContain('DB failure');
+      }
+    });
+  });
+
+  describe('removeParticipantFromChat', () => {
+    const chatId = new mongoose.Types.ObjectId().toString();
+
+    it('removes an existing participant and returns updated chat', async () => {
+      const updatedChat: DatabaseChat = {
+        _id: new mongoose.Types.ObjectId(),
+        participants: { alice: true },
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const spy = jest.spyOn(ChatModel, 'findOneAndUpdate').mockResolvedValueOnce(updatedChat);
+
+      const result = await removeParticipantFromChat(chatId, 'alice');
+
+      expect(spy).toHaveBeenCalledWith(
+        { _id: chatId, 'participants.alice': { $exists: true } },
+        { $unset: { 'participants.alice': '' } },
+        { new: true },
+      );
+      expect(result).toEqual(updatedChat);
+    });
+
+    it('returns error when chat not found or user missing', async () => {
+      jest.spyOn(ChatModel, 'findOneAndUpdate').mockResolvedValueOnce(null);
+
+      const result = await removeParticipantFromChat(chatId, 'alice');
+
+      expect(result).toHaveProperty('error');
+      if ('error' in result) {
+        expect(result.error).toContain('Chat not found or user is not a participant.');
+      }
+    });
+
+    it('returns error when DB operation throws', async () => {
+      jest.spyOn(ChatModel, 'findOneAndUpdate').mockRejectedValueOnce(new Error('DB fail'));
+
+      const result = await removeParticipantFromChat(chatId, 'alice');
+      expect(result).toHaveProperty('error');
+      if ('error' in result) {
+        expect(result.error).toContain('DB fail');
+      }
+    });
+  });
+
+  describe('syncCommunityChatParticipants', () => {
+    const communityId = 'community-1';
+    const initialParticipants = new ParticipantsContainer({ alice: true, carol: true });
+
+    it('adds new community members and removes departed ones', async () => {
+      const chatDoc = {
+        communityId,
+        isCommunityChat: true,
+        participants: initialParticipants,
+        save: jest.fn().mockImplementation(async () => ({
+          participants: initialParticipants,
+        })),
+      };
+
+      jest.spyOn(ChatModel, 'findOne').mockResolvedValueOnce(chatDoc as any);
+
+      const nextMembers = ['alice', 'bob'];
+
+      const result = await syncCommunityChatParticipants(communityId, nextMembers);
+
+      expect(ChatModel.findOne).toHaveBeenCalledWith({ communityId, isCommunityChat: true });
+      expect(initialParticipants.has('bob')).toBe(true);
+      expect(initialParticipants.get('bob')).toBe(true);
+      expect(initialParticipants.has('carol')).toBe(false);
+      expect(chatDoc.save).toHaveBeenCalledTimes(1);
+      expect('error' in result).toBe(false);
+      if (!('error' in result)) {
+        expect(result.participants).toBe(initialParticipants as any);
+      }
+    });
+
+    it('returns error when community chat missing', async () => {
+      jest.spyOn(ChatModel, 'findOne').mockResolvedValueOnce(null);
+
+      const result = await syncCommunityChatParticipants(communityId, ['alice']);
+      expect(result).toHaveProperty('error');
+      if ('error' in result) {
+        expect(result.error).toContain('Community chat not found');
+      }
+    });
+
+    it('returns error when database throws', async () => {
+      jest.spyOn(ChatModel, 'findOne').mockRejectedValueOnce(new Error('DB down'));
+
+      const result = await syncCommunityChatParticipants(communityId, ['alice']);
+      expect(result).toHaveProperty('error');
+      if ('error' in result) {
+        expect(result.error).toContain('DB down');
+      }
+    });
+  });
+
+  describe('getCommunityChat', () => {
+    const communityId = 'comm-123';
+
+    it('returns community chat when found', async () => {
+      const chat = {
+        _id: new mongoose.Types.ObjectId(),
+        communityId,
+        isCommunityChat: true,
+      };
+
+      jest.spyOn(ChatModel, 'findOne').mockResolvedValueOnce(chat as any);
+
+      const result = await getCommunityChat(communityId);
+      expect(result).toEqual(chat);
+    });
+
+    it('returns error when chat missing', async () => {
+      jest.spyOn(ChatModel, 'findOne').mockResolvedValueOnce(null);
+
+      const result = await getCommunityChat(communityId);
+      expect(result).toHaveProperty('error');
+      if ('error' in result) {
+        expect(result.error).toContain('Community chat not found');
+      }
+    });
+
+    it('propagates errors as error response', async () => {
+      jest.spyOn(ChatModel, 'findOne').mockRejectedValueOnce(new Error('DB issue'));
+
+      const result = await getCommunityChat(communityId);
+      expect(result).toHaveProperty('error');
+      if ('error' in result) {
+        expect(result.error).toContain('DB issue');
       }
     });
   });
