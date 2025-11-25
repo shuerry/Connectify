@@ -71,11 +71,10 @@ export const addMessageToChat = async (
       .replace(/\s+/g, ' ')
       .slice(0, 140);
 
-    // for future group chats
-    const groupName = undefined;
-
     // ---- PARTICIPANTS ----
     const participants = updatedChat.participants as Record<string, boolean>;
+    const groupChat = Object.keys(participants).length > 2;
+    const groupName = groupChat ? updatedChat.name || 'Group Chat' : 'Direct Message';
 
     const toEmail: string[] = [];
 
@@ -89,9 +88,9 @@ export const addMessageToChat = async (
       await createNotification({
         recipient: username,
         kind: 'chat',
-        title: `New message from ${senderUsername}`,
+        title: `New message from ${senderUsername} in ${groupName}`,
         preview: messagePreview,
-        link: `/messaging/direct-message`,
+        link: groupChat ? `/messaging/group-chat` : `/messaging/direct-message`,
         actorUsername: senderUsername,
         meta: { chatId, isMention: false },
       });

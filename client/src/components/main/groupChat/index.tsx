@@ -8,6 +8,7 @@ import ChatsListCard from './chatsListCard';
 import useUserContext from '../../../hooks/useUserContext';
 import OnlineStatusIndicator from '../../common/OnlineStatusIndicator/OnlineStatusIndicator';
 import ProfanityFilterModal from '../newQuestion/profanityFilterModal';
+import ChatMenu from '../../main/chatMenu';
 
 /**
  * GroupChat component renders a page for group chat messaging.
@@ -371,13 +372,7 @@ const GroupChat = () => {
                 </div>
                 <div className='chat-actions'>
                   <NotifComponent chat={selectedChat} />
-                  <button className='chat-action-btn' title='Chat options'>
-                    <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
-                      <circle cx='12' cy='12' r='1' stroke='currentColor' strokeWidth='2' />
-                      <circle cx='19' cy='12' r='1' stroke='currentColor' strokeWidth='2' />
-                      <circle cx='5' cy='12' r='1' stroke='currentColor' strokeWidth='2' />
-                    </svg>
-                  </button>
+                  <ChatMenu chat={selectedChat} user={user} refreshChat={refreshChat} />
                 </div>
               </div>
 
