@@ -1173,18 +1173,18 @@ describe('Connect Four Controller Tests', () => {
       });
 
       it('should swallow non-throwing errors from leaveGame (result with error field)', async () => {
+        const leaveGameSpy = jest.spyOn(mockGameManager, 'leaveGame');
+
         const leaveHandled = new Promise<void>(resolve => {
-          jest
-            .spyOn(mockGameManager, 'leaveGame')
-            .mockImplementation(async (gameID, playerID, isSpectator) => {
-              resolve();
-              return { error: 'cannot leave' };
-            });
+          leaveGameSpy.mockImplementation(async (gameID, playerID, isSpectator) => {
+            resolve();
+            return { error: 'cannot leave' };
+          });
         });
 
         const leavePayload = { gameID: 'game123', playerID: 'player1', isSpectator: false };
-
         clientSocket.emit('leaveGame', leavePayload);
+
         await leaveHandled;
 
         expect(mockGameManager.leaveGame).toHaveBeenCalledWith('game123', 'player1', false);

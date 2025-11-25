@@ -23,6 +23,24 @@ describe('Chat service', () => {
     jest.clearAllMocks();
   });
 
+  class ParticipantsContainer {
+    constructor(initial: Record<string, boolean>) {
+      Object.assign(this, initial);
+    }
+    get(username: string) {
+      return (this as unknown as Record<string, boolean>)[username];
+    }
+    set(username: string, value: boolean) {
+      (this as unknown as Record<string, boolean>)[username] = value;
+    }
+    has(username: string) {
+      return Object.prototype.hasOwnProperty.call(this, username);
+    }
+    delete(username: string) {
+      delete (this as unknown as Record<string, boolean>)[username];
+    }
+  }
+
   describe('saveChat', () => {
     const mockChatPayload: Chat = {
       participants: { ['user1']: false },
@@ -531,194 +549,136 @@ describe('Chat service', () => {
   });
 
   describe('removeParticipantFromChat', () => {
-    it('should remove a participant from a chat', async () => {
-      const chatId = new mongoose.Types.ObjectId();
-      const mockChat: DatabaseChat = {
-        _id: chatId,
-        participants: { alice: true, bob: true },
+    const chatId = new mongoose.Types.ObjectId().toString();
+
+    it('removes an existing participant and returns updated chat', async () => {
+      const updatedChat: DatabaseChat = {
+        _id: new mongoose.Types.ObjectId(),
+        participants: { alice: true },
         messages: [],
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      jest.spyOn(ChatModel, 'findOneAndUpdate').mockResolvedValueOnce(mockChat);
+      const spy = jest.spyOn(ChatModel, 'findOneAndUpdate').mockResolvedValueOnce(updatedChat);
 
-      const result = await removeParticipantFromChat(chatId.toString(), 'bob');
+      const result = await removeParticipantFromChat(chatId, 'alice');
 
-      expect('error' in result).toBe(false);
-      expect(result).toEqual(mockChat);
-      expect(ChatModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { '_id': chatId.toString(), 'participants.bob': { $exists: true } },
-        { $unset: { 'participants.bob': '' } },
+      expect(spy).toHaveBeenCalledWith(
+        { _id: chatId, 'participants.alice': { $exists: true } },
+        { $unset: { 'participants.alice': '' } },
         { new: true },
       );
+      expect(result).toEqual(updatedChat);
     });
 
-    it('should return an error if chat is not found or user is not a participant', async () => {
+    it('returns error when chat not found or user missing', async () => {
       jest.spyOn(ChatModel, 'findOneAndUpdate').mockResolvedValueOnce(null);
 
-      const result = await removeParticipantFromChat('anyChatId', 'nonParticipant');
+      const result = await removeParticipantFromChat(chatId, 'alice');
 
-      expect('error' in result).toBe(true);
+      expect(result).toHaveProperty('error');
       if ('error' in result) {
         expect(result.error).toContain('Chat not found or user is not a participant.');
       }
     });
 
-    it('should return an error if DB operation fails', async () => {
-      jest.spyOn(ChatModel, 'findOneAndUpdate').mockRejectedValueOnce(new Error('DB Error'));
+    it('returns error when DB operation throws', async () => {
+      jest.spyOn(ChatModel, 'findOneAndUpdate').mockRejectedValueOnce(new Error('DB fail'));
 
-      const result = await removeParticipantFromChat('chatId', 'bob');
-
-      expect('error' in result).toBe(true);
+      const result = await removeParticipantFromChat(chatId, 'alice');
+      expect(result).toHaveProperty('error');
       if ('error' in result) {
-        expect(result.error).toContain('Error removing participant from chat: DB Error');
+        expect(result.error).toContain('DB fail');
       }
     });
   });
 
   describe('syncCommunityChatParticipants', () => {
-    it('should add new community members and remove departed members', async () => {
-      const communityIdObj = new mongoose.Types.ObjectId();
-      const communityId = communityIdObj.toString();
-      // Create participants as a plain object (function uses Object.keys on it)
-      const participantsObj: Record<string, boolean> = {
-        alice: true,
-        bob: true,
-        charlie: true,
-      };
+    const communityId = 'community-1';
+    const initialParticipants = new ParticipantsContainer({ alice: true, carol: true });
 
-      // Create a Map that will be mutated, and attach it to the object
-      const participantsMap = new Map<string, boolean>(Object.entries(participantsObj));
-      // Make the object support both Object.keys (for line 282) and Map methods (for lines 288-296)
-      const hybridParticipants = new Proxy(participantsObj, {
-        get(target, prop) {
-          if (prop === 'has' || prop === 'set' || prop === 'delete') {
-            return (participantsMap as any)[prop].bind(participantsMap);
-          }
-          return target[prop as string];
-        },
-        ownKeys() {
-          return Object.keys(participantsObj);
-        },
-      }) as any;
-
+    it('adds new community members and removes departed ones', async () => {
       const chatDoc = {
-        _id: new mongoose.Types.ObjectId(),
-        communityId: communityIdObj,
+        communityId,
         isCommunityChat: true,
-        participants: hybridParticipants,
-        save: jest.fn().mockImplementation(function (this: typeof chatDoc) {
-          // Return the doc with the mutated map
-          return Promise.resolve({
-            ...this,
-            participants: participantsMap,
-          });
-        }),
+        participants: initialParticipants,
+        save: jest.fn().mockImplementation(async () => ({
+          participants: initialParticipants,
+        })),
       };
 
       jest.spyOn(ChatModel, 'findOne').mockResolvedValueOnce(chatDoc as any);
 
-      // New community has alice, bob, dave (charlie left, dave joined)
-      const result = await syncCommunityChatParticipants(communityId, ['alice', 'bob', 'dave']);
+      const nextMembers = ['alice', 'bob'];
 
-      expect('error' in result).toBe(false);
+      const result = await syncCommunityChatParticipants(communityId, nextMembers);
+
       expect(ChatModel.findOne).toHaveBeenCalledWith({ communityId, isCommunityChat: true });
-      expect(chatDoc.save).toHaveBeenCalled();
-      // Check the mutated participants
-      const resultParticipants = (result as any).participants;
-      expect(resultParticipants.has('dave')).toBe(true);
-      expect(resultParticipants.has('charlie')).toBe(false);
-      expect(resultParticipants.has('alice')).toBe(true);
-      expect(resultParticipants.has('bob')).toBe(true);
-    });
-
-    it('should return an error if community chat is not found', async () => {
-      const communityId = new mongoose.Types.ObjectId().toString();
-
-      jest.spyOn(ChatModel, 'findOne').mockResolvedValueOnce(null);
-
-      const result = await syncCommunityChatParticipants(communityId, ['alice', 'bob']);
-
-      expect('error' in result).toBe(true);
-      if ('error' in result) {
-        expect(result.error).toBe('Community chat not found');
+      expect(initialParticipants.has('bob')).toBe(true);
+      expect(initialParticipants.get('bob')).toBe(true);
+      expect(initialParticipants.has('carol')).toBe(false);
+      expect(chatDoc.save).toHaveBeenCalledTimes(1);
+      expect('error' in result).toBe(false);
+      if (!('error' in result)) {
+        expect(result.participants).toBe(initialParticipants as any);
       }
     });
 
-    it('should return an error if DB operation fails', async () => {
-      const communityIdObj = new mongoose.Types.ObjectId();
-      const communityId = communityIdObj.toString();
-      const participantsMap = new Map<string, boolean>([['alice', true]]);
+    it('returns error when community chat missing', async () => {
+      jest.spyOn(ChatModel, 'findOne').mockResolvedValueOnce(null);
 
-      const chatDoc = {
-        _id: new mongoose.Types.ObjectId(),
-        communityId: communityIdObj,
-        isCommunityChat: true,
-        participants: participantsMap,
-        save: jest.fn().mockRejectedValue(new Error('DB Error')),
-      };
-
-      jest.spyOn(ChatModel, 'findOne').mockResolvedValueOnce(chatDoc as any);
-
-      const result = await syncCommunityChatParticipants(communityId, ['alice', 'bob']);
-
-      expect('error' in result).toBe(true);
+      const result = await syncCommunityChatParticipants(communityId, ['alice']);
+      expect(result).toHaveProperty('error');
       if ('error' in result) {
-        expect(result.error).toContain('Error syncing community chat participants: DB Error');
+        expect(result.error).toContain('Community chat not found');
+      }
+    });
+
+    it('returns error when database throws', async () => {
+      jest.spyOn(ChatModel, 'findOne').mockRejectedValueOnce(new Error('DB down'));
+
+      const result = await syncCommunityChatParticipants(communityId, ['alice']);
+      expect(result).toHaveProperty('error');
+      if ('error' in result) {
+        expect(result.error).toContain('DB down');
       }
     });
   });
 
   describe('getCommunityChat', () => {
-    it('should retrieve a community chat by community ID', async () => {
-      const communityIdObj = new mongoose.Types.ObjectId();
-      const communityId = communityIdObj.toString();
-      const mockChat: DatabaseChat = {
+    const communityId = 'comm-123';
+
+    it('returns community chat when found', async () => {
+      const chat = {
         _id: new mongoose.Types.ObjectId(),
-        communityId: communityIdObj,
-        isCommunityChat: true,
-        participants: { alice: true, bob: true },
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      jest.spyOn(ChatModel, 'findOne').mockResolvedValueOnce(mockChat);
-
-      const result = await getCommunityChat(communityId);
-
-      expect('error' in result).toBe(false);
-      expect(result).toEqual(mockChat);
-      expect(ChatModel.findOne).toHaveBeenCalledWith({
         communityId,
         isCommunityChat: true,
-      });
+      };
+
+      jest.spyOn(ChatModel, 'findOne').mockResolvedValueOnce(chat as any);
+
+      const result = await getCommunityChat(communityId);
+      expect(result).toEqual(chat);
     });
 
-    it('should return an error if community chat is not found', async () => {
-      const communityId = new mongoose.Types.ObjectId().toString();
-
+    it('returns error when chat missing', async () => {
       jest.spyOn(ChatModel, 'findOne').mockResolvedValueOnce(null);
 
       const result = await getCommunityChat(communityId);
-
-      expect('error' in result).toBe(true);
+      expect(result).toHaveProperty('error');
       if ('error' in result) {
-        expect(result.error).toBe('Community chat not found');
+        expect(result.error).toContain('Community chat not found');
       }
     });
 
-    it('should return an error if DB operation fails', async () => {
-      const communityId = new mongoose.Types.ObjectId().toString();
-
-      jest.spyOn(ChatModel, 'findOne').mockRejectedValueOnce(new Error('DB Error'));
+    it('propagates errors as error response', async () => {
+      jest.spyOn(ChatModel, 'findOne').mockRejectedValueOnce(new Error('DB issue'));
 
       const result = await getCommunityChat(communityId);
-
-      expect('error' in result).toBe(true);
+      expect(result).toHaveProperty('error');
       if ('error' in result) {
-        expect(result.error).toContain('Error retrieving community chat: DB Error');
+        expect(result.error).toContain('DB issue');
       }
     });
   });

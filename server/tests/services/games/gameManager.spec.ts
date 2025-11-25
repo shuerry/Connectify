@@ -5,18 +5,35 @@ import NimGame from '../../../services/games/nim';
 import ConnectFourGame from '../../../services/games/connectFour';
 import { MAX_NIM_OBJECTS } from '../../../types/constants';
 import {
+  ConnectFourGameState,
+  ConnectFourRoomSettings,
   GameInstance,
   GameInstanceID,
   NimGameState,
   GameType,
-  ConnectFourRoomSettings,
-  ConnectFourGameState,
 } from '../../../types/types';
 import { getRelations } from '../../../services/user.service';
 
 jest.mock('nanoid', () => ({
   nanoid: jest.fn(() => 'testGameID'), // Mock the return value
 }));
+jest.mock('../../../services/user.service', () => ({
+  getRelations: jest.fn(),
+}));
+
+const mockGetRelations = getRelations as jest.MockedFunction<typeof getRelations>;
+const connectFourSaveGameStateSpy = jest
+  .spyOn(ConnectFourGame.prototype, 'saveGameState')
+  .mockResolvedValue(undefined);
+
+const connectFourSettings = (
+  overrides?: Partial<ConnectFourRoomSettings>,
+): ConnectFourRoomSettings => ({
+  roomName: 'Connect Room',
+  privacy: 'PUBLIC',
+  allowSpectators: true,
+  ...overrides,
+});
 
 jest.mock('../../../services/user.service', () => ({
   getRelations: jest.fn(),
@@ -87,6 +104,34 @@ describe('GameManager', () => {
 
       expect(mapSetSpy).not.toHaveBeenCalled();
       expect(error).toHaveProperty('error');
+    });
+
+    it('should create a Connect Four game when required arguments are provided', async () => {
+      const gameManager = GameManager.getInstance();
+
+      const gameID = await gameManager.addGame('Connect Four', 'creator', connectFourSettings());
+
+      expect(gameID).toEqual('testGameID');
+      expect(mapSetSpy).toHaveBeenCalledWith('testGameID', expect.any(ConnectFourGame));
+      expect(connectFourSaveGameStateSpy).toHaveBeenCalled();
+    });
+
+    it('should return an error when Connect Four creator is missing', async () => {
+      const gameManager = GameManager.getInstance();
+
+      const error = await gameManager.addGame('Connect Four', undefined, connectFourSettings());
+
+      expect(error).toEqual({ error: 'Creator ID is required for Connect Four' });
+      expect(mapSetSpy).not.toHaveBeenCalledWith(expect.any(String), expect.any(ConnectFourGame));
+    });
+
+    it('should return an error when Connect Four room settings are missing', async () => {
+      const gameManager = GameManager.getInstance();
+
+      const error = await gameManager.addGame('Connect Four', 'creator');
+
+      expect(error).toEqual({ error: 'Room settings are required for Connect Four' });
+      expect(mapSetSpy).not.toHaveBeenCalledWith(expect.any(String), expect.any(ConnectFourGame));
     });
   });
 
@@ -181,6 +226,100 @@ describe('GameManager', () => {
     });
   });
 
+  describe('joinGame - Connect Four', () => {
+    let gameManager: GameManager;
+    let connectFourGameID: GameInstanceID;
+
+    beforeEach(async () => {
+      gameManager = GameManager.getInstance();
+      const result = await gameManager.addGame('Connect Four', 'creator', connectFourSettings());
+      if (typeof result === 'string') {
+        connectFourGameID = result;
+      }
+    });
+
+    it('should allow spectators in public rooms', async () => {
+      const response = await gameManager.joinGame(connectFourGameID, 'spectator', undefined, true);
+
+      expect(response).toEqual(
+        expect.objectContaining({
+          gameType: 'Connect Four',
+          state: expect.objectContaining({
+            spectators: expect.arrayContaining(['spectator']),
+          }),
+        }),
+      );
+      expect(connectFourSaveGameStateSpy).toHaveBeenCalled();
+    });
+
+    it('should join friends-only rooms when requester is a friend', async () => {
+      const friendsOnlyId = await gameManager.addGame(
+        'Connect Four',
+        'creator',
+        connectFourSettings({ privacy: 'FRIENDS_ONLY' }),
+      );
+      mockGetRelations.mockResolvedValueOnce({ friends: ['creator'], blockedUsers: [] });
+
+      if (typeof friendsOnlyId === 'string') {
+        const response = await gameManager.joinGame(friendsOnlyId, 'friendPlayer');
+
+        expect(response).toEqual(
+          expect.objectContaining({
+            players: expect.arrayContaining(['friendPlayer']),
+            state: expect.objectContaining({ status: 'IN_PROGRESS' }),
+          }),
+        );
+        expect(mockGetRelations).toHaveBeenCalledWith('friendPlayer');
+      }
+    });
+
+    it('should return an error when relations cannot be retrieved for friends-only rooms', async () => {
+      const friendsOnlyId = await gameManager.addGame(
+        'Connect Four',
+        'creator',
+        connectFourSettings({ privacy: 'FRIENDS_ONLY' }),
+      );
+      mockGetRelations.mockResolvedValueOnce({ error: 'failed to fetch' });
+
+      if (typeof friendsOnlyId === 'string') {
+        const response = await gameManager.joinGame(friendsOnlyId, 'friendPlayer');
+
+        expect(response).toEqual({ error: 'Could not verify friends for room access' });
+      }
+    });
+
+    it('should reject non-friends from friends-only rooms', async () => {
+      const friendsOnlyId = await gameManager.addGame(
+        'Connect Four',
+        'creator',
+        connectFourSettings({ privacy: 'FRIENDS_ONLY' }),
+      );
+      mockGetRelations.mockResolvedValueOnce({ friends: [], blockedUsers: [] });
+
+      if (typeof friendsOnlyId === 'string') {
+        const response = await gameManager.joinGame(friendsOnlyId, 'stranger');
+
+        expect(response).toEqual({ error: 'Access denied: This is a friends-only room' });
+      }
+    });
+
+    it('should reject private rooms when room code is missing', async () => {
+      const privateGameID = await gameManager.addGame(
+        'Connect Four',
+        'creator',
+        connectFourSettings({ privacy: 'PRIVATE' }),
+      );
+
+      if (typeof privateGameID === 'string') {
+        const response = await gameManager.joinGame(privateGameID, 'playerTwo');
+
+        expect(response).toEqual({
+          error: 'Access denied: invalid room code or room is private',
+        });
+      }
+    });
+  });
+
   describe('leaveGame', () => {
     let gameManager: GameManager;
     let gameID: GameInstanceID;
@@ -261,6 +400,35 @@ describe('GameManager', () => {
       const response = await gameManager.leaveGame('fakeGameID', 'player1');
 
       expect(response).toEqual({ error: 'Game requested does not exist.' });
+    });
+  });
+
+  describe('leaveGame - Connect Four', () => {
+    let gameManager: GameManager;
+    let connectFourGameID: GameInstanceID;
+
+    beforeEach(async () => {
+      gameManager = GameManager.getInstance();
+      const result = await gameManager.addGame('Connect Four', 'creator', connectFourSettings());
+      if (typeof result === 'string') {
+        connectFourGameID = result;
+      }
+    });
+
+    it('should remove spectators that leave a Connect Four game', async () => {
+      await gameManager.joinGame(connectFourGameID, 'spectator', undefined, true);
+
+      const response = await gameManager.leaveGame(connectFourGameID, 'spectator', true);
+
+      const connectFourState = (response as GameInstance<ConnectFourGameState>).state;
+      expect(connectFourState.spectators).not.toContain('spectator');
+      expect(connectFourSaveGameStateSpy).toHaveBeenCalled();
+    });
+
+    it('should remove Connect Four games when no players remain', async () => {
+      await gameManager.leaveGame(connectFourGameID, 'creator');
+
+      expect(gameManager.getGame(connectFourGameID)).toBeUndefined();
     });
   });
 

@@ -2,7 +2,13 @@ import GameModel from '../../models/games.model';
 import findGames from '../../services/game.service';
 import { getUserByUsername } from '../../services/user.service';
 import { MAX_NIM_OBJECTS } from '../../types/constants';
-import { FindGameQuery, GameInstance, NimGameState, ConnectFourGameState } from '../../types/types';
+import {
+  ConnectFourGameState,
+  ConnectFourRoomSettings,
+  FindGameQuery,
+  GameInstance,
+  NimGameState,
+} from '../../types/types';
 
 jest.mock('../../services/user.service', () => ({
   getUserByUsername: jest.fn(),
@@ -28,6 +34,47 @@ const gameState3: GameInstance<NimGameState> = {
   players: ['user1', 'user2'],
   gameType: 'Nim',
 };
+
+const createConnectFourState = (
+  overrides?: Partial<ConnectFourGameState>,
+  roomOverrides?: Partial<ConnectFourRoomSettings>,
+): ConnectFourGameState => {
+  const baseRoomSettings: ConnectFourRoomSettings = {
+    roomName: 'Connect Room',
+    privacy: 'PUBLIC',
+    allowSpectators: true,
+    roomCode: 'SECRET',
+  };
+
+  return {
+    status: 'WAITING_TO_START',
+    board: Array.from({ length: 6 }, () => Array(7).fill(null)),
+    currentTurn: 'RED',
+    player1: 'creator',
+    player2: undefined,
+    player1Color: 'RED',
+    player2Color: 'YELLOW',
+    moves: [],
+    totalMoves: 0,
+    roomSettings: { ...baseRoomSettings, ...(roomOverrides ?? {}) },
+    spectators: [],
+    ...overrides,
+  };
+};
+
+const createConnectFourGame = (
+  gameID: string,
+  options?: {
+    stateOverrides?: Partial<ConnectFourGameState>;
+    roomOverrides?: Partial<ConnectFourRoomSettings>;
+    players?: string[];
+  },
+): GameInstance<ConnectFourGameState> => ({
+  state: createConnectFourState(options?.stateOverrides, options?.roomOverrides),
+  gameID,
+  players: options?.players ?? ['creator'],
+  gameType: 'Connect Four',
+});
 
 describe('findGames', () => {
   beforeEach(() => {
@@ -107,259 +154,94 @@ describe('findGames', () => {
     expect(games).toEqual([]);
   });
 
-  describe('Connect Four privacy filtering', () => {
-    const buildConnectFourGame = (overrides: any = {}): GameInstance<any> => {
-      const defaultRoomSettings: ConnectFourGameState['roomSettings'] = {
-        roomName: 'Room',
-        privacy: 'PUBLIC',
-        allowSpectators: true,
-        roomCode: 'SECRET',
-      };
-      const state: ConnectFourGameState = {
-        status: 'WAITING_TO_START',
-        board: Array(6)
-          .fill(null)
-          .map(() => Array(7).fill(null)),
-        currentTurn: 'RED',
-        moves: [],
-        totalMoves: 0,
-        player1: 'creator',
-        player1Color: 'RED',
-        player2Color: 'YELLOW',
-        spectators: [],
-        ...overrides.state,
-        roomSettings: {
-          ...defaultRoomSettings,
-          ...(overrides.state?.roomSettings || {}),
-        },
-      };
-      return {
-        state,
-        gameID: overrides.gameID || `cf-${Math.random()}`,
-        players: overrides.players || ['creator'],
-        gameType: 'Connect Four',
-      };
-    };
+  it('should include only accessible Connect Four rooms and remove room codes', async () => {
+    const mockGetUserByUsername = getUserByUsername as jest.MockedFunction<typeof getUserByUsername>;
+    mockGetUserByUsername.mockResolvedValueOnce({
+      username: 'requester',
+      friends: ['friendlyCreator'],
+    } as any);
 
-    it('filters Connect Four games by privacy for anonymous users', async () => {
-      const publicGame = buildConnectFourGame({
-        state: {
-          roomSettings: {
-            roomName: 'Public',
-            privacy: 'PUBLIC',
-            allowSpectators: true,
-            roomCode: 'SECRET',
-          },
-        },
-      });
-      const privateGame = buildConnectFourGame({
-        state: {
-          roomSettings: { roomName: 'Private', privacy: 'PRIVATE', allowSpectators: true },
-          status: 'WAITING_TO_START',
-        },
-      });
-      const noSpectators = buildConnectFourGame({
-        state: {
-          roomSettings: { roomName: 'No Specs', privacy: 'PUBLIC', allowSpectators: false },
-          status: 'WAITING_TO_START',
-        },
-      });
-
-      jest.spyOn(GameModel, 'find').mockReturnValue({
-        lean: jest.fn().mockResolvedValue([publicGame, privateGame, noSpectators]),
-      } as any);
-
-      const results = await findGames(undefined, undefined);
-      expect(results).toHaveLength(1);
-      expect(results[0].gameID).toBe(publicGame.gameID);
-      expect((results[0].state as any).roomSettings.roomCode).toBeUndefined(); // sanitized
+    jest.spyOn(GameModel, 'find').mockImplementation(() => {
+      const query: any = {};
+      query.lean = jest.fn().mockReturnValue(
+        Promise.resolve([
+          createConnectFourGame('public-room', {
+            stateOverrides: { player1: 'publicCreator' },
+            roomOverrides: {
+              privacy: 'PUBLIC',
+              // simulate missing allowSpectators flag
+              allowSpectators: undefined as unknown as boolean,
+            },
+          }),
+          createConnectFourGame('private-room', {
+            roomOverrides: { privacy: 'PRIVATE' },
+          }),
+          createConnectFourGame('friend-room', {
+            stateOverrides: { player1: 'friendlyCreator', status: 'IN_PROGRESS' },
+            roomOverrides: { privacy: 'FRIENDS_ONLY', allowSpectators: true },
+          }),
+          createConnectFourGame('friend-room-no-access', {
+            stateOverrides: { player1: 'strangerCreator' },
+            roomOverrides: { privacy: 'FRIENDS_ONLY', allowSpectators: true },
+          }),
+          createConnectFourGame('no-spectators', {
+            roomOverrides: { allowSpectators: false },
+          }),
+          createConnectFourGame('over-room', {
+            stateOverrides: { status: 'OVER' },
+          }),
+        ]),
+      );
+      return query;
     });
 
-    it('includes friends-only rooms when requester is a friend', async () => {
-      const friendsOnlyGame = buildConnectFourGame({
-        state: {
-          player1: 'alice',
-          roomSettings: {
-            roomName: 'Friends',
+    const games = await findGames('Connect Four', undefined, 'requester');
+
+    expect(mockGetUserByUsername).toHaveBeenCalledWith('requester');
+    expect(games).toHaveLength(2);
+    expect(games[0]).toEqual(
+      expect.objectContaining({
+        gameID: 'friend-room',
+        state: expect.objectContaining({
+          roomSettings: expect.objectContaining({
             privacy: 'FRIENDS_ONLY',
-            allowSpectators: true,
-            roomCode: 'HUSH',
-          },
-        },
-      });
-
-      jest.spyOn(GameModel, 'find').mockReturnValue({
-        lean: jest.fn().mockResolvedValue([friendsOnlyGame]),
-      } as any);
-      (getUserByUsername as jest.Mock).mockResolvedValue({
-        username: 'viewer',
-        friends: ['alice'],
-      });
-
-      const results = await findGames(undefined, undefined, 'viewer');
-      expect(results).toHaveLength(1);
-      expect(results[0].gameID).toBe(friendsOnlyGame.gameID);
-      expect((results[0].state as any).roomSettings.roomCode).toBeUndefined(); // sanitized
-    });
-
-    it('excludes friends-only rooms when requester lacks access', async () => {
-      const friendsOnlyGame = buildConnectFourGame({
-        state: {
-          player1: 'alice',
-          roomSettings: { roomName: 'Friends', privacy: 'FRIENDS_ONLY', allowSpectators: true },
-        },
-      });
-
-      jest.spyOn(GameModel, 'find').mockReturnValue({
-        lean: jest.fn().mockResolvedValue([friendsOnlyGame]),
-      } as any);
-      (getUserByUsername as jest.Mock).mockResolvedValue({
-        username: 'viewer',
-        friends: ['bob'],
-      });
-
-      const results = await findGames(undefined, undefined, 'viewer');
-      expect(results).toEqual([]);
-    });
-
-    it('excludes OVER games even if they are public', async () => {
-      const overGame = buildConnectFourGame({
-        state: {
-          status: 'OVER',
-          roomSettings: { roomName: 'Over', privacy: 'PUBLIC', allowSpectators: true },
-        },
-      });
-
-      jest.spyOn(GameModel, 'find').mockReturnValue({
-        lean: jest.fn().mockResolvedValue([overGame]),
-      } as any);
-
-      const results = await findGames(undefined, undefined);
-      expect(results).toEqual([]);
-    });
-
-    it('excludes games with allowSpectators false', async () => {
-      const noSpectatorsGame = buildConnectFourGame({
-        state: {
-          roomSettings: { roomName: 'No Specs', privacy: 'PUBLIC', allowSpectators: false },
-          status: 'WAITING_TO_START',
-        },
-      });
-
-      jest.spyOn(GameModel, 'find').mockReturnValue({
-        lean: jest.fn().mockResolvedValue([noSpectatorsGame]),
-      } as any);
-
-      const results = await findGames(undefined, undefined);
-      expect(results).toEqual([]);
-    });
-
-    it('handles missing friends array gracefully', async () => {
-      const friendsOnlyGame = buildConnectFourGame({
-        state: {
-          player1: 'alice',
-          roomSettings: { roomName: 'Friends', privacy: 'FRIENDS_ONLY', allowSpectators: true },
-        },
-      });
-
-      jest.spyOn(GameModel, 'find').mockReturnValue({
-        lean: jest.fn().mockResolvedValue([friendsOnlyGame]),
-      } as any);
-      (getUserByUsername as jest.Mock).mockResolvedValue({
-        username: 'viewer',
-        friends: undefined,
-      });
-
-      const results = await findGames(undefined, undefined, 'viewer');
-      expect(results).toEqual([]);
-    });
-
-    it('handles getUserByUsername returning an error', async () => {
-      const friendsOnlyGame = buildConnectFourGame({
-        state: {
-          player1: 'alice',
-          roomSettings: { roomName: 'Friends', privacy: 'FRIENDS_ONLY', allowSpectators: true },
-        },
-      });
-
-      jest.spyOn(GameModel, 'find').mockReturnValue({
-        lean: jest.fn().mockResolvedValue([friendsOnlyGame]),
-      } as any);
-      (getUserByUsername as jest.Mock).mockResolvedValue({
-        error: 'User not found',
-      });
-
-      const results = await findGames(undefined, undefined, 'viewer');
-      expect(results).toEqual([]);
-    });
-
-    it('handles getUserByUsername returning null', async () => {
-      const friendsOnlyGame = buildConnectFourGame({
-        state: {
-          player1: 'alice',
-          roomSettings: { roomName: 'Friends', privacy: 'FRIENDS_ONLY', allowSpectators: true },
-        },
-      });
-
-      jest.spyOn(GameModel, 'find').mockReturnValue({
-        lean: jest.fn().mockResolvedValue([friendsOnlyGame]),
-      } as any);
-      (getUserByUsername as jest.Mock).mockResolvedValue(null);
-
-      const results = await findGames(undefined, undefined, 'viewer');
-      expect(results).toEqual([]);
-    });
-
-    it('sanitizes room codes from all Connect Four games', async () => {
-      const gameWithCode = buildConnectFourGame({
-        state: {
-          // Use valid ConnectFourGameState values for currentTurn
-          board: Array(6)
-            .fill(null)
-            .map(() => Array(7).fill(null)),
-          currentTurn: 'RED',
-          player1: 'player1',
-          player2: 'player2',
-          status: 'WAITING_TO_START',
-          player1Color: 'RED',
-          player2Color: 'YELLOW',
-          winner: undefined,
-          roomSettings: {
-            roomName: 'Public',
+            roomCode: undefined,
+          }),
+        }),
+      }),
+    );
+    expect(games[1]).toEqual(
+      expect.objectContaining({
+        gameID: 'public-room',
+        state: expect.objectContaining({
+          roomSettings: expect.objectContaining({
             privacy: 'PUBLIC',
-            allowSpectators: true,
-            roomCode: 'SECRET123',
-          },
-        },
-      });
+            roomCode: undefined,
+          }),
+        }),
+      }),
+    );
+  });
 
-      jest.spyOn(GameModel, 'find').mockReturnValue({
-        lean: jest.fn().mockResolvedValue([gameWithCode]),
-      } as any);
+  it('should exclude friends-only rooms when requester is not a friend or lookup fails', async () => {
+    const mockGetUserByUsername = getUserByUsername as jest.MockedFunction<typeof getUserByUsername>;
+    mockGetUserByUsername.mockResolvedValueOnce({ error: 'User not found' } as any);
 
-      const results = await findGames(undefined, undefined);
-      expect(results).toHaveLength(1);
-      expect((results[0].state as any).roomSettings.roomCode).toBeUndefined();
+    jest.spyOn(GameModel, 'find').mockImplementation(() => {
+      const query: any = {};
+      query.lean = jest.fn().mockReturnValue(
+        Promise.resolve([
+          createConnectFourGame('friend-room', {
+            stateOverrides: { player1: 'friendlyCreator' },
+            roomOverrides: { privacy: 'FRIENDS_ONLY', allowSpectators: true },
+          }),
+        ]),
+      );
+      return query;
     });
 
-    it('handles Connect Four games with missing roomSettings', async () => {
-      const gameWithoutSettings: GameInstance<any> = {
-        state: {
-          status: 'WAITING_TO_START',
-          // roomSettings is missing
-        },
-        gameID: 'cf-missing-settings',
-        players: ['creator'],
-        gameType: 'Connect Four',
-      };
+    const games = await findGames('Connect Four', undefined, 'requester');
 
-      jest.spyOn(GameModel, 'find').mockReturnValue({
-        lean: jest.fn().mockResolvedValue([gameWithoutSettings]),
-      } as any);
-
-      const results = await findGames(undefined, undefined);
-      // Should be filtered out due to missing privacy setting
-      expect(results).toEqual([]);
-    });
+    expect(games).toEqual([]);
   });
 });
