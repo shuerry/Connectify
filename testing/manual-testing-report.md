@@ -20,12 +20,17 @@ This document describes the manual regression checks performed for key product r
 - **Screenshot prompts:** Report modal submission, author view with the warning banner text.
 
 ## Email Verification
+
 - **Goal** Users can verify their email addresses
 - **Steps**
   1. While logged in as `hullaballoo`, navigate to the profile settings page via "View Profile"
   2. Click "Edit" underneath the email address field, and enter an email address
   3. Go to your email inbox, click the "Verify" button in the email
   4. Return to the profile page and verify that the email is marked as verified (black text, no 'not verified' tag)
+  ![Edited email](./manual-testing-images/verification-1.png "Optional title")
+  ![Verification email](./manual-testing-images/verification-2.png "Optional title")
+  ![Verification page](./manual-testing-images/verification-3.png "Optional title")
+  ![Confirmed email](./manual-testing-images/verification-4.png "Optional title")
 
 - **Goal** Users can replace and verify a new email address
 - **Steps**
