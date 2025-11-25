@@ -78,7 +78,7 @@
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 18px;
-  padding: 12px 16px;
+  padding: 12px 16px 2px 16px;
   font-size: 15px;
   line-height: 1.4;
   color: #f5f6f8;
@@ -88,13 +88,29 @@
 }
 
 .message.sender .message-body {
-  background: linear-gradient(135deg, #8e9bd2 30%, #4b54a2 80%);
+  background: linear-gradient(135deg, #515d95 30%, #4b54a2 80%);
   color: white;
   border: none;
 }
 .message.receiver .message-body {
   background: transparent;
   border: none;
+  color: #1f2937;
+}
+
+/* Sender message text should be white */
+.message.sender .message-body * {
+  color: white;
+}
+
+.message-footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: end;
+  margin-top: 4px;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
 .message-body-controls {
@@ -107,13 +123,9 @@
   align-items: center;
 }
 
-.message.sender .message-body-controls {
-  border-top-color: rgba(255, 255, 255, 0.2);
-}
-
 .message-actions {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 .message-action-btn {
@@ -124,6 +136,7 @@
   border-radius: 8px;
   font-size: 11px;
   font-weight: 600;
+  margin-right: auto;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -154,7 +167,7 @@
 
 .message-history-buttons {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   flex-wrap: wrap;
 }
 
@@ -209,6 +222,7 @@
 
 .message-history-panel {
   margin-top: 12px;
+  margin-bottom: 12px;
   border-top: 1px solid rgba(156, 163, 175, 0.4);
   padding-top: 10px;
   display: flex;
@@ -415,22 +429,15 @@
 /* Read Receipt */
 .read-receipt {
   font-size: 11px;
-  color: #f6f6f6;
-  margin-top: 4px;
-  text-align: right;
+  color: #fafafa;
   font-weight: 400;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 4px;
 }
 
-.read-receipt::before {
-  content: '';
-  width: 12px;
-  height: 12px;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>') no-repeat center;
-  background-size: contain;
+.message.sender .read-receipt {
+  color: rgb(255, 255, 255);
 }
 
 /* Responsive Design */

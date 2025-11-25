@@ -205,41 +205,64 @@ const MessageCard = ({
         ) : (
           <>
             <Markdown remarkPlugins={[remarkGfm]}>{displayedBody}</Markdown>
-            {(canModifyMessage && !isEditing) || (hasHistory && !isEditing) ? (
-              <div className='message-body-controls'>
-                {canModifyMessage && !isEditing && (
-                  <div className='message-actions'>
-                    <button
-                      className='message-action-btn'
-                      onClick={() => {
-                        setDraftMessage(message.msg);
-                        setIsEditing(true);
-                        setActionError(null);
-                      }}>
-                      Edit
-                    </button>
-                    <button
-                      className='message-action-btn destructive'
-                      onClick={handleDeleteMessage}
-                      disabled={isDeleting}>
-                      {isDeleting ? 'Deleting...' : 'Delete'}
-                    </button>
-                  </div>
-                )}
-                {hasHistory && !isEditing && (
-                  <div className='message-history-buttons'>
-                    <button
-                      className='message-history-toggle'
-                      type='button'
-                      onClick={() => setIsHistoryOpen(prev => !prev)}>
-                      {isHistoryOpen
-                        ? 'Hide edit history'
-                        : `View edit history (${historyEntries.length})`}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : null}
+            <div className='message-footer'>
+              {((canModifyMessage && !isEditing) || (hasHistory && !isEditing)) && (
+                <div className='message-body-controls'>
+                  {canModifyMessage && !isEditing && (
+                    <div className='message-actions'>
+                      <button
+                        className='message-action-btn'
+                        onClick={() => {
+                          setDraftMessage(message.msg);
+                          setIsEditing(true);
+                          setActionError(null);
+                        }}>
+                        Edit
+                      </button>
+                      <button
+                        className='message-action-btn destructive'
+                        onClick={handleDeleteMessage}
+                        disabled={isDeleting}>
+                        {isDeleting ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  )}
+                  {hasHistory && !isEditing && (
+                    <div className='message-history-buttons'>
+                      <button
+                        className='message-history-toggle'
+                        type='button'
+                        onClick={() => setIsHistoryOpen(prev => !prev)}>
+                        {isHistoryOpen
+                          ? 'Hide edit history'
+                          : `View edit history (${historyEntries.length})`}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+              {isLatestSentMessage && isSentByCurrentUser && (
+                <div className='read-receipt'>
+                  {allParticipants && allParticipants.length > 2
+                    ? (() => {
+                        const participantsToRead = allParticipants.filter(p => p !== message.msgFrom);
+                        const readCount = message.readBy
+                          ? message.readBy.filter(reader => participantsToRead.includes(reader)).length
+                          : 0;
+                        const totalCount = participantsToRead.length;
+                        if (isRead) {
+                          return 'Read by all';
+                        } else if (readCount > 0) {
+                          return `Read by ${readCount}/${totalCount}`;
+                        }
+                        return 'Delivered';
+                      })()
+                    : isRead
+                      ? 'Read'
+                      : 'Delivered'}
+                </div>
+              )}
+            </div>
           </>
         )}
 
@@ -311,28 +334,6 @@ const MessageCard = ({
                   </div>
                 </div>
               ))}
-          </div>
-        )}
-
-        {isLatestSentMessage && isSentByCurrentUser && (
-          <div className='read-receipt'>
-            {allParticipants && allParticipants.length > 2
-              ? (() => {
-                  const participantsToRead = allParticipants.filter(p => p !== message.msgFrom);
-                  const readCount = message.readBy
-                    ? message.readBy.filter(reader => participantsToRead.includes(reader)).length
-                    : 0;
-                  const totalCount = participantsToRead.length;
-                  if (isRead) {
-                    return 'Read by all';
-                  } else if (readCount > 0) {
-                    return `Read by ${readCount}/${totalCount}`;
-                  }
-                  return 'Delivered';
-                })()
-              : isRead
-                ? 'Read'
-                : 'Delivered'}
           </div>
         )}
       </div>
