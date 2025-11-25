@@ -119,7 +119,9 @@ const ConnectFourLobby = ({
               </button>
             </div>
 
-            <div className='code-hint'>Have a private room code? Enter it here to join directly</div>
+            <div className='code-hint'>
+              Have a private room code? Enter it here to join directly
+            </div>
           </div>
         </div>
       </div>

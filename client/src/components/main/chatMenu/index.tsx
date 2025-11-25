@@ -27,10 +27,7 @@ const ChatMenu: React.FC<ChatMenuProps> = ({ chat, user, refreshChat }) => {
     if (!open) return;
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
-      ) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setOpen(false);
       }
     };
@@ -52,8 +49,7 @@ const ChatMenu: React.FC<ChatMenuProps> = ({ chat, user, refreshChat }) => {
         className={`chat-action-btn ${open ? 'chat-action-btn--active' : ''}`}
         title='Chat options'
         onClick={toggleOpen}
-        disabled={isMuting}
-      >
+        disabled={isMuting}>
         <svg width='20' height='20' viewBox='0 0 24 24' fill='none'>
           <circle cx='12' cy='12' r='1' stroke='currentColor' strokeWidth='2' />
           <circle cx='19' cy='12' r='1' stroke='currentColor' strokeWidth='2' />
@@ -74,24 +70,21 @@ const ChatMenu: React.FC<ChatMenuProps> = ({ chat, user, refreshChat }) => {
 
           <button
             className='chat-action-menu-item'
-            onClick={() => handleAction(() => muteFor(60 * 60 * 1000))}
-          >
+            onClick={() => handleAction(() => muteFor(60 * 60 * 1000))}>
             <span className='chat-action-menu-item-primary'>Mute for 1 hour</span>
             <span className='chat-action-menu-item-secondary'>Good for short focus blocks</span>
           </button>
 
           <button
             className='chat-action-menu-item'
-            onClick={() => handleAction(() => muteFor(8 * 60 * 60 * 1000))}
-          >
+            onClick={() => handleAction(() => muteFor(8 * 60 * 60 * 1000))}>
             <span className='chat-action-menu-item-primary'>Mute for 8 hours</span>
             <span className='chat-action-menu-item-secondary'>Covers a full work day</span>
           </button>
 
           <button
             className='chat-action-menu-item'
-            onClick={() => handleAction(() => muteFor(24 * 60 * 60 * 1000))}
-          >
+            onClick={() => handleAction(() => muteFor(24 * 60 * 60 * 1000))}>
             <span className='chat-action-menu-item-primary'>Mute for 24 hours</span>
             <span className='chat-action-menu-item-secondary'>Perfect for a day off</span>
           </button>
@@ -100,11 +93,8 @@ const ChatMenu: React.FC<ChatMenuProps> = ({ chat, user, refreshChat }) => {
 
           <button
             className='chat-action-menu-item chat-action-menu-item--danger'
-            onClick={() => handleAction(() => muteIndefinitely())}
-          >
-            <span className='chat-action-menu-item-primary'>
-              Mute until I turn it back on
-            </span>
+            onClick={() => handleAction(() => muteIndefinitely())}>
+            <span className='chat-action-menu-item-primary'>Mute until I turn it back on</span>
             <span className='chat-action-menu-item-secondary'>
               You&apos;ll stay muted until you re-enable notifications
             </span>

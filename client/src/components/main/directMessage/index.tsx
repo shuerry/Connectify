@@ -10,7 +10,6 @@ import Avatar from '../../common/Avatar/Avatar';
 import ProfanityFilterModal from '../newQuestion/profanityFilterModal';
 import ChatMenu from '../../main/chatMenu';
 
-
 /**
  * DirectMessage component renders a page for direct messaging between users.
  * It includes a list of users and a chat window to send and receive messages.

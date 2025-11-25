@@ -7,8 +7,7 @@ type UseMuteChatOptions = {
   user: SafeDatabaseUser | null;
   /**
    * Function that refetches the current chat from the backend
-   * and updates local state. You already have this in your
-   * direct message and group chat hooks.
+   * and updates local state.
    */
   refreshChat: () => Promise<void>;
 };
@@ -37,11 +36,10 @@ const useMuteChat = ({ chat, user, refreshChat }: UseMuteChatOptions) => {
             await toggleNotify(chat!._id, user!.username);
             await refreshChat();
           } catch (err) {
-            console.error('Error automatically unmuting chat', err);
+            // Silent catch
           }
         }, durationMs);
       } catch (err) {
-        console.error('Error muting chat', err);
         setError('Failed to mute chat');
       } finally {
         setIsMuting(false);
@@ -60,7 +58,6 @@ const useMuteChat = ({ chat, user, refreshChat }: UseMuteChatOptions) => {
       await toggleNotify(chat!._id, user!.username);
       await refreshChat();
     } catch (err) {
-      console.error('Error muting chat indefinitely', err);
       setError('Failed to mute chat');
     } finally {
       setIsMuting(false);
