@@ -1,0 +1,120 @@
+@startuml questions.puml
+skinparam classAttributeIconSize 0
+left to right direction
+hide circle
+
+package "Users" {
+  class User {
+    +username : string
+    +email : string [optional]
+    +dateJoined : Date
+    +biography : string [optional]
+    +friends : string[] [optional]
+    +blockedUsers : string[] [optional]
+    +hiddenQuestions : string[] [optional]
+  }
+}
+
+package "Tags" {
+  class Tag {
+    +name : string
+    +description : string
+  }
+}
+
+package "Comments & Answers" {
+  class Comment {
+    +text : string
+    +commentBy : string
+    +commentDateTime : Date
+  }
+
+  class Answer {
+    +text : string
+    +ansBy : string
+    +ansDateTime : Date
+    +comments : Comment[]
+  }
+
+  Answer "1" --> "many" Comment : comments
+}
+
+package "Communities" {
+  class Community {
+    +name : string
+    +description : string
+    +visibility : string   ' PUBLIC/PRIVATE
+    +participants : string[]
+    +admin : string
+  }
+}
+
+package "Questions" {
+  enum OrderType {
+    newest
+    unanswered
+    active
+    mostViewed
+    trending
+  }
+
+  class Question {
+    +title : string
+    +text : string
+    +tags : Tag[]
+    +askedBy : string
+    +askDateTime : Date
+    +answers : Answer[]
+    +views : string[]
+    +upVotes : string[]
+    +downVotes : string[]
+    +comments : Comment[]
+    +communityId : ObjectId [nullable]
+    +followers : User[]
+  }
+
+  class Draft {
+    +title : string
+    +text : string
+    +tags : Tag[]
+    +askedBy : string
+    +communityId : ObjectId [nullable]
+    +createdAt : Date
+    +updatedAt : Date
+  }
+}
+
+package "Collections" {
+  class Collection {
+    +name : string
+    +description : string [optional]
+    +questions : Question[]
+    +isPrivate : boolean
+    +username : string   ' owner username
+  }
+}
+
+' Cross-domain relationships
+
+' User authored content
+User "1" --> "many" Question : askedBy
+User "1" --> "many" Answer : ansBy
+User "1" --> "many" Comment : commentBy
+
+' Followers of question
+Question "many" --> "many" User : followers
+
+' Tags & answers & comments inside Question
+Question "1" --> "many" Tag : tags
+Question "1" --> "many" Answer : answers
+Question "1" --> "many" Comment : comments
+
+' Communities link to users and questions
+Community "many" --> "many" User : participants/admin
+Question "many" --> "0..1" Community : communityId
+
+' Collections group questions and belong to a user
+Collection "many" --> "many" Question : questions
+Collection "many" --> "1" User : owner(username)
+
+@enduml

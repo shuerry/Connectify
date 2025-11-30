@@ -1,0 +1,170 @@
+@startuml games.puml
+skinparam classAttributeIconSize 0
+left to right direction
+hide circle
+
+package "Games Core" {
+
+  enum GameType {
+    Nim
+    ConnectFour
+  }
+
+  enum GameStatus {
+    IN_PROGRESS
+    WAITING_TO_START
+    OVER
+  }
+
+  class GameState {
+    +status : GameStatus
+  }
+
+  class WinnableGameState {
+    +status : GameStatus
+    +winners : string[] [optional]
+  }
+
+  GameState <|-- WinnableGameState
+
+  ' ------ Nim ------
+  class NimMove {
+    +numObjects : int
+  }
+
+  class NimGameState {
+    +status : GameStatus
+    +winners : string[] [optional]
+    +moves : NimMove[]
+    +player1 : string [optional]
+    +player2 : string [optional]
+    +remainingObjects : int
+  }
+
+  WinnableGameState <|-- NimGameState
+
+  ' ------ Connect Four ------
+  enum RoomPrivacy {
+    PUBLIC
+    PRIVATE
+    FRIENDS_ONLY
+  }
+
+  enum ConnectFourColor {
+    RED
+    YELLOW
+  }
+
+  class BoardPosition {
+    +row : int
+    +col : int
+  }
+
+  class ConnectFourMove {
+    +column : int
+  }
+
+  class ConnectFourRoomSettings {
+    +roomName : string
+    +privacy : RoomPrivacy
+    +allowSpectators : boolean
+    +roomCode : string [optional]
+  }
+
+  class ConnectFourGameState {
+    +status : GameStatus
+    +winners : string[] [optional]
+    +board : ConnectFourColor[][]
+    +currentTurn : ConnectFourColor
+    +player1 : string [optional]
+    +player2 : string [optional]
+    +player1Color : ConnectFourColor
+    +player2Color : ConnectFourColor
+    +moves : ConnectFourMove[]
+    +winningPositions : BoardPosition[] [optional]
+    +totalMoves : int
+    +roomSettings : ConnectFourRoomSettings
+    +spectators : string[]
+    +lastMoveColumn : int [optional]
+  }
+
+  WinnableGameState <|-- ConnectFourGameState
+
+  ' Game Instance
+  class GameInstance {
+    +gameID : string
+    +players : string[]
+    +gameType : GameType
+    +state : GameState
+  }
+
+  GameInstance "1" --> "1" GameState : state
+  GameInstance "many" --> "many" ConnectFourGameState : concrete (runtime)
+  GameInstance "many" --> "many" NimGameState : concrete (runtime)
+
+  NimGameState "1" --> "many" NimMove : moves
+  ConnectFourGameState "1" --> "many" ConnectFourMove : moves
+  ConnectFourGameState "many" --> "1" ConnectFourRoomSettings : roomSettings
+  ConnectFourGameState "1" --> "many" BoardPosition : winningPositions
+}
+
+package "Games & Users" {
+  class User {
+    +username : string
+  }
+
+  GameInstance "many" --> "many" User : players
+}
+
+package "Game Socket Payloads" {
+
+  class GameMovePayload {
+    +gameID : string
+    +moveType : string    ' NimMove or ConnectFourMove
+  }
+
+  class GameUpdatePayload {
+    +gameInstance : GameInstance
+  }
+
+  class GameErrorPayload {
+    +player : string
+    +error : string
+  }
+
+  class PlayerDisconnectedPayload {
+    +disconnectedPlayer : string
+    +message : string
+  }
+
+  class GameInvitationPayload {
+    +gameID : string
+    +roomName : string
+    +inviterUsername : string
+    +roomCode : string [optional]
+  }
+
+  interface ClientToServerEvents {
+    +makeMove(move : GameMovePayload)
+    +joinGame(gameID : string)
+    +leaveGame(gameID : string, playerID : string, isSpectator : boolean [optional])
+    +requestConnectFourRooms()
+    +registerPresence(gameID : string, playerID : string, isSpectator : boolean [optional])
+  }
+
+  interface ServerToClientEvents {
+    +gameUpdate(game : GameUpdatePayload)
+    +gameError(error : GameErrorPayload)
+    +connectFourRoomsUpdate(rooms : GameInstance[])
+    +playerDisconnected(payload : PlayerDisconnectedPayload)
+    +gameInvitation(payload : GameInvitationPayload)
+  }
+
+  GameMovePayload --> GameInstance
+  GameUpdatePayload --> GameInstance
+  GameErrorPayload --> User
+  PlayerDisconnectedPayload --> User
+  GameInvitationPayload --> GameInstance
+}
+
+@enduml

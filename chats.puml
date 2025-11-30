@@ -1,0 +1,166 @@
+@startuml chats.puml
+skinparam classAttributeIconSize 0
+left to right direction
+hide circle
+
+package "Users" {
+  class User {
+    +username : string
+    +email : string [optional]
+    +isOnline : boolean [optional]
+    +showOnlineStatus : boolean [optional]
+    +readReceiptsEnabled : boolean [optional]
+  }
+}
+
+package "Chat Core" {
+
+  class GameInvitationInfo {
+    +gameID : string
+    +roomName : string
+    +roomCode : string [optional]
+    +gameType : string      ' Connect Four
+    +status : string        ' pending|accepted|declined|expired
+  }
+
+  class MessageEditEntry {
+    +body : string
+    +editedAt : Date
+    +editedBy : string
+  }
+
+  class Message {
+    +msg : string
+    +msgFrom : string
+    +msgDateTime : Date
+    +type : string       ' global|direct|friendRequest|gameInvitation
+    +msgTo : string [optional]
+    +friendRequestStatus : string [optional]
+    +gameInvitation : GameInvitationInfo [optional]
+    +readBy : string[] [optional]
+    +editHistory : MessageEditEntry[] [optional]
+    +lastEditedAt : Date [optional]
+    +lastEditedBy : string [optional]
+    +isDeleted : boolean [optional]
+    +deletedAt : Date [optional]
+    +deletedBy : string [optional]
+  }
+
+  ' Simple alias for Record<string, boolean>
+  class MapStringBoolean {
+    +key : string
+    +value : boolean
+  }
+
+  class Chat {
+    +participants : MapStringBoolean   ' username -> notify
+    +messages : Message[]
+    +name : string [optional]
+    +isCommunityChat : boolean [optional]
+    +communityId : ObjectId [optional]
+  }
+}
+
+package "Notifications (email)" {
+
+  class ChatNotificationPayload {
+    +toEmail : string[]
+    +toName : string [optional]
+    +fromName : string [optional]
+    +chatId : string [optional]
+    +messagePreview : string
+    +groupName : string [optional]
+    +isMention : boolean [optional]
+  }
+
+  class AnswerNotificationPayload {
+    +toEmail : string[]
+    +authorName : string [optional]
+    +questionTitle : string [optional]
+    +answerPreview : string
+    +questionId : string
+    +extraVoteCount : int [optional]
+    +extraCommentPreview : string [optional]
+  }
+
+  class EmailVerificationPayload {
+    +toEmail : string
+    +username : string
+    +token : string
+    +verifyUrl : string
+    +expiresAt : Date
+  }
+
+  class PasswordResetPayload {
+    +toEmail : string
+    +username : string
+    +resetUrl : string
+    +expiresAt : Date
+  }
+}
+
+package "Socket Payloads (chat-related)" {
+
+  class ChatUpdatePayload {
+    +type : string    ' created|newMessage|newParticipant|readReceipt|messageDeleted
+  }
+
+  class MessageUpdatePayload {
+    +msg : Message
+  }
+
+  class TypingIndicatorPayload {
+    +username : string
+    +chatID : string [optional]
+    +isTyping : boolean
+  }
+
+  class UserStatusUpdatePayload {
+    +username : string
+    +isOnline : boolean
+    +showOnlineStatus : boolean
+  }
+
+  interface ClientToServerEvents {
+    +joinChat(chatID : string)
+    +leaveChat(chatID : string [optional])
+    +typingStart(chatID : string [optional], username : string)
+    +typingStop(chatID : string [optional], username : string)
+    +joinUserRoom(username : string)
+    +leaveUserRoom(username : string)
+  }
+
+  interface ServerToClientEvents {
+    +chatUpdate(chat : ChatUpdatePayload)
+    +messageUpdate(message : MessageUpdatePayload)
+    +typingIndicator(payload : TypingIndicatorPayload)
+    +notificationUpdate()
+    +userStatusUpdate(payload : UserStatusUpdatePayload)
+  }
+}
+
+' Relationships
+
+' Who sends what
+Message "many" --> "1" User : msgFrom(username)
+Message "many" --> "0..1" User : msgTo(username)
+Message "many" --> "0..1" GameInvitationInfo : gameInvitation
+Message "1" --> "many" MessageEditEntry : editHistory
+
+Chat "1" --> "many" Message : messages
+Chat "many" --> "0..1" MapStringBoolean : participants
+Chat "many" --> "0..1" User : community admin via communityId (indirect)
+
+' Email notifications reference user identity & email
+ChatNotificationPayload "many" --> "0..1" User : fromName/toName (logical)
+AnswerNotificationPayload "many" --> "0..1" User : authorName
+EmailVerificationPayload "many" --> "1" User : username
+PasswordResetPayload "many" --> "1" User : username
+
+' Socket payloads wiring
+ChatUpdatePayload --> Chat
+MessageUpdatePayload --> Message
+TypingIndicatorPayload --> User
+UserStatusUpdatePayload --> User
+
+@enduml
